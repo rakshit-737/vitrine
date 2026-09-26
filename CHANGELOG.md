@@ -3,6 +3,21 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic versioning.
 
+## [0.2.1] - 2026-09-26
+
+### Added
+- `scripts/merge_baselines.py`: folds saved LightGBM baseline scores into
+  `results/ember_benchmark.json` without retraining.
+- Real results committed: EMBER 2018 verdict benchmark with ROC and SHAP figures,
+  adversarial robustness (`results/adversarial.json`), System32 benign specificity
+  (`results/benign_system32.json`).
+- ADR 0007: memory-bounded baselines and how published numbers are reported.
+
+### Changed
+- `train_ember.py --lgbm-limit` subsamples only the 2381-dim LightGBM baselines. The XGBoost
+  model still uses all 275,732 training rows.
+- README rewritten around real results, with an honest treatment of limitations.
+
 ## [0.2.0] - 2026-09-26
 
 ### Added
