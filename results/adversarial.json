@@ -12,6 +12,10 @@
         "detection_rate": 0.741,
         "evasion_rate_of_detected": 0.0
       },
+      "lgbm_ember_2018": {
+        "detection_rate": 0.8646666666666667,
+        "evasion_rate_of_detected": 0.0
+      },
       "vitrine_triage": {
         "detection_rate": 0.8936666666666667,
         "evasion_rate_of_detected": 0.0
@@ -26,6 +30,10 @@
       "lgbm_ember_paper": {
         "detection_rate": 0.6376666666666667,
         "evasion_rate_of_detected": 0.1862348178137652
+      },
+      "lgbm_ember_2018": {
+        "detection_rate": 0.742,
+        "evasion_rate_of_detected": 0.16422513492675406
       },
       "vitrine_triage": {
         "detection_rate": 0.8226666666666667,
@@ -42,6 +50,10 @@
         "detection_rate": 0.6303333333333333,
         "evasion_rate_of_detected": 0.1871345029239766
       },
+      "lgbm_ember_2018": {
+        "detection_rate": 0.7033333333333334,
+        "evasion_rate_of_detected": 0.2035466461063994
+      },
       "vitrine_triage": {
         "detection_rate": 0.7863333333333333,
         "evasion_rate_of_detected": 0.1409921671018277
@@ -56,6 +68,10 @@
       "lgbm_ember_paper": {
         "detection_rate": 0.602,
         "evasion_rate_of_detected": 0.19883040935672514
+      },
+      "lgbm_ember_2018": {
+        "detection_rate": 0.782,
+        "evasion_rate_of_detected": 0.09984579799537394
       },
       "vitrine_triage": {
         "detection_rate": 0.855,
@@ -72,6 +88,10 @@
         "detection_rate": 0.702,
         "evasion_rate_of_detected": 0.08007197480881692
       },
+      "lgbm_ember_2018": {
+        "detection_rate": 0.8346666666666667,
+        "evasion_rate_of_detected": 0.052428681572860444
+      },
       "vitrine_triage": {
         "detection_rate": 0.823,
         "evasion_rate_of_detected": 0.09250279746363298
@@ -86,6 +106,10 @@
       "lgbm_ember_paper": {
         "detection_rate": 0.37066666666666664,
         "evasion_rate_of_detected": 0.524966261808367
+      },
+      "lgbm_ember_2018": {
+        "detection_rate": 0.44666666666666666,
+        "evasion_rate_of_detected": 0.4915188897455667
       },
       "vitrine_triage": {
         "detection_rate": 0.589,
