@@ -66,7 +66,8 @@ def _u(fmt: str, data: bytes, off: int):
         raise PEParseError(f"truncated at 0x{off:x}") from e
 
 
-def _cstr(data: bytes, off: int, maxlen: int = 256) -> str:
+def _cstr(data: bytes, off: int, maxlen: int = 4096) -> str:
+    # 4096 bounds the scan but still fits long MSVC-mangled C++ export names (seen >256 chars in System32)
     if off < 0 or off >= len(data):
         return ""
     end = data.find(b"\0", off, off + maxlen)
