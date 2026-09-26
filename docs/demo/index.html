@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VITRINE triage</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #1d2330; --muted: #5b6475; --line: #dde1e8;
+    --mal: #b3261e; --sus: #a15c00; --ben: #1e7b3a; --accent: #2d5bd7; --code: #f0f2f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12151b; --panel: #1a1f28; --ink: #e6e9ef; --muted: #9aa3b5; --line: #2c3340;
+            --mal: #ff6b60; --sus: #f0a33a; --ben: #4cc47a; --accent: #7aa2ff; --code: #0f1217; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 18px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  .panel h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  #drop { border: 2px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; color: var(--muted); }
+  #drop.over { border-color: var(--accent); color: var(--ink); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .verdict { font-size: 28px; font-weight: 700; }
+  .MALICIOUS { color: var(--mal); } .SUSPICIOUS { color: var(--sus); } .BENIGN { color: var(--ben); }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14px; }
+  .kv span:nth-child(odd) { color: var(--muted); }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+  .bar { height: 8px; border-radius: 4px; }
+  .pos { background: var(--mal); } .neg { background: var(--ben); }
+  ul { margin: 0; padding-left: 18px; }
+  textarea { width: 100%; min-height: 260px; background: var(--code); color: var(--ink); border: 1px solid var(--line);
+             border-radius: 8px; padding: 10px; font: 12.5px/1.45 ui-monospace, Consolas, monospace; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .hidden { display: none; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>VITRINE &middot; static PE triage</h1>
+  <p>Files are parsed in memory and never executed. Lab use only.</p>
+</header>
+<main>
+  <section class="panel">
+    <label for="pick">Static demo (no backend): pick a synthetic, inert sample</label> <select id="pick"></select>
+    <p class="muted">Precomputed with <code>scripts/build_demo.py</code> using the synthetic demo model. Run <code>vitrine serve</code> locally to analyze your own files.</p>
+    <p id="status" class="muted"></p>
+  </section>
+
+  <div id="out" class="hidden">
+    <div class="grid2">
+      <section class="panel">
+        <h2>Verdict</h2>
+        <div id="verdict" class="verdict"></div>
+        <div class="kv" id="facts"></div>
+      </section>
+      <section class="panel">
+        <h2>Why: top drivers (TreeSHAP)</h2>
+        <table id="drivers"></table>
+        <p class="muted">Contributions in log-odds; red pushes toward malicious, green toward benign.</p>
+      </section>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <section class="panel">
+        <h2>Capabilities (ATT&amp;CK)</h2>
+        <ul id="caps"></ul>
+        <h2 style="margin-top:14px">Notes</h2>
+        <ul id="notes"></ul>
+      </section>
+      <section class="panel">
+        <h2>Candidate YARA rule (review before use)</h2>
+        <textarea id="rule" spellcheck="false"></textarea>
+        <p><button id="validate">Validate against benign corpus</button> <span id="vres" class="muted"></span></p>
+      </section>
+    </div>
+  </div>
+</main>
+<script>
+const DEMO = {"synthetic_benign.exe": {"sha256": "4f05c21b6346a9e111595e68398efa8c5bfdb35a7423afa72a2951fc3c197268", "verdict": "BENIGN", "score": 0.0078, "family": null, "packed": false, "route_to_dynamic": false, "attributions": [{"feature": "api_gui", "value": 3.0, "contribution": -0.9539, "explanation": "3 gui API(s) imported"}, {"feature": "api_anti_debug", "value": 1.0, "contribution": -0.7139, "explanation": "1 anti debug API(s) imported"}, {"feature": "high_risk_capabilities", "value": 0.0, "contribution": -0.6656, "explanation": "0 high-risk capability rule(s) matched (injection/download/keylogging)"}, {"feature": "capability_count", "value": 0.0, "contribution": -0.4947, "explanation": "0 capability rule(s) matched"}, {"feature": "n_imports", "value": 9.0, "contribution": -0.3425, "explanation": "9 imported functions"}], "capabilities": [], "yara": null, "notes": [], "structural_rule": null}, "synthetic_injector.exe": {"sha256": "c58a0c6549ba2b3747993d6300d9d13c7a16b09b4bc7b23ce55297939a17fc78", "verdict": "MALICIOUS", "score": 0.9885, "family": "injector", "packed": false, "route_to_dynamic": false, "attributions": [{"feature": "high_risk_capabilities", "value": 1.0, "contribution": 0.8874, "explanation": "1 high-risk capability rule(s) matched (injection/download/keylogging)"}, {"feature": "api_injection", "value": 4.0, "contribution": 0.8007, "explanation": "4 injection API(s) imported"}, {"feature": "cap:process injection (remote thread)", "value": 1.0, "contribution": 0.8007, "explanation": "capability 'process injection (remote thread)' (T1055.002) present: 1"}, {"feature": "api_gui", "value": 0.0, "contribution": 0.7154, "explanation": "0 gui API(s) imported"}, {"feature": "api_dynamic_resolution", "value": 2.0, "contribution": 0.5001, "explanation": "2 dynamic resolution API(s) imported"}], "capabilities": [{"name": "process injection (remote thread)", "attack_id": "T1055.002", "evidence": ["import CreateRemoteThread", "import WriteProcessMemory", "import VirtualAllocEx"]}, {"name": "dynamic API resolution", "attack_id": "T1027.007", "evidence": ["import GetProcAddress", "import LoadLibraryA"]}], "yara": {"name": "vitrine_injector_c58a0c65", "text": "rule vitrine_injector_c58a0c65\n{\n    meta:\n        author = \"VITRINE (auto-generated, analyst review required)\"\n        family = \"injector\"\n        sample_count = 11\n    strings:\n        $s0 = \"VTRN_FAMILY_INJ_marker_7Q\" ascii\n        $s1 = \"target=explorer.exe\" ascii\n        $s2 = \"Global\\\\inj_mtx_31\" ascii\n        $s3 = \"inj-cfg-v2\" ascii\n    condition:\n        uint16(0) == 0x5A4D and 2 of them\n}\n", "strings": ["VTRN_FAMILY_INJ_marker_7Q", "target=explorer.exe", "Global\\inj_mtx_31", "inj-cfg-v2"], "threshold": 2, "benign_hits": 0, "benign_total": 40, "sibling_hits": 10, "sibling_total": 10, "specificity": 1.0, "coverage": 1.0}, "notes": [], "structural_rule": "import \"pe\"\n\nrule vitrine_injector_c58a0c65_pe\n{\n    meta:\n        author = \"VITRINE structural synthesizer (analyst review required)\"\n        family = \"injector\"\n        sample_count = 11\n        requires = \"YARA >= 4.3 (boolean-expression sets)\"\n    condition:\n        uint16(0) == 0x5A4D and 1 of (\n            pe.imphash() == \"5060bb34101245cba70dd00a60a7d3ce\",\n            pe.imports(\"kernel32.dll\", \"CreateRemoteThread\"),\n            pe.imports(\"kernel32.dll\", \"OpenProcess\"),\n            pe.imports(\"kernel32.dll\", \"VirtualAllocEx\"),\n            pe.imports(\"kernel32.dll\", \"WriteProcessMemory\")\n        )\n}\n"}, "synthetic_downloader.exe": {"sha256": "ad41045d0953b9ed5c7f43d21d1c7b01bd53fc0377bcd4eaefc8f3ebdc84a545", "verdict": "MALICIOUS", "score": 0.9923, "family": "downloader", "packed": false, "route_to_dynamic": false, "attributions": [{"feature": "capability_count", "value": 4.0, "contribution": 1.0443, "explanation": "4 capability rule(s) matched"}, {"feature": "high_risk_capabilities", "value": 1.0, "contribution": 0.8874, "explanation": "1 high-risk capability rule(s) matched (injection/download/keylogging)"}, {"feature": "api_gui", "value": 0.0, "contribution": 0.7154, "explanation": "0 gui API(s) imported"}, {"feature": "api_network", "value": 4.0, "contribution": 0.4349, "explanation": "4 network API(s) imported"}, {"feature": "api_process", "value": 1.0, "contribution": 0.4349, "explanation": "1 process API(s) imported"}], "capabilities": [{"name": "download file from internet", "attack_id": "T1105", "evidence": ["import InternetOpenUrlA", "import URLDownloadToFileA"]}, {"name": "create process", "attack_id": "T1106", "evidence": ["import CreateProcessA"]}, {"name": "HTTP client", "attack_id": "T1071.001", "evidence": ["import InternetOpenA"]}, {"name": "embedded URL", "attack_id": "T1071.001", "evidence": ["string 'http://payload.example.invalid/stage2.bin'"]}], "yara": {"name": "vitrine_downloader_ad41045d", "text": "rule vitrine_downloader_ad41045d\n{\n    meta:\n        author = \"VITRINE (auto-generated, analyst review required)\"\n        family = \"downloader\"\n        sample_count = 11\n    strings:\n        $s0 = \"http://payload.example.invalid/stage2.bin\" ascii\n        $s1 = \"VTRN_FAMILY_DL_marker_K2\" ascii\n        $s2 = \"%TEMP%\\\\upd_svc.exe\" ascii\n        $s3 = \"Mozilla/4.0 (dlr)\" ascii\n        $s4 = \"WININET.dll\" ascii\n        $s5 = \"URLMON.dll\" ascii\n    condition:\n        uint16(0) == 0x5A4D and 3 of them\n}\n", "strings": ["http://payload.example.invalid/stage2.bin", "VTRN_FAMILY_DL_marker_K2", "%TEMP%\\upd_svc.exe", "Mozilla/4.0 (dlr)", "WININET.dll", "URLMON.dll"], "threshold": 3, "benign_hits": 0, "benign_total": 40, "sibling_hits": 10, "sibling_total": 10, "specificity": 1.0, "coverage": 1.0}, "notes": [], "structural_rule": "import \"pe\"\n\nrule vitrine_downloader_ad41045d_pe\n{\n    meta:\n        author = \"VITRINE structural synthesizer (analyst review required)\"\n        family = \"downloader\"\n        sample_count = 11\n        requires = \"YARA >= 4.3 (boolean-expression sets)\"\n    condition:\n        uint16(0) == 0x5A4D and 1 of (\n            pe.imphash() == \"ac3aa02fa181fbcd1aa603a5a20c9f2f\",\n            pe.imports(\"kernel32.dll\", \"CreateProcessA\"),\n            pe.imports(\"kernel32.dll\", \"GetTempPathA\"),\n            pe.imports(\"urlmon.dll\", \"URLDownloadToFileA\"),\n            pe.imports(\"wininet.dll\", \"InternetOpenA\"),\n            pe.imports(\"wininet.dll\", \"InternetOpenUrlA\"),\n            pe.imports(\"wininet.dll\", \"InternetReadFile\")\n        )\n}\n"}, "synthetic_keylogger.exe": {"sha256": "a526b17a9ff5be419325ec72f453d7e77d2c54ba0c5b796855dc3acb46eaddfc", "verdict": "MALICIOUS", "score": 0.9807, "family": "keylogger", "packed": false, "route_to_dynamic": false, "attributions": [{"feature": "api_keyboard_hook", "value": 2.0, "contribution": 1.4267, "explanation": "2 keyboard hook API(s) imported"}, {"feature": "cap:keylogging via hook/polling", "value": 1.0, "contribution": 1.4267, "explanation": "capability 'keylogging via hook/polling' (T1056.001) present: 1"}, {"feature": "high_risk_capabilities", "value": 1.0, "contribution": 0.8874, "explanation": "1 high-risk capability rule(s) matched (injection/download/keylogging)"}, {"feature": "api_gui", "value": 0.0, "contribution": 0.7154, "explanation": "0 gui API(s) imported"}, {"feature": "n_imports", "value": 6.0, "contribution": 0.3204, "explanation": "6 imported functions"}], "capabilities": [{"name": "keylogging via hook/polling", "attack_id": "T1056.001", "evidence": ["import GetAsyncKeyState", "import SetWindowsHookExA"]}], "yara": {"name": "vitrine_keylogger_a526b17a", "text": "rule vitrine_keylogger_a526b17a\n{\n    meta:\n        author = \"VITRINE (auto-generated, analyst review required)\"\n        family = \"keylogger\"\n        sample_count = 11\n    strings:\n        $s0 = \"VTRN_FAMILY_KL_marker_P9\" ascii\n        $s1 = \"keys_%04d.log\" ascii\n        $s2 = \"[BACKSPACE]\" ascii\n        $s3 = \"[ENTER]\" ascii\n    condition:\n        uint16(0) == 0x5A4D and 2 of them\n}\n", "strings": ["VTRN_FAMILY_KL_marker_P9", "keys_%04d.log", "[BACKSPACE]", "[ENTER]"], "threshold": 2, "benign_hits": 0, "benign_total": 40, "sibling_hits": 10, "sibling_total": 10, "specificity": 1.0, "coverage": 1.0}, "notes": [], "structural_rule": "import \"pe\"\n\nrule vitrine_keylogger_a526b17a_pe\n{\n    meta:\n        author = \"VITRINE structural synthesizer (analyst review required)\"\n        family = \"keylogger\"\n        sample_count = 11\n        requires = \"YARA >= 4.3 (boolean-expression sets)\"\n    condition:\n        uint16(0) == 0x5A4D and 1 of (\n            pe.imphash() == \"460d98384cdfb0be151e6a00b057013e\",\n            pe.imports(\"kernel32.dll\", \"WriteFile\"),\n            pe.imports(\"user32.dll\", \"GetAsyncKeyState\"),\n            pe.imports(\"user32.dll\", \"GetForegroundWindow\"),\n            pe.imports(\"user32.dll\", \"GetWindowTextA\"),\n            pe.imports(\"user32.dll\", \"SetWindowsHookExA\")\n        )\n}\n"}, "synthetic_packed.exe": {"sha256": "2df8d9ba614db0debe706de844424ec357791be59d579a9104aab6f70fac1319", "verdict": "MALICIOUS", "score": 0.9952, "family": "packed", "packed": true, "route_to_dynamic": true, "attributions": [{"feature": "n_imports", "value": 3.0, "contribution": 0.9834, "explanation": "3 imported functions"}, {"feature": "api_gui", "value": 0.0, "contribution": 0.7154, "explanation": "0 gui API(s) imported"}, {"feature": "high_risk_capabilities", "value": 0.0, "contribution": -0.6656, "explanation": "0 high-risk capability rule(s) matched (injection/download/keylogging)"}, {"feature": "string_entropy", "value": 6.063522434058255, "contribution": 0.5669, "explanation": "string character entropy 6.06"}, {"feature": "api_dynamic_resolution", "value": 2.0, "contribution": 0.5001, "explanation": "2 dynamic resolution API(s) imported"}], "capabilities": [{"name": "dynamic API resolution", "attack_id": "T1027.007", "evidence": ["import GetProcAddress", "import LoadLibraryA"]}, {"name": "modify memory protection", "attack_id": "T1055", "evidence": ["import VirtualProtect"]}], "yara": {"name": "vitrine_packed_2df8d9ba", "text": "rule vitrine_packed_2df8d9ba\n{\n    meta:\n        author = \"VITRINE (auto-generated, analyst review required)\"\n        family = \"packed\"\n        sample_count = 11\n    strings:\n        $s0 = \"VTRN_FAMILY_PK_marker_Z0\" ascii\n    condition:\n        uint16(0) == 0x5A4D and 1 of them\n}\n", "strings": ["VTRN_FAMILY_PK_marker_Z0"], "threshold": 1, "benign_hits": 0, "benign_total": 40, "sibling_hits": 10, "sibling_total": 10, "specificity": 1.0, "coverage": 1.0}, "notes": ["section UPX0 is writable+executable", "section UPX1 is writable+executable", "packer section names: ['upx0', 'upx1']", "high-entropy sections: ['UPX1']", "minimal import table with dynamic resolution (LoadLibraryA+GetProcAddress)", "entry point in writable+executable section UPX0", "static features likely starved by packing -> recommend dynamic sandbox"], "structural_rule": "import \"pe\"\n\nrule vitrine_packed_2df8d9ba_pe\n{\n    meta:\n        author = \"VITRINE structural synthesizer (analyst review required)\"\n        family = \"packed\"\n        sample_count = 11\n        requires = \"YARA >= 4.3 (boolean-expression sets)\"\n    condition:\n        uint16(0) == 0x5A4D and 1 of (\n            pe.imphash() == \"6859c1fbd5011b39e2b3c5ccd6eda491\",\n            for any s in pe.sections : ( s.name == \"UPX0\" ),\n            for any s in pe.sections : ( s.name == \"UPX1\" )\n        )\n}\n"}};
+</script>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const pick = $("pick");
+pick.innerHTML = Object.keys(DEMO).map((k) => `<option>${esc(k)}</option>`).join("");
+pick.onchange = () => { $("status").textContent = pick.value; render(DEMO[pick.value]); };
+pick.onchange();
+async function run(file) {
+  $("status").textContent = `Analyzing ${file.name} (${(file.size/1024).toFixed(0)} KB)...`;
+  const r = await fetch("/api/analyze", {method: "POST", body: file, headers: {"Content-Type": "application/octet-stream"}});
+  const d = await r.json();
+  if (!r.ok) { $("status").textContent = d.detail || "error"; return; }
+  $("status").textContent = file.name;
+  render(d);
+}
+
+function render(d) {
+  $("out").classList.remove("hidden");
+  $("verdict").innerHTML = `<span class="${d.verdict}">${d.verdict}</span>`;
+  $("facts").innerHTML = [
+    ["score", d.score.toFixed(4)], ["family (nearest)", d.family || "-"], ["packed", d.packed],
+    ["route to dynamic", d.route_to_dynamic ? "yes" : "no"], ["sha256", `<span class="mono">${d.sha256}</span>`],
+  ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join("");
+  const max = Math.max(0.001, ...d.attributions.map((a) => Math.abs(a.contribution)));
+  $("drivers").innerHTML = d.attributions.map((a) => `<tr><td style="width:90px">
+      <div class="bar ${a.contribution > 0 ? "pos" : "neg"}" style="width:${Math.round(80 * Math.abs(a.contribution) / max)}px"></div>
+      <span class="mono">${a.contribution > 0 ? "+" : ""}${a.contribution.toFixed(3)}</span></td>
+      <td>${esc(a.explanation)}</td></tr>`).join("");
+  $("caps").innerHTML = d.capabilities.length ? d.capabilities.map((c) =>
+    `<li><a href="https://attack.mitre.org/techniques/${c.attack_id.replace(".", "/")}/" target="_blank" rel="noopener">${c.attack_id}</a>
+     ${esc(c.name)} <span class="muted">(${esc(c.evidence.slice(0, 3).join(", "))})</span></li>`).join("") : "<li class='muted'>none</li>";
+  $("notes").innerHTML = d.notes.length ? d.notes.map((n) => `<li>${esc(n)}</li>`).join("") : "<li class='muted'>none</li>";
+  $("rule").value = [d.yara && d.yara.text, d.structural_rule].filter(Boolean).join("\n") ||
+    "// no rule: verdict BENIGN or no benign corpus configured (vitrine serve --benign-dir ...)";
+  $("vres").textContent = d.yara ? `specificity ${d.yara.specificity} on ${d.yara.benign_total} benign files` : "";
+}
+
+$("validate").onclick = async () => { $("vres").textContent = "validation needs the local API (vitrine serve --benign-dir ...)"; return;
+  const r = await fetch("/api/yara/validate", {method: "POST", headers: {"Content-Type": "application/json"},
+                                               body: JSON.stringify({text: $("rule").value})});
+  const d = await r.json();
+  $("vres").textContent = r.ok ? `${d.benign_hits}/${d.benign_total} benign hits (specificity ${d.specificity})` : d.detail;
+};
+</script>
+</body>
+</html>
