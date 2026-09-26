@@ -88,6 +88,7 @@ def main() -> None:
             r = evaluate(name, ytr[val_idx], s_val, yte, s_te, tt)
             r["params"] = {**params, "num_boost_round": rounds}
             r["n_train"] = int(lgbm_idx.size)
+            r["n_features"] = int(Xfit.shape[1])
             results["models"].append(r)
             scores[name] = s_te
             bst.save_model(str(models_dir / f"{name}.txt"))
