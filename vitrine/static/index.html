@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VITRINE triage</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --ink: #1d2330; --muted: #5b6475; --line: #dde1e8;
+    --mal: #b3261e; --sus: #a15c00; --ben: #1e7b3a; --accent: #2d5bd7; --code: #f0f2f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #12151b; --panel: #1a1f28; --ink: #e6e9ef; --muted: #9aa3b5; --line: #2c3340;
+            --mal: #ff6b60; --sus: #f0a33a; --ben: #4cc47a; --accent: #7aa2ff; --code: #0f1217; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 18px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+  header h1 { margin: 0; font-size: 20px; letter-spacing: .02em; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 16px; display: grid; gap: 16px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+  .panel h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  #drop { border: 2px dashed var(--line); border-radius: 10px; padding: 28px; text-align: center; cursor: pointer; color: var(--muted); }
+  #drop.over { border-color: var(--accent); color: var(--ink); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .verdict { font-size: 28px; font-weight: 700; }
+  .MALICIOUS { color: var(--mal); } .SUSPICIOUS { color: var(--sus); } .BENIGN { color: var(--ben); }
+  .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14px; }
+  .kv span:nth-child(odd) { color: var(--muted); }
+  .mono { font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; word-break: break-all; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 6px 4px; border-top: 1px solid var(--line); vertical-align: top; }
+  .bar { height: 8px; border-radius: 4px; }
+  .pos { background: var(--mal); } .neg { background: var(--ben); }
+  ul { margin: 0; padding-left: 18px; }
+  textarea { width: 100%; min-height: 260px; background: var(--code); color: var(--ink); border: 1px solid var(--line);
+             border-radius: 8px; padding: 10px; font: 12.5px/1.45 ui-monospace, Consolas, monospace; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 8px 14px; font-weight: 600; cursor: pointer; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .hidden { display: none; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>VITRINE &middot; static PE triage</h1>
+  <p>Files are parsed in memory and never executed. Lab use only.</p>
+</header>
+<main>
+  <section class="panel">
+    <div id="drop" tabindex="0" role="button" aria-label="Choose a PE file">Drop a PE file here or click to choose
+      <input id="file" type="file" class="hidden"></div>
+    <p id="status" class="muted"></p>
+  </section>
+
+  <div id="out" class="hidden">
+    <div class="grid2">
+      <section class="panel">
+        <h2>Verdict</h2>
+        <div id="verdict" class="verdict"></div>
+        <div class="kv" id="facts"></div>
+      </section>
+      <section class="panel">
+        <h2>Why: top drivers (TreeSHAP)</h2>
+        <table id="drivers"></table>
+        <p class="muted">Contributions in log-odds; red pushes toward malicious, green toward benign.</p>
+      </section>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <section class="panel">
+        <h2>Capabilities (ATT&amp;CK)</h2>
+        <ul id="caps"></ul>
+        <h2 style="margin-top:14px">Notes</h2>
+        <ul id="notes"></ul>
+      </section>
+      <section class="panel">
+        <h2>Candidate YARA rule (review before use)</h2>
+        <textarea id="rule" spellcheck="false"></textarea>
+        <p><button id="validate">Validate against benign corpus</button> <span id="vres" class="muted"></span></p>
+      </section>
+    </div>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const drop = $("drop"), input = $("file");
+drop.onclick = () => input.click();
+drop.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") input.click(); };
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) run(e.dataTransfer.files[0]); };
+input.onchange = () => input.files[0] && run(input.files[0]);
+
+async function run(file) {
+  $("status").textContent = `Analyzing ${file.name} (${(file.size/1024).toFixed(0)} KB)...`;
+  const r = await fetch("/api/analyze", {method: "POST", body: file, headers: {"Content-Type": "application/octet-stream"}});
+  const d = await r.json();
+  if (!r.ok) { $("status").textContent = d.detail || "error"; return; }
+  $("status").textContent = file.name;
+  render(d);
+}
+
+function render(d) {
+  $("out").classList.remove("hidden");
+  $("verdict").innerHTML = `<span class="${d.verdict}">${d.verdict}</span>`;
+  $("facts").innerHTML = [
+    ["score", d.score.toFixed(4)], ["family (nearest)", d.family || "-"], ["packed", d.packed],
+    ["route to dynamic", d.route_to_dynamic ? "yes" : "no"], ["sha256", `<span class="mono">${d.sha256}</span>`],
+  ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join("");
+  const max = Math.max(0.001, ...d.attributions.map((a) => Math.abs(a.contribution)));
+  $("drivers").innerHTML = d.attributions.map((a) => `<tr><td style="width:90px">
+      <div class="bar ${a.contribution > 0 ? "pos" : "neg"}" style="width:${Math.round(80 * Math.abs(a.contribution) / max)}px"></div>
+      <span class="mono">${a.contribution > 0 ? "+" : ""}${a.contribution.toFixed(3)}</span></td>
+      <td>${esc(a.explanation)}</td></tr>`).join("");
+  $("caps").innerHTML = d.capabilities.length ? d.capabilities.map((c) =>
+    `<li><a href="https://attack.mitre.org/techniques/${c.attack_id.replace(".", "/")}/" target="_blank" rel="noopener">${c.attack_id}</a>
+     ${esc(c.name)} <span class="muted">(${esc(c.evidence.slice(0, 3).join(", "))})</span></li>`).join("") : "<li class='muted'>none</li>";
+  $("notes").innerHTML = d.notes.length ? d.notes.map((n) => `<li>${esc(n)}</li>`).join("") : "<li class='muted'>none</li>";
+  $("rule").value = [d.yara && d.yara.text, d.structural_rule].filter(Boolean).join("\n") ||
+    "// no rule: verdict BENIGN or no benign corpus configured (vitrine serve --benign-dir ...)";
+  $("vres").textContent = d.yara ? `specificity ${d.yara.specificity} on ${d.yara.benign_total} benign files` : "";
+}
+
+$("validate").onclick = async () => {
+  const r = await fetch("/api/yara/validate", {method: "POST", headers: {"Content-Type": "application/json"},
+                                               body: JSON.stringify({text: $("rule").value})});
+  const d = await r.json();
+  $("vres").textContent = r.ok ? `${d.benign_hits}/${d.benign_total} benign hits (specificity ${d.specificity})` : d.detail;
+};
+</script>
+</body>
+</html>
