@@ -1,0 +1,54 @@
+site_name: VITRINE
+site_description: Static-first, explainable PE triage with auto-synthesized YARA rules (never executes samples)
+site_url: https://rakshit-737.github.io/vitrine/
+repo_url: https://github.com/rakshit-737/vitrine
+repo_name: rakshit-737/vitrine
+edit_uri: edit/main/docs/
+theme:
+  name: material
+  features: [navigation.sections, content.code.copy, search.highlight]
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: {icon: material/brightness-7, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: {icon: material/brightness-4, name: Light mode}
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc: {permalink: true}
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [.]
+          options: {show_source: false, docstring_style: google, show_root_heading: true}
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Architecture: architecture.md
+  - Datasets: datasets.md
+  - Benchmarks: benchmarks.md
+  - CLI & API reference: reference.md
+  - Live demo: demo/index.html
+  - Threat model: threat-model.md
+  - Security: security.md
+  - ADRs:
+      - adr/index.md
+      - adr/0001-static-only-no-live-malware.md
+      - adr/0002-own-extractor-emits-ember-schema.md
+      - adr/0003-interpretable-features-plus-treeshap.md
+      - adr/0004-structural-yara-from-features.md
+      - adr/0005-adversarial-eval-in-feature-space.md
+      - adr/0006-vanilla-ui-instead-of-react.md
+      - adr/0007-memory-bounded-baselines.md
+  - Changelog: changelog.md
+  - Limitations & roadmap: limitations.md

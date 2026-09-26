@@ -8,3 +8,4 @@ data/
 *.npy
 .ruff_cache/
 .venv/
+site/
