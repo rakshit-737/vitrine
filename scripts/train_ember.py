@@ -52,7 +52,8 @@ def main() -> None:
     ap.add_argument("--rounds-2018", type=int, default=400)
     ap.add_argument("--xgb-rounds", type=int, default=600)
     ap.add_argument("--skip-full", action="store_true", help="skip the 2381-dim LightGBM baselines")
-    ap.add_argument("--train-limit", type=int, default=0, help="subsample training rows (0 = all)")
+    ap.add_argument("--lgbm-limit", type=int, default=0,
+                    help="subsample training rows for the 2381-dim LightGBM baselines (0 = all; memory)")
     a = ap.parse_args()
     data = data_dir(a.data)
     models_dir = data / "models"
@@ -62,12 +63,10 @@ def main() -> None:
     Xte, Fte, yte, mte = load_split(data, "test")
     val = np.asarray([m == "2018-10" for m in mtr["appeared"]])
     fit = ~val
-    if a.train_limit:
-        idx = np.flatnonzero(fit)
-        keep = np.random.default_rng(0).choice(idx, size=min(a.train_limit, idx.size), replace=False)
-        fit = np.zeros_like(fit)
-        fit[keep] = True
     fit_idx, val_idx = np.flatnonzero(fit), np.flatnonzero(val)
+    lgbm_idx = fit_idx
+    if a.lgbm_limit and a.lgbm_limit < fit_idx.size:
+        lgbm_idx = np.sort(np.random.default_rng(0).choice(fit_idx, size=a.lgbm_limit, replace=False))
     print(f"train={fit_idx.size} val={val_idx.size} test={yte.size} "
           f"(test malicious={int(yte.sum())})", flush=True)
     results = {"dataset": "EMBER 2018 (feature version 2)", "n_train": int(fit_idx.size),
@@ -77,17 +76,18 @@ def main() -> None:
     if not a.skip_full:
         import lightgbm as lgb
 
-        Xfit = np.asarray(Xtr[fit_idx])
+        Xfit = np.asarray(Xtr[lgbm_idx])
         Xval = np.asarray(Xtr[val_idx])
         for name, params, rounds in (("lgbm_ember_paper", {"objective": "binary", "verbose": -1}, 100),
                                      ("lgbm_ember_2018", EMBER_2018_PARAMS, a.rounds_2018)):
             t = time.time()
-            bst = lgb.train(params, lgb.Dataset(Xfit, ytr[fit_idx]), rounds)
+            bst = lgb.train({**params, "num_threads": 8}, lgb.Dataset(Xfit, ytr[lgbm_idx]), rounds)
             tt = time.time() - t
             s_val = bst.predict(Xval)
             s_te = np.concatenate([bst.predict(np.asarray(Xte[i : i + 50000])) for i in range(0, len(yte), 50000)])
             r = evaluate(name, ytr[val_idx], s_val, yte, s_te, tt)
             r["params"] = {**params, "num_boost_round": rounds}
+            r["n_train"] = int(lgbm_idx.size)
             results["models"].append(r)
             scores[name] = s_te
             bst.save_model(str(models_dir / f"{name}.txt"))
@@ -104,6 +104,7 @@ def main() -> None:
     s_te = m.score_many(Fte)
     r = evaluate("vitrine_xgb", ytr[val_idx], s_val, yte, s_te, tt)
     r["n_features"] = len(FEATURE_NAMES)
+    r["n_train"] = int(fit_idx.size)
     results["models"].append(r)
     scores["vitrine_xgb"] = s_te
     m.thresholds = {"fpr_1pct": threshold_for_fpr(ytr[val_idx], s_val, 0.01),
