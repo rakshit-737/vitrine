@@ -1,33 +1,52 @@
-"""End-to-end static triage pipeline: dissect -> tag -> featurize -> score/attribute -> YARA."""
+"""End-to-end static triage pipeline: dissect -> tag -> featurize -> score/attribute -> YARA -> route.
+
+Works with either verdict model:
+
+* :class:`vitrine.gbdt.GBDTVerdictModel` -- XGBoost trained on EMBER 2018 (real data), with
+  validation-calibrated thresholds: MALICIOUS at the 0.1 %-FPR point, SUSPICIOUS at the 1 %-FPR point.
+* :class:`vitrine.model.VerdictModel` -- the dependency-free linear model trained on the synthetic
+  corpus (demo / CI), with fixed 0.7 / 0.3 thresholds.
+"""
 from __future__ import annotations
 
-from .capabilities import tag
+from .capabilities import HIGH_RISK_ATTACK_IDS, tag
 from .dissect import dissect, is_packed, packing_signals
-from .features import vector
+from .ember import raw_from_report
+from .features import vector_raw
 from .model import VerdictModel
 from .models import TriageResult, Verdict
 from .synth import MALICIOUS_FAMILIES, corpus
-from .yara_synth import synthesize, validate
+from .yara_synth import structural_atoms, synthesize, synthesize_structural, validate
 
 MAL_THR = 0.7
 SUS_THR = 0.3
-# capabilities that are costly to evade statically; they floor the verdict at SUSPICIOUS
-HIGH_RISK_ATTACK_IDS = {"T1055.002", "T1056.001", "T1105"}
+
+
+def vector_bytes(data: bytes) -> list[float]:
+    return vector_raw(raw_from_report(dissect(data), data))
 
 
 def train_default(n_per_family: int = 20, seed: int = 0) -> VerdictModel:
+    """Linear model on the synthetic inert corpus (fast, dependency-free; for demos and CI)."""
     data = corpus(n_per_family, seed)
-    X = [vector(dissect(b)) for _, b in data]
+    X = [vector_bytes(b) for _, b in data]
     y = [int(f in MALICIOUS_FAMILIES) for f, _ in data]
     return VerdictModel().fit(X, y, [f for f, _ in data])
 
 
-def analyze(data: bytes, model: VerdictModel, benign: list[bytes] | None = None,
+def thresholds(model) -> tuple[float, float]:
+    t = getattr(model, "thresholds", None) or {}
+    return t.get("fpr_0.1pct", MAL_THR), t.get("fpr_1pct", SUS_THR)
+
+
+def analyze(data: bytes, model, benign: list[bytes] | None = None,
             siblings: list[bytes] | None = None) -> TriageResult:
     rep = dissect(data)
-    x = vector(rep)
+    raw = raw_from_report(rep, data)
+    x = vector_raw(raw)
     score = model.score(x)
-    verdict = Verdict.MALICIOUS if score >= MAL_THR else Verdict.SUSPICIOUS if score >= SUS_THR else Verdict.BENIGN
+    mal_thr, sus_thr = thresholds(model)
+    verdict = Verdict.MALICIOUS if score >= mal_thr else Verdict.SUSPICIOUS if score >= sus_thr else Verdict.BENIGN
     caps = tag(rep)
     packed = is_packed(rep)
     notes = list(rep.anomalies) + packing_signals(rep)
@@ -42,10 +61,28 @@ def analyze(data: bytes, model: VerdictModel, benign: list[bytes] | None = None,
     if packed:
         notes.append("static features likely starved by packing -> recommend dynamic sandbox")
     rule = None
+    structural = None
     if verdict != Verdict.BENIGN and benign is not None:
-        rule = synthesize(f"vitrine_{family or 'sample'}_{rep.sha256[:8]}", [data] + (siblings or []),
-                          benign, family)
+        name = f"vitrine_{family or 'sample'}_{rep.sha256[:8]}"
+        rule = synthesize(name, [data] + (siblings or []), benign, family)
         if rule:
             validate(rule, benign, siblings or [])
+        group = [structural_atoms(raw)] + [structural_atoms(raw_from_report(dissect(s))) for s in siblings or []]
+        ben = [structural_atoms(raw_from_report(dissect(b))) for b in benign]
+        srule = synthesize_structural(name + "_pe", group, ben, family or "unknown", min_support=0.6)
+        structural = srule.text if srule else None
     return TriageResult(rep.sha256, verdict, round(score, 4), family, packed, route,
-                        model.attribute(x), caps, rule, notes)
+                        model.attribute(x), caps, rule, notes, structural_rule=structural)
+
+
+def load_model(path: str):
+    """Load either model format by sniffing the file."""
+    from pathlib import Path
+
+    with open(Path(path), encoding="utf-8") as f:
+        head = f.read(64)
+    if '"vitrine-gbdt-1"' in head:
+        from .gbdt import GBDTVerdictModel
+
+        return GBDTVerdictModel.load(path)
+    return VerdictModel.load(path)

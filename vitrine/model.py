@@ -38,7 +38,7 @@ class VerdictModel:
         return [(xi - m) / s for xi, m, s in zip(x, self.mu, self.sigma)]
 
     def fit(self, X: list[list[float]], y: list[int], families: list[str] | None = None,
-            epochs: int = 400, lr: float = 0.1, l2: float = 1e-2) -> "VerdictModel":
+            epochs: int = 400, lr: float = 0.1, l2: float = 1e-2) -> VerdictModel:
         n, d = len(X), len(X[0])
         self.mu = [sum(r[j] for r in X) / n for j in range(d)]
         self.sigma = [math.sqrt(sum((r[j] - self.mu[j]) ** 2 for r in X) / n) or 1.0 for j in range(d)]
@@ -86,7 +86,7 @@ class VerdictModel:
         Path(path).write_text(json.dumps(self.__dict__, indent=1))
 
     @classmethod
-    def load(cls, path: str | Path) -> "VerdictModel":
+    def load(cls, path: str | Path) -> VerdictModel:
         m = cls(**json.loads(Path(path).read_text()))
         if m.feature_names != FEATURE_NAMES:
             raise ValueError("model feature schema mismatch; retrain")
