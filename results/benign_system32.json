@@ -5,8 +5,8 @@
   "parse_errors": {
     "file too large": 1
   },
-  "seconds": 2145.1,
-  "files_per_second": 1.4,
+  "seconds": 1054.8,
+  "files_per_second": 2.8,
   "median_size_kb": 168.0,
   "packed_rate": 0.0,
   "models": {
@@ -19,6 +19,11 @@
       "fp_rate_at_val_1pct": 0.0,
       "fp_rate_at_val_0.1pct": 0.0,
       "mean_score": 0.012322250513539655
+    },
+    "lgbm_ember_2018": {
+      "fp_rate_at_val_1pct": 0.0,
+      "fp_rate_at_val_0.1pct": 0.0,
+      "mean_score": 0.0013414226188855202
     }
   },
   "triage": {

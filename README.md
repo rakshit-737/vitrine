@@ -88,7 +88,7 @@ This benchmark takes 3,000 random PE files from this machine's `C:\Windows\Syste
 | --- | --- |
 | Parsed | 2,999 / 3,000 (1 over the size cap), median 168 KB |
 | VITRINE XGB false positives at the 1 % / 0.1 % thresholds | **0 / 0** (mean score 0.0005) |
-| LightGBM baseline false positives | 0 / 0 (mean score 0.012) |
+| LightGBM baseline false positives (tuned 2018 / paper config) | 0 / 0 (mean score 0.0013) and 0 / 0 (mean score 0.012) |
 | Triage verdicts | 0 MALICIOUS, 0 SUSPICIOUS by score, **102 (3.4 %) SUSPICIOUS by capability floor**, 2,897 BENIGN |
 | Most frequent capability hits | anti-debug API (T1622) 70 %, registry modification (T1112) 41 %, memory-protection changes (T1055) 11 % |
 
@@ -180,7 +180,7 @@ python scripts/bench_benign.py    --data D:/data/vitrine --dir C:/Windows/System
 VITRINE_DATA=D:/data/vitrine python -m pytest -q -m realdata   # real-data tests
 ```
 
-Wall-clock on a contended 16 GB / 16-thread laptop: prep about 40 min, XGBoost 2–12 min depending on contention, the LightGBM paper-config baseline about 7 min, the tuned LightGBM 2018 baseline about 2 h, and the System32 scan about 36 min.
+Wall-clock on a contended 16 GB / 16-thread laptop: prep about 40 min, XGBoost 2–12 min depending on contention, the LightGBM paper-config baseline about 7 min, the tuned LightGBM 2018 baseline about 2 h, and the System32 scan 18–36 min.
 
 ## Dataset
 
