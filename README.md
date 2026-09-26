@@ -15,19 +15,20 @@ A bare `predict() -> 0.87` doesn't help an analyst decide anything. VITRINE pars
 
 All numbers come from committed JSON in [`results/`](results/) and were produced by the scripts in [`scripts/`](scripts/). EMBER 2018 uses a **temporal split**: training on Jan–Sep 2018, calibration on Oct 2018 (held out), and testing on **200,000 samples first seen Nov–Dec 2018**. Thresholds are chosen on the validation month, so the test FPR/TPR are honest out-of-time numbers.
 
-### 1. Verdict model vs. the EMBER LightGBM baseline
+### 1. Verdict model vs. EMBER LightGBM baselines
 
 | Model | Features | Train rows | ROC AUC | TPR @ 1 % FPR | TPR @ 0.1 % FPR | Test FPR / recall at the val-calibrated 1 % threshold |
 | --- | --- | --- | --- | --- | --- | --- |
 | **VITRINE XGBoost** (600 trees, depth 10) | **91 named** | 275,732 | **0.9917** | **88.7 %** | **74.5 %** | 0.89 % / 87.8 % (precision 99.0 %) |
+| LightGBM, EMBER-2018 tuned config (300 trees, 2048 leaves, lr 0.05) | 2,381 hashed | 150,000* | 0.9901 | **89.0 %** | 56.8 % | 0.79 % / 87.0 % |
 | LightGBM, EMBER-paper config (100 trees, 31 leaves) | 2,381 hashed | 150,000* | 0.9797 | 75.4 % | 38.9 % | 0.90 % / 74.3 % |
 | *Published:* EMBER paper LightGBM on **EMBER 2017** [1] | 2,351 | 600k labeled | 0.9991 | 98.2 % | 93.0 % | n/a (different, easier dataset) |
 
 ![ROC on EMBER 2018 test set](docs/figures/roc_ember2018.png)
 
-\* The baseline was trained on a 150k-row random subsample because the full 275k × 2381 float32 matrix did not fit in memory next to everything else on a 16 GB laptop. Treat it as a *reproduced reference point*, not as the best LightGBM result possible. EMBER 2018 was deliberately built to be harder than 2017, and public default-parameter LightGBM runs on EMBER 2018 report about 0.985 AUC [3]. Tuned 2018 parameters (`num_leaves=2048`, many more rounds) score higher. That run (`lgbm_ember_2018` in `train_ember.py`) did not finish on this hardware, so no number is claimed for it.
+\* Both LightGBM baselines were trained on the same seeded 150k-row random subsample because the full 275k × 2381 float32 matrix did not fit in memory next to everything else on a 16 GB laptop ([ADR 0007](docs/adr/0007-memory-bounded-baselines.md)). The tuned run also uses 300 rounds instead of the 1,000 of the EMBER 2018 reference config, and took about 2 h. Treat both as *reproduced reference points*, not as the best LightGBM result possible: a full-data, full-budget tuned model would very likely beat the row above. EMBER 2018 was deliberately built to be harder than 2017, and public default-parameter LightGBM runs on EMBER 2018 report about 0.985 AUC [3].
 
-**Cost of interpretability:** none measured against this baseline. The 91 human-readable features beat the reproduced 2,381-dim hashed baseline on every metric. They also give SHAP attributions that turn into analyst sentences ([ADR 0003](docs/adr/0003-interpretable-features-plus-treeshap.md)).
+**Cost of interpretability:** small, and it depends on the operating point. Against the tuned 2,381-dim LightGBM, the 91 named features are level at 1 % FPR (88.7 % vs 89.0 % read off the test ROC; 87.8 % vs 87.0 % recall at the validation-calibrated thresholds, where LightGBM's test FPR came out lower, 0.79 % vs 0.89 %). They are clearly ahead at 0.1 % FPR (74.5 % vs 56.8 %) and on AUC (0.9917 vs 0.9901), with 1.8× the training rows. They beat the EMBER-paper config everywhere. In return every verdict comes with SHAP attributions that turn into analyst sentences ([ADR 0003](docs/adr/0003-interpretable-features-plus-treeshap.md)).
 
 **SHAP faithfulness** (2,000 test malware):
 
@@ -39,7 +40,7 @@ All numbers come from committed JSON in [`results/`](results/) and were produced
 
 ![global SHAP](docs/figures/shap_global_top20.png)
 
-**Packing routing rationale:** 20.8 % of the test set trips the packing heuristics, and 75 % of those samples are malicious. AUC on the packed subset is 0.9965 (XGB) / 0.9905 (LGBM). The packed flag is therefore a strong *prior*, but packed benign files (installers, protected software) are exactly where static evidence runs out, which is why VITRINE routes them to dynamic analysis.
+**Packing routing rationale:** 20.8 % of the test set trips the packing heuristics, and 75 % of those samples are malicious. AUC on the packed subset is 0.9965 (XGB) / 0.9953 (tuned LGBM) / 0.9905 (paper-config LGBM). The packed flag is therefore a strong *prior*, but packed benign files (installers, protected software) are exactly where static evidence runs out, which is why VITRINE routes them to dynamic analysis.
 
 ### 2. Auto-YARA on real families (15 most frequent AVClass families)
 
@@ -57,16 +58,16 @@ When a family has distinctive structure, the rule works: xtrat **97.7 %** and si
 
 Functionality-preserving edits are simulated on the EMBER raw features, with donor content taken from real benign samples ([ADR 0005](docs/adr/0005-adversarial-eval-in-feature-space.md)). The table shows detection rate at the validation-calibrated 1 % FPR threshold.
 
-| Perturbation | VITRINE XGB | LightGBM baseline | VITRINE triage (score **or** high-risk capability floor) |
-| --- | --- | --- | --- |
-| none | 87.1 % | 74.1 % | 89.4 % |
-| append benign PE as overlay | 78.6 % | 63.8 % | 82.3 % |
-| add benign data section | 75.1 % | 63.0 % | 78.6 % |
-| import padding (benign donor) | 77.1 % | 60.2 % | 85.5 % |
-| copy benign header fields | 79.2 % | 70.2 % | 82.3 % |
-| **all combined** | **40.2 %** | **37.1 %** | **58.9 %** |
+| Perturbation | VITRINE XGB | LightGBM tuned 2018 | LightGBM paper config | VITRINE triage (score **or** high-risk capability floor) |
+| --- | --- | --- | --- | --- |
+| none | 87.1 % | 86.5 % | 74.1 % | 89.4 % |
+| append benign PE as overlay | 78.6 % | 74.2 % | 63.8 % | 82.3 % |
+| add benign data section | 75.1 % | 70.3 % | 63.0 % | 78.6 % |
+| import padding (benign donor) | 77.1 % | 78.2 % | 60.2 % | 85.5 % |
+| copy benign header fields | 79.2 % | 83.5 % | 70.2 % | 82.3 % |
+| **all combined** | **40.2 %** | **44.7 %** | **37.1 %** | **58.9 %** |
 
-Honest reading: both models are badly hurt by a combined attack. The capability floor retains more detections because capability rules need the *malicious* imports to disappear, and padding can't remove them. The floor has a price, though. On EMBER's raw features it flags **10.9 % of benign** test files for review, more than its 8.6 % hit rate on malware. As a *standalone* signal it isn't discriminative, and it is only useful as a "don't auto-clear" floor in front of an analyst queue.
+Honest reading: every model is badly hurt by a combined attack, and the interpretable features are *not* more robust than the hashed EMBER vector: the tuned LightGBM holds up better against import padding, header copying and the combined attack. The capability floor retains more detections because capability rules need the *malicious* imports to disappear, and padding can't remove them. The floor has a price, though. On EMBER's raw features it flags **10.9 % of benign** test files for review, more than its 8.6 % hit rate on malware. As a *standalone* signal it isn't discriminative, and it is only useful as a "don't auto-clear" floor in front of an analyst queue.
 
 ### 4. Family clustering (5,000 malware, 10 AVClass families)
 
@@ -170,7 +171,7 @@ capabilities:
 pip install -e ".[dev,bench]"
 python scripts/download_ember.py  --out D:/data/vitrine          # 1.7 GB, MD5 + SHA-256 verified, resumable
 python scripts/prepare_ember.py   --data D:/data/vitrine         # stream -> 2381-dim f32 memmap + 91 features (~5.5 GB)
-python scripts/train_ember.py     --data D:/data/vitrine --lgbm-limit 150000   # -> results/ember_benchmark.json
+python scripts/train_ember.py     --data D:/data/vitrine --lgbm-limit 150000 --rounds-2018 300   # -> results/ember_benchmark.json
 python scripts/merge_baselines.py --data D:/data/vitrine         # fold saved baseline scores in, redraw figures
 python scripts/bench_yara.py      --data D:/data/vitrine --benign-dir C:/Windows/System32 --benign-limit 3000
 python scripts/bench_adversarial.py --data D:/data/vitrine
@@ -179,7 +180,7 @@ python scripts/bench_benign.py    --data D:/data/vitrine --dir C:/Windows/System
 VITRINE_DATA=D:/data/vitrine python -m pytest -q -m realdata   # real-data tests
 ```
 
-Wall-clock on a contended 16 GB / 16-thread laptop: prep about 40 min, XGBoost about 12 min, the LightGBM paper-config baseline about 7 min, and the System32 scan about 36 min.
+Wall-clock on a contended 16 GB / 16-thread laptop: prep about 40 min, XGBoost 2–12 min depending on contention, the LightGBM paper-config baseline about 7 min, the tuned LightGBM 2018 baseline about 2 h, and the System32 scan about 36 min.
 
 ## Dataset
 
@@ -205,7 +206,7 @@ VITRINE's contribution is **chaining these into one static-only pipeline and mea
 
 - **No live samples by design.** Real-file scoring is validated only on benign binaries. Malware performance comes from EMBER's LIEF-extracted features, and VITRINE's own extractor differs from LIEF in small ways ([ADR 0002](docs/adr/0002-own-extractor-emits-ember-schema.md)).
 - **Temporal drift.** EMBER stops in 2018. The model is a 2018 detector and needs retraining on modern features (for example EMBER2024) for real use.
-- The LightGBM baseline is a memory-limited reproduction (150k rows, 100 trees). The published 2017-set numbers are shown only for context.
+- The LightGBM baselines are memory-limited reproductions (150k rows; 100 trees for the paper config, 300 for the tuned 2018 config). The published 2017-set numbers are shown only for context.
 - The adversarial evaluation works in feature space. It bounds what naive edits can do, and it is not a problem-space attack on real binaries.
 - YARA structural rules abstain on about half the families. String and byte-sequence atoms from code sections (capstone) are not implemented.
 - The capability floor is not discriminative on its own (sections 3 and 5).
@@ -216,7 +217,7 @@ VITRINE's contribution is **chaining these into one static-only pipeline and mea
 - [ ] Problem-space adversarial evaluation on benign binaries (secml-malware style section and overlay injection).
 - [ ] Capstone byte-sequence atoms for YARA, plus a yarGen-style goodware string DB.
 - [ ] Per-cluster (HDBSCAN) rule generation instead of per-AVClass-family.
-- [ ] A tuned full-data LightGBM 2018 baseline on a bigger machine.
+- [ ] A full-data, full-budget (1,000-round) tuned LightGBM 2018 baseline on a bigger machine.
 
 ## Repository layout
 

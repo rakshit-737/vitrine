@@ -28,5 +28,14 @@ swapping without finishing.
 
 - The headline comparison favors VITRINE partly through training-set size. A full-data,
   tuned LightGBM would probably narrow or reverse the gap, which is listed on the roadmap.
+
+## Update (2026-09-26, later the same day)
+
+The tuned `lgbm_ember_2018` run (`--lgbm-limit 150000 --rounds-2018 300`) eventually finished
+in about 2 h once memory freed up: AUC 0.9901, TPR 89.0 % at 1 % FPR and 56.8 % at 0.1 % FPR.
+It is now reported next to the paper-config baseline. With 1.8x fewer rows and 300 instead of
+1,000 rounds it already matches VITRINE's XGBoost at 1 % FPR (and is slightly more robust in
+the feature-space adversarial benchmark), so the "cost of interpretability" claim in the README
+was narrowed accordingly: VITRINE's advantage is at low FPR (0.1 %) and in AUC, not everywhere.
 - All reported thresholds stay validation-calibrated, so the operating-point comparison is
   fair, whatever the training budget.
