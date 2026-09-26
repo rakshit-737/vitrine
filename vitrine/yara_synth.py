@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import math
 import re
+from dataclasses import dataclass
 
 from .dissect import PEParseError, dissect, extract_strings
 from .models import YaraRule
@@ -102,3 +103,113 @@ def compile_check(rule: YaraRule) -> bool | None:
         return True
     except yara.SyntaxError:
         return False
+
+
+# ============================================================ structural (pe-module) rules
+# Rules over *structure* rather than bytes: imported APIs, section names and imphash. These can
+# be synthesized and validated from EMBER raw features alone (no binaries needed), and are the
+# atoms that survive string obfuscation. Emitted with YARA's `pe` module; the `N of (<bool>, ...)`
+# form requires YARA >= 4.3. VITRINE evaluates the same atoms natively for validation.
+
+STANDARD_SECTION_NAMES = {".text", ".rdata", ".data", ".rsrc", ".reloc", ".idata", ".pdata", ".bss",
+                          ".tls", ".edata", ".crt", ".didat", "code", "data", ".code", "bss", ".itext"}
+
+
+def imphash_from_imports(imports: dict[str, list[str]]) -> str:
+    import hashlib
+
+    parts = []
+    for dll, fs in imports.items():
+        base = dll.lower()
+        for ext in (".dll", ".ocx", ".sys"):
+            if base.endswith(ext):
+                base = base[: -len(ext)]
+        parts += [f"{base}.{f.lower()}" for f in fs]
+    return hashlib.md5(",".join(parts).encode()).hexdigest() if parts else ""
+
+
+# ubiquitous APIs: never useful as a family signature even when a small benign pool lacks them
+COMMON_APIS = {"GetProcAddress", "LoadLibraryA", "LoadLibraryW", "LoadLibraryExA", "LoadLibraryExW",
+               "GetModuleHandleA", "GetModuleHandleW", "ExitProcess", "VirtualProtect", "VirtualAlloc",
+               "VirtualFree", "GetLastError", "CloseHandle", "Sleep", "GetTickCount", "HeapAlloc", "HeapFree",
+               "GetCurrentProcess", "GetCommandLineA", "GetCommandLineW", "MessageBoxA", "MessageBoxW"}
+
+
+def structural_atoms(rec: dict) -> set[tuple]:
+    """Atoms present in an EMBER raw/struct record: ('imp', dll, func), ('sec', name), ('imphash', h)."""
+    atoms: set[tuple] = set()
+    for dll, fs in rec.get("imports", {}).items():
+        d = dll.lower()
+        for f in fs:
+            if f and not f.startswith("ordinal") and f not in COMMON_APIS:
+                atoms.add(("imp", d, f))
+    for s in rec.get("section", {}).get("sections", []):
+        if s["name"] and s["name"].lower() not in STANDARD_SECTION_NAMES:
+            atoms.add(("sec", s["name"]))
+    h = imphash_from_imports(rec.get("imports", {}))
+    if h:
+        atoms.add(("imphash", h))
+    return atoms
+
+
+@dataclass
+class StructuralRule:
+    name: str
+    atoms: list[tuple]
+    threshold: int
+    family: str = "unknown"
+    group_size: int = 0
+
+    @property
+    def text(self) -> str:
+        conds = []
+        for a in self.atoms:
+            if a[0] == "imp":
+                conds.append(f'pe.imports("{_esc(a[1])}", "{_esc(a[2])}")')
+            elif a[0] == "sec":
+                conds.append(f'for any s in pe.sections : ( s.name == "{_esc(a[1])}" )')
+            else:
+                conds.append(f'pe.imphash() == "{a[1]}"')
+        body = ",\n            ".join(conds)
+        return (f'import "pe"\n\nrule {self.name}\n{{\n    meta:\n'
+                f'        author = "VITRINE structural synthesizer (analyst review required)"\n'
+                f'        family = "{_esc(self.family)}"\n        sample_count = {self.group_size}\n'
+                f'        requires = "YARA >= 4.3 (boolean-expression sets)"\n'
+                f"    condition:\n        uint16(0) == 0x5A4D and {self.threshold} of (\n"
+                f"            {body}\n        )\n}}\n")
+
+    def matches_atoms(self, atoms: set[tuple]) -> bool:
+        return sum(1 for a in self.atoms if a in atoms) >= self.threshold
+
+    def matches(self, rec: dict) -> bool:
+        return self.matches_atoms(structural_atoms(rec))
+
+
+def synthesize_structural(name: str, group: list[set[tuple]], benign: list[set[tuple]], family: str = "unknown",
+                          max_atoms: int = 8, min_support: float = 0.3, max_benign_rate: float = 0.002,
+                          target_benign_fpr: float = 0.0) -> StructuralRule | None:
+    """Pick atoms frequent in ``group`` and rare in ``benign`` (atom sets from :func:`structural_atoms`),
+    then choose the smallest ``N of`` threshold whose benign hit-rate is <= ``target_benign_fpr``."""
+    from collections import Counter
+
+    gc = Counter(a for s in group for a in s)
+    need = max(1, math.ceil(min_support * len(group)))
+    cand = [a for a, c in gc.items() if c >= need]
+    if not cand:
+        return None
+    bc = Counter(a for s in benign for a in s if a in set(cand))
+    nb = max(len(benign), 1)
+    cand = [a for a in cand if bc[a] / nb <= max_benign_rate]
+    if not cand:
+        return None
+    # prefer high group support, low benign rate, and diverse atom kinds (imphash, sections, imports)
+    cand.sort(key=lambda a: (-(gc[a] / len(group) - 5 * bc[a] / nb), a[0] != "imphash", a))
+    atoms = cand[:max_atoms]
+    best = None
+    for thr in range(1, len(atoms) + 1):
+        r = StructuralRule(re.sub(r"[^A-Za-z0-9_]", "_", name), atoms, thr, family, len(group))
+        fp = sum(r.matches_atoms(b) for b in benign) / nb
+        if fp <= target_benign_fpr:
+            best = r
+            break
+    return best
