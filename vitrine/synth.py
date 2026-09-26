@@ -24,16 +24,18 @@ def _align(v: int, a: int) -> int:
     return (v + a - 1) // a * a
 
 
-def _build_idata(imports: dict[str, list[str]], rva: int) -> tuple[bytes, int]:
-    """Return (section bytes, size of import descriptor table)."""
+def _build_idata(imports: dict[str, list[str]], rva: int, wide: bool = False) -> tuple[bytes, int]:
+    """Return (section bytes, size of import descriptor table). ``wide`` = PE32+ 8-byte thunks."""
+    ts = 8 if wide else 4
+    fmt = "<Q" if wide else "<I"
     dlls = list(imports)
     desc_size = 20 * (len(dlls) + 1)
     off = desc_size
     thunk_offs = {}
     for d in dlls:
         n = len(imports[d]) + 1
-        thunk_offs[d] = (off, off + 4 * n)  # ILT, IAT
-        off += 8 * n
+        thunk_offs[d] = (off, off + ts * n)  # ILT, IAT
+        off += 2 * ts * n
     hn_offs = {}
     for d in dlls:
         for f in imports[d]:
@@ -48,12 +50,35 @@ def _build_idata(imports: dict[str, list[str]], rva: int) -> tuple[bytes, int]:
         ilt, iat = thunk_offs[d]
         struct.pack_into("<IIIII", buf, 20 * i, rva + ilt, 0, 0, rva + name_offs[d], rva + iat)
         for j, f in enumerate(imports[d]):
-            struct.pack_into("<I", buf, ilt + 4 * j, rva + hn_offs[(d, f)])
-            struct.pack_into("<I", buf, iat + 4 * j, rva + hn_offs[(d, f)])
+            struct.pack_into(fmt, buf, ilt + ts * j, rva + hn_offs[(d, f)])
+            struct.pack_into(fmt, buf, iat + ts * j, rva + hn_offs[(d, f)])
             enc = f.encode()
             buf[hn_offs[(d, f)] + 2 : hn_offs[(d, f)] + 2 + len(enc)] = enc
         buf[name_offs[d] : name_offs[d] + len(d)] = d.encode()
     return bytes(buf), desc_size
+
+
+def _build_edata(dll_name: str, names: list[str], rva: int, func_rva: int) -> bytes:
+    """Export directory with every name pointing at ``func_rva`` (inert)."""
+    names = sorted(names)
+    n = len(names)
+    off = 40
+    eat, npt, ot = off, off + 4 * n, off + 8 * n
+    off = ot + 2 * n
+    name_offs = []
+    strtab = bytearray()
+    dll_off = off
+    strtab += dll_name.encode() + b"\0"
+    for nm in names:
+        name_offs.append(off + len(strtab))
+        strtab += nm.encode() + b"\0"
+    buf = bytearray(off) + strtab
+    struct.pack_into("<IIHHIIIIIII", buf, 0, 0, 0, 0, 0, rva + dll_off, 1, n, n, rva + eat, rva + npt, rva + ot)
+    for i in range(n):
+        struct.pack_into("<I", buf, eat + 4 * i, func_rva)
+        struct.pack_into("<I", buf, npt + 4 * i, rva + name_offs[i])
+        struct.pack_into("<H", buf, ot + 2 * i, i)
+    return bytes(buf)
 
 
 def build_pe(
@@ -62,6 +87,8 @@ def build_pe(
     timestamp: int = 0x5F000000,
     is_dll: bool = False,
     overlay: bytes = b"",
+    pe32plus: bool = False,
+    exports: list[str] | None = None,
 ) -> bytes:
     imports = imports or {}
     rva = SECT_ALIGN
@@ -69,12 +96,17 @@ def build_pe(
     for name, data, ch in sections:
         layout.append((name, data, ch, rva))
         rva += _align(max(len(data), 1), SECT_ALIGN)
-    import_dir = (0, 0)
+    dirs = [(0, 0)] * 16
     if imports:
-        idata, dsize = _build_idata(imports, rva)
+        idata, dsize = _build_idata(imports, rva, wide=pe32plus)
         layout.append((".idata", idata, RDATA, rva))
-        import_dir = (rva, dsize)
+        dirs[1] = (rva, dsize)
         rva += _align(len(idata), SECT_ALIGN)
+    if exports:
+        edata = _build_edata("synthetic.dll", exports, rva, layout[0][3] if layout else 0)
+        layout.append((".edata", edata, RDATA, rva))
+        dirs[0] = (rva, len(edata))
+        rva += _align(len(edata), SECT_ALIGN)
     size_of_image = rva
 
     dos = bytearray(0x80)
@@ -83,20 +115,30 @@ def build_pe(
     msg = b"This program cannot be run in DOS mode."
     dos[0x40 : 0x40 + len(msg)] = msg
 
-    characteristics = 0x0102 | (0x2000 if is_dll else 0)
-    coff = struct.pack("<HHIIIHH", 0x14C, len(layout), timestamp, 0, 0, 224, characteristics)
+    characteristics = 0x0002 | (0x0020 if pe32plus else 0x0100) | (0x2000 if is_dll else 0)
     entry = layout[0][3] if layout else 0
-    opt = struct.pack(
-        "<HBBIIIIIIIIIHHHHHHIIIIHHIIIIII",
-        0x10B, 14, 0, 0, 0, 0, entry, SECT_ALIGN, SECT_ALIGN,
-        IMAGE_BASE, SECT_ALIGN, FILE_ALIGN, 6, 0, 0, 0, 6, 0, 0,
-        size_of_image, HEADERS_SIZE, 0, 2, 0x8140,
-        0x100000, 0x1000, 0x100000, 0x1000, 0, 16,
-    )
-    assert len(opt) == 96
-    dirs = [(0, 0)] * 16
-    dirs[1] = import_dir
+    if pe32plus:
+        opt = struct.pack(
+            "<HBBIIIIIQIIHHHHHHIIIIHHQQQQII",
+            0x20B, 14, 0, 0, 0, 0, entry, SECT_ALIGN,
+            0x140000000, SECT_ALIGN, FILE_ALIGN, 6, 0, 0, 0, 6, 0, 0,
+            size_of_image, HEADERS_SIZE, 0, 2, 0x8160,
+            0x100000, 0x1000, 0x100000, 0x1000, 0, 16,
+        )
+        assert len(opt) == 112
+        machine = 0x8664
+    else:
+        opt = struct.pack(
+            "<HBBIIIIIIIIIHHHHHHIIIIHHIIIIII",
+            0x10B, 14, 0, 0, 0, 0, entry, SECT_ALIGN, SECT_ALIGN,
+            IMAGE_BASE, SECT_ALIGN, FILE_ALIGN, 6, 0, 0, 0, 6, 0, 0,
+            size_of_image, HEADERS_SIZE, 0, 2, 0x8140,
+            0x100000, 0x1000, 0x100000, 0x1000, 0, 16,
+        )
+        assert len(opt) == 96
+        machine = 0x14C
     opt += b"".join(struct.pack("<II", *d) for d in dirs)
+    coff = struct.pack("<HHIIIHH", machine, len(layout), timestamp, 0, 0, len(opt), characteristics)
 
     raw = HEADERS_SIZE
     table = b""
