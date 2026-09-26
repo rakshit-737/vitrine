@@ -1,0 +1,98 @@
+{
+  "n_malware": 3000,
+  "threshold": "validation-calibrated 1% FPR",
+  "rows": [
+    {
+      "perturbation": "none",
+      "vitrine_xgb": {
+        "detection_rate": 0.8706666666666667,
+        "evasion_rate_of_detected": 0.0
+      },
+      "lgbm_ember_paper": {
+        "detection_rate": 0.741,
+        "evasion_rate_of_detected": 0.0
+      },
+      "vitrine_triage": {
+        "detection_rate": 0.8936666666666667,
+        "evasion_rate_of_detected": 0.0
+      }
+    },
+    {
+      "perturbation": "overlay",
+      "vitrine_xgb": {
+        "detection_rate": 0.7856666666666666,
+        "evasion_rate_of_detected": 0.12021439509954059
+      },
+      "lgbm_ember_paper": {
+        "detection_rate": 0.6376666666666667,
+        "evasion_rate_of_detected": 0.1862348178137652
+      },
+      "vitrine_triage": {
+        "detection_rate": 0.8226666666666667,
+        "evasion_rate_of_detected": 0.09958970533383066
+      }
+    },
+    {
+      "perturbation": "section",
+      "vitrine_xgb": {
+        "detection_rate": 0.751,
+        "evasion_rate_of_detected": 0.16079632465543645
+      },
+      "lgbm_ember_paper": {
+        "detection_rate": 0.6303333333333333,
+        "evasion_rate_of_detected": 0.1871345029239766
+      },
+      "vitrine_triage": {
+        "detection_rate": 0.7863333333333333,
+        "evasion_rate_of_detected": 0.1409921671018277
+      }
+    },
+    {
+      "perturbation": "imports",
+      "vitrine_xgb": {
+        "detection_rate": 0.771,
+        "evasion_rate_of_detected": 0.12212863705972435
+      },
+      "lgbm_ember_paper": {
+        "detection_rate": 0.602,
+        "evasion_rate_of_detected": 0.19883040935672514
+      },
+      "vitrine_triage": {
+        "detection_rate": 0.855,
+        "evasion_rate_of_detected": 0.07646400596792241
+      }
+    },
+    {
+      "perturbation": "header",
+      "vitrine_xgb": {
+        "detection_rate": 0.7916666666666666,
+        "evasion_rate_of_detected": 0.1060490045941807
+      },
+      "lgbm_ember_paper": {
+        "detection_rate": 0.702,
+        "evasion_rate_of_detected": 0.08007197480881692
+      },
+      "vitrine_triage": {
+        "detection_rate": 0.823,
+        "evasion_rate_of_detected": 0.09250279746363298
+      }
+    },
+    {
+      "perturbation": "all",
+      "vitrine_xgb": {
+        "detection_rate": 0.4023333333333333,
+        "evasion_rate_of_detected": 0.5520673813169985
+      },
+      "lgbm_ember_paper": {
+        "detection_rate": 0.37066666666666664,
+        "evasion_rate_of_detected": 0.524966261808367
+      },
+      "vitrine_triage": {
+        "detection_rate": 0.589,
+        "evasion_rate_of_detected": 0.3782170831779187
+      }
+    }
+  ],
+  "capability_floor_benign_flag_rate": 0.1087,
+  "capability_floor_malware_flag_rate": 0.08608
+}
