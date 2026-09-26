@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vitrine"
-version = "0.2.0"
+version = "0.2.2"
 description = "Static-first, explainable PE triage with auto-synthesized YARA rules (never executes samples)"
 readme = "README.md"
 license = { text = "MIT" }

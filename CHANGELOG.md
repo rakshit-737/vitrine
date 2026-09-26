@@ -3,6 +3,21 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic versioning.
 
+## [0.2.2] - 2026-09-26
+
+### Added
+- Tuned EMBER-2018 LightGBM baseline (150k rows, 300 rounds) in `results/ember_benchmark.json`,
+  the ROC figure and the adversarial benchmark.
+
+### Fixed
+- The dissector truncated import/export names at 256 bytes; long C++-mangled exports now match
+  pefile (was 499/500 System32 DLLs, now 500/500).
+- `train_ember.py` records `n_features` for the LightGBM baselines.
+
+### Changed
+- README: the "no cost of interpretability" claim is narrowed. The tuned LightGBM matches XGBoost
+  at 1 % FPR and is slightly more robust to feature-space evasion; XGBoost leads at 0.1 % FPR and AUC.
+
 ## [0.2.1] - 2026-09-26
 
 ### Added
