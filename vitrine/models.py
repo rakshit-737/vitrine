@@ -46,6 +46,19 @@ class PEReport:
     overall_entropy: float
     imphash: str
     anomalies: list[str] = field(default_factory=list)
+    # richer header / directory data (filled by dissect(); defaults keep old callers working)
+    pe32plus: bool = False
+    coff_characteristics: int = 0
+    dll_characteristics: int = 0
+    header: dict = field(default_factory=dict)
+    data_directories: list[tuple[int, int]] = field(default_factory=list)
+    exports: list[str] = field(default_factory=list)
+    delay_imports: dict[str, list[str]] = field(default_factory=dict)
+    resource_types: list[str] = field(default_factory=list)
+    entry_section: str = ""
+    size_of_image: int = 0
+    overlay_size: int = 0
+    n_symbols: int = 0
 
     @property
     def import_names(self) -> set[str]:
@@ -99,6 +112,7 @@ class TriageResult:
     capabilities: list[Capability]
     yara: YaraRule | None
     notes: list[str] = field(default_factory=list)
+    structural_rule: str | None = None  # pe-module rule (imports/sections/imphash), see yara_synth
 
     def to_dict(self) -> dict:
         d = asdict(self)
