@@ -1,0 +1,11 @@
+services:
+  vitrine:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"   # lab tool: bind to localhost only
+    volumes:
+      - ${VITRINE_DATA:-./data}/models:/models:ro
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
