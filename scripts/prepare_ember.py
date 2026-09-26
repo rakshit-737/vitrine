@@ -25,17 +25,22 @@ import json
 import multiprocessing as mp
 import os
 import sys
-import tarfile
 import time
 from pathlib import Path
 
-import numpy as np
+# one BLAS thread per worker: default thread pools reserve ~1 GB of commit per process
+for _v in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+    os.environ.setdefault(_v, "1")
+import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _pbz2 import iter_decompressed  # noqa: E402
+
 from vitrine.ember import vectorize_many  # noqa: E402
 from vitrine.features import FEATURE_NAMES, vector_raw  # noqa: E402
 
-BATCH = 2000
+BATCH = 1000
 
 
 def _process(lines: list[bytes]):
@@ -71,6 +76,56 @@ def _lines(fobj):
         yield batch
 
 
+def _tar_members(chunks):
+    """Minimal streaming ustar reader over an iterator of decompressed byte chunks.
+
+    ``tarfile``'s stream mode reads lines through a tiny buffer and is far slower than the
+    decompressor on this 10 GB archive; this reader yields (name, line-iterator) pairs.
+    """
+    chunks = iter(chunks)
+    buf = bytearray()
+
+    def fill(n: int) -> bool:
+        while len(buf) < n:
+            chunk = next(chunks, None)
+            if chunk is None:
+                return False
+            buf.extend(chunk)
+        return True
+
+    while fill(512):
+        hdr = bytes(buf[:512])
+        del buf[:512]
+        if hdr == b"\0" * 512:
+            break
+        name = hdr[:100].rstrip(b"\0").decode()
+        prefix = hdr[345:500].rstrip(b"\0").decode()
+        if prefix:
+            name = prefix + "/" + name
+        size = int(hdr[124:136].rstrip(b"\0 ").decode() or "0", 8)
+        padded = (size + 511) // 512 * 512
+
+        def body(size=size, padded=padded):
+            remaining = size
+            tail = b""
+            while remaining > 0:
+                if not buf:
+                    fill(1)
+                take = min(remaining, len(buf))
+                chunk = tail + bytes(buf[:take])
+                del buf[:take]
+                remaining -= take
+                parts = chunk.split(b"\n")
+                tail = parts.pop()
+                yield from parts
+            if tail:
+                yield tail
+            fill(padded - size)
+            del buf[: padded - size]
+
+        yield Path(name).name, body()
+
+
 class SplitWriter:
     def __init__(self, out: Path, split: str):
         self.split, self.out = split, out
@@ -103,6 +158,8 @@ def main() -> None:
     ap.add_argument("--data", default=os.environ.get("VITRINE_DATA", "data"))
     ap.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) // 2))
     ap.add_argument("--archive", default="ember_dataset_2018_2.tar.bz2")
+    ap.add_argument("--train-frac", type=float, default=1.0,
+                    help="deterministic (sha256-prefix) fraction of labeled training rows to keep")
     a = ap.parse_args()
     data = Path(a.data)
     out = data / "processed"
@@ -110,22 +167,57 @@ def main() -> None:
     writers = {"train": SplitWriter(out, "train"), "test": SplitWriter(out, "test")}
     sample = gzip.open(out / "test_raw_sample.jsonl.gz", "wt", compresslevel=4)
     t0 = time.time()
-    with tarfile.open(data / a.archive, "r|bz2") as tar, mp.Pool(a.workers) as pool:
-        for member in tar:
-            name = Path(member.name).name
-            if not name.endswith(".jsonl") or "features" not in name:
-                continue
-            split = "test" if name.startswith("test") else "train"
-            print(f"[{time.time() - t0:7.0f}s] {member.name} -> {split}", flush=True)
-            f = tar.extractfile(member)
-            for res in pool.imap(_process, _lines(f), chunksize=1):
+
+    def consume(name: str, fobj, pool) -> None:
+        split = "test" if name.startswith("test") else "train"
+        print(f"[{time.time() - t0:7.0f}s] {name} -> {split}", flush=True)
+        # bounded in-flight window: Pool.imap would read the whole input into its task queue
+        from collections import deque
+
+        pending: deque = deque()
+
+        def drain(block: bool) -> None:
+            while pending and (block or pending[0].ready()):
+                res = pending.popleft().get()
                 if res is None:
                     continue
                 X, F, meta, struct, smp = res
                 writers[split].add(X, F, meta, struct)
                 if split == "test" and smp:
                     sample.write("\n".join(smp) + "\n")
-            print(f"    {split}: {writers[split].n} labeled rows so far", flush=True)
+
+        def keep(ln: bytes) -> bool:
+            head = ln[:200]
+            if b'"label": -1' in head or b'"label":-1' in head:
+                return False  # unlabeled: skip before paying for JSON parsing
+            if split == "train" and a.train_frac < 1.0:
+                i = head.find(b'"sha256": "')
+                return i < 0 or int(head[i + 11 : i + 15], 16) < a.train_frac * 65536
+            return True
+
+        for batch in _lines(ln for ln in fobj if ln.strip() and keep(ln)):
+            pending.append(pool.apply_async(_process, (batch,)))
+            while len(pending) >= 2 * a.workers:
+                pending[0].wait()
+                drain(False)
+        drain(True)
+        print(f"    {split}: {writers[split].n} labeled rows so far", flush=True)
+
+    extracted = data / "ember2018"
+    with mp.Pool(a.workers) as pool:
+        if extracted.is_dir():  # fast path: `tar -xjf` already run (bz2 streaming is single-threaded)
+            for p in sorted(extracted.glob("*_features*.jsonl")):
+                with open(p, "rb", buffering=1 << 24) as f:
+                    consume(p.name, f, pool)
+        else:
+            dpool = mp.Pool(a.workers)
+            for name, lines in _tar_members(iter_decompressed(data / a.archive, dpool, window=4 * a.workers)):
+                if name.endswith(".jsonl") and "features" in name:
+                    consume(name, lines, pool)
+                else:
+                    for _ in lines:  # skip member body
+                        pass
+            dpool.close()
     for w in writers.values():
         w.close()
     sample.close()
