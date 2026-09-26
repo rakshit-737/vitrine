@@ -6,7 +6,7 @@
   "models": [
     {
       "model": "lgbm_ember_paper",
-      "train_seconds": null,
+      "train_seconds": 416.7,
       "roc_auc": 0.97968082965,
       "pr_auc": 0.9805337672929724,
       "tpr_at_fpr_1pct_test_roc": 0.75394,
@@ -46,14 +46,69 @@
       },
       "params": {
         "objective": "binary",
+        "verbose": -1,
         "num_boost_round": 100
       },
       "n_train": 150000,
       "n_features": 2381
     },
     {
+      "model": "lgbm_ember_2018",
+      "train_seconds": 7139.6,
+      "roc_auc": 0.990144827,
+      "pr_auc": 0.9910023773057159,
+      "tpr_at_fpr_1pct_test_roc": 0.88975,
+      "val_calibrated_1pct": {
+        "threshold": 0.929694308765283,
+        "precision": 0.9909659485753995,
+        "recall": 0.86986,
+        "f1": 0.9264720762172554,
+        "fpr": 0.00793,
+        "tp": 86986,
+        "fp": 793,
+        "tn": 99207,
+        "fn": 13014
+      },
+      "tpr_at_fpr_0.1pct_test_roc": 0.56765,
+      "val_calibrated_0.1pct": {
+        "threshold": 0.9986168783439968,
+        "precision": 0.9980159408887217,
+        "recall": 0.5835,
+        "f1": 0.736435576085722,
+        "fpr": 0.00116,
+        "tp": 58350,
+        "fp": 116,
+        "tn": 99884,
+        "fn": 41650
+      },
+      "at_0.5": {
+        "threshold": 0.5,
+        "precision": 0.9575576618640161,
+        "recall": 0.9557,
+        "f1": 0.9566279290912184,
+        "fpr": 0.04236,
+        "tp": 95570,
+        "fp": 4236,
+        "tn": 95764,
+        "fn": 4430
+      },
+      "params": {
+        "boosting": "gbdt",
+        "objective": "binary",
+        "learning_rate": 0.05,
+        "num_leaves": 2048,
+        "max_depth": 15,
+        "min_data_in_leaf": 50,
+        "feature_fraction": 0.5,
+        "verbose": -1,
+        "num_boost_round": 300
+      },
+      "n_train": 150000,
+      "n_features": 2381
+    },
+    {
       "model": "vitrine_xgb",
-      "train_seconds": 731.2,
+      "train_seconds": 108.6,
       "roc_auc": 0.9916956069,
       "pr_auc": 0.992396333101737,
       "tpr_at_fpr_1pct_test_roc": 0.88667,
@@ -202,13 +257,17 @@
   "packing_subsets": {
     "packed_fraction_test": 0.20809,
     "packed_malicious_fraction": 0.7513335575952713,
-    "vitrine_xgb": {
-      "auc_packed": 0.9965379495493429,
-      "auc_unpacked": 0.9897104510279773
-    },
     "lgbm_ember_paper": {
       "auc_packed": 0.9905402279159561,
       "auc_unpacked": 0.9752599841403462
+    },
+    "lgbm_ember_2018": {
+      "auc_packed": 0.995321401356745,
+      "auc_unpacked": 0.9880960722995255
+    },
+    "vitrine_xgb": {
+      "auc_packed": 0.9965379495493429,
+      "auc_unpacked": 0.9897104510279773
     }
   }
 }
