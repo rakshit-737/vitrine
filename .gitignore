@@ -3,3 +3,8 @@ __pycache__/
 .pytest_cache/
 vitrine_model.json
 corpus/
+data/
+*.f32
+*.npy
+.ruff_cache/
+.venv/
