@@ -17,6 +17,18 @@ All numbers come from committed JSON in [`results/`](https://github.com/rakshit-
 
 **Cost of interpretability:** small, and it depends on the operating point. Against the tuned 2,381-dim LightGBM, the 91 named features are level at 1 % FPR (88.7 % vs 89.0 % read off the test ROC; 87.8 % vs 87.0 % recall at the validation-calibrated thresholds, where LightGBM's test FPR came out lower, 0.79 % vs 0.89 %). They are clearly ahead at 0.1 % FPR (74.5 % vs 56.8 %) and on AUC (0.9917 vs 0.9901), with 1.8× the training rows. They beat the EMBER-paper config everywhere. In return every verdict comes with SHAP attributions that turn into analyst sentences ([ADR 0003](adr/0003-interpretable-features-plus-treeshap.md)).
 
+**Uncertainty and like-for-like rows** ([`results/ember_ci.json`](https://github.com/rakshit-737/vitrine/blob/main/results/ember_ci.json), `scripts/bench_ci.py`). 95 % intervals from 300 stratified bootstrap resamples of the 200k test set; differences are *paired* (same resamples for both models). Seed variance: XGBoost retrained with seeds 0, 1, 2.
+
+| | ROC AUC | TPR @ 1 % FPR | TPR @ 0.1 % FPR |
+| --- | --- | --- | --- |
+| VITRINE XGB, 95 % bootstrap CI | 0.9915–0.9920 | 88.2–89.0 % | 73.4–75.7 % |
+| LightGBM tuned 2018, 95 % bootstrap CI | 0.9898–0.9905 | 88.3–89.4 % | 53.2–59.0 % |
+| Paired difference XGB − tuned LGBM (95 % CI) | +0.0016 (+0.0013, +0.0018) | −0.3 pt (−0.9, +0.3): **no significant difference** | +17.8 pt (+15.6, +21.6) |
+| XGB, 275k rows, 3 seeds (mean ± sd) | 0.9913 ± 0.0007 | 88.4 ± 0.3 % | 74.1 ± 0.4 % |
+| XGB, **same 150k rows as LightGBM**, 3 seeds | 0.9902 ± 0.0001 | 86.9 ± 1.6 % | 70.9 ± 0.4 % |
+
+Like-for-like on identical rows, the XGBoost AUC advantage disappears (0.9902 vs 0.9901) and the tuned LightGBM is ahead at 1 % FPR (89.0 % vs 86.9 %); the 0.1 % FPR lead (70.9 % vs 56.8 %) survives. Part of the headline AUC gap is therefore extra training data, not the feature set.
+
 **SHAP faithfulness** (2,000 test malware):
 
 | Check | Result |

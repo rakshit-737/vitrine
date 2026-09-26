@@ -3,6 +3,19 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic versioning.
 
+## [1.0.0] - 2026-09-26
+
+### Added
+- `scripts/bench_ci.py` and `results/ember_ci.json`: stratified-bootstrap 95 % CIs, paired
+  differences, and XGBoost seed variance on full data and on the LightGBM baselines' exact 150k rows.
+- MkDocs Material documentation site on GitHub Pages (architecture, datasets, benchmarks, API
+  reference via mkdocstrings, ADRs) with a static, server-less triage demo (`scripts/build_demo.py`).
+- Release workflow: wheel/sdist and a GHCR image (`ghcr.io/rakshit-737/vitrine`) on `v*` tags.
+
+### Changed
+- README: like-for-like rows remove XGBoost's AUC lead and put the tuned LightGBM ahead at 1 % FPR;
+  the 0.1 % FPR lead holds. The 1 % FPR XGB-vs-LGBM difference is not significant.
+
 ## [0.2.2] - 2026-09-26
 
 ### Added

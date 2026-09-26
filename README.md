@@ -4,6 +4,7 @@
 ![python](https://img.shields.io/badge/python-3.10%E2%80%933.14-blue)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 ![static only](https://img.shields.io/badge/analysis-static%20only-lightgrey)
+[![docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue)](https://rakshit-737.github.io/vitrine/)
 
 **Static-first PE triage that explains every verdict and writes a candidate YARA rule, without ever running the sample.**
 
@@ -29,6 +30,18 @@ All numbers come from committed JSON in [`results/`](results/) and were produced
 \* Both LightGBM baselines were trained on the same seeded 150k-row random subsample because the full 275k × 2381 float32 matrix did not fit in memory next to everything else on a 16 GB laptop ([ADR 0007](docs/adr/0007-memory-bounded-baselines.md)). The tuned run also uses 300 rounds instead of the 1,000 of the EMBER 2018 reference config, and took about 2 h. Treat both as *reproduced reference points*, not as the best LightGBM result possible: a full-data, full-budget tuned model would very likely beat the row above. EMBER 2018 was deliberately built to be harder than 2017, and public default-parameter LightGBM runs on EMBER 2018 report about 0.985 AUC [3].
 
 **Cost of interpretability:** small, and it depends on the operating point. Against the tuned 2,381-dim LightGBM, the 91 named features are level at 1 % FPR (88.7 % vs 89.0 % read off the test ROC; 87.8 % vs 87.0 % recall at the validation-calibrated thresholds, where LightGBM's test FPR came out lower, 0.79 % vs 0.89 %). They are clearly ahead at 0.1 % FPR (74.5 % vs 56.8 %) and on AUC (0.9917 vs 0.9901), with 1.8× the training rows. They beat the EMBER-paper config everywhere. In return every verdict comes with SHAP attributions that turn into analyst sentences ([ADR 0003](docs/adr/0003-interpretable-features-plus-treeshap.md)).
+
+**Uncertainty and like-for-like rows** ([`results/ember_ci.json`](results/ember_ci.json), `scripts/bench_ci.py`). 95 % intervals from 300 stratified bootstrap resamples of the 200k test set; differences are *paired* (same resamples for both models). Seed variance: XGBoost retrained with seeds 0, 1, 2.
+
+| | ROC AUC | TPR @ 1 % FPR | TPR @ 0.1 % FPR |
+| --- | --- | --- | --- |
+| VITRINE XGB, 95 % bootstrap CI | 0.9915–0.9920 | 88.2–89.0 % | 73.4–75.7 % |
+| LightGBM tuned 2018, 95 % bootstrap CI | 0.9898–0.9905 | 88.3–89.4 % | 53.2–59.0 % |
+| Paired difference XGB − tuned LGBM (95 % CI) | +0.0016 (+0.0013, +0.0018) | −0.3 pt (−0.9, +0.3): **no significant difference** | +17.8 pt (+15.6, +21.6) |
+| XGB, 275k rows, 3 seeds (mean ± sd) | 0.9913 ± 0.0007 | 88.4 ± 0.3 % | 74.1 ± 0.4 % |
+| XGB, **same 150k rows as LightGBM**, 3 seeds | 0.9902 ± 0.0001 | 86.9 ± 1.6 % | 70.9 ± 0.4 % |
+
+Like-for-like on identical rows, the XGBoost AUC advantage disappears (0.9902 vs 0.9901) and the tuned LightGBM is ahead at 1 % FPR (89.0 % vs 86.9 %); the 0.1 % FPR lead (70.9 % vs 56.8 %) survives. Part of the headline AUC gap is therefore extra training data, not the feature set.
 
 **SHAP faithfulness** (2,000 test malware):
 
@@ -133,7 +146,7 @@ flowchart LR
 
 ```bash
 python -m pip install -e ".[dev]"      # numpy core; dev pulls sklearn, xgboost, fastapi, pytest, ruff
-python -m pytest -q                     # 40 tests; realdata tests skip when the dataset is absent
+python -m pytest -q                     # 43 tests; realdata tests skip when the dataset is absent
 python -m vitrine demo                  # end-to-end on synthetic inert samples
 ```
 
