@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use VITRINE, please cite it as below."
+title: "VITRINE: static-first, explainable PE triage with auto-synthesized YARA rules"
+authors:
+  - name: Rakshit
+    affiliation: "VIT Chennai"
+version: 1.0.0
+date-released: 2026-09-26
+license: MIT
+repository-code: "https://github.com/rakshit-737/vitrine"
+url: "https://rakshit-737.github.io/vitrine/"
+keywords: [malware-analysis, explainable-ai, yara, ember, static-analysis]

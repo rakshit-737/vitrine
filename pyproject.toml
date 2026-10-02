@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68"]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,14 +7,19 @@ name = "vitrine"
 version = "1.0.0"
 description = "Static-first, explainable PE triage with auto-synthesized YARA rules (never executes samples)"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Rakshit" }]
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.24"]
 keywords = ["malware-analysis", "pe", "yara", "explainable-ai", "shap", "ember", "static-analysis"]
 classifiers = [
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Security",
 ]
 
@@ -22,21 +27,22 @@ classifiers = [
 ml = ["scikit-learn>=1.3", "xgboost>=2.0"]
 bench = ["scikit-learn>=1.3", "xgboost>=2.0", "lightgbm>=4.0", "matplotlib>=3.7"]
 api = ["fastapi>=0.110", "uvicorn>=0.23"]
-dev = ["pytest>=7", "ruff>=0.5", "httpx>=0.25", "pefile>=2023.2.7", "scikit-learn>=1.3", "xgboost>=2.0",
+dev = ["pytest>=7", "ruff~=0.16.0", "httpx>=0.25", "pefile>=2023.2.7", "scikit-learn>=1.3", "xgboost>=2.0",
        "fastapi>=0.110", "uvicorn>=0.23"]
 yara = ["yara-python>=4.3"]
 
 [project.urls]
 Repository = "https://github.com/rakshit-737/vitrine"
+Documentation = "https://rakshit-737.github.io/vitrine/"
 
 [project.scripts]
 vitrine = "vitrine.cli:main"
 
 [tool.setuptools]
-packages = ["vitrine"]
+packages = ["vitrine", "vitrine.static"]
 
 [tool.setuptools.package-data]
-vitrine = ["static/*.html"]
+"vitrine.static" = ["*.html"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

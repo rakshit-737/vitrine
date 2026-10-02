@@ -1,5 +1,0 @@
-# Runtime: Python stdlib only.
-# Dev/test:
-pytest>=7
-# Optional: real-engine compile check for generated rules
-# yara-python>=4.3

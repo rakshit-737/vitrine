@@ -3,14 +3,39 @@ on:
   push:
     tags: ["v*"]
 permissions:
-  contents: write
-  packages: write
+  contents: read
 jobs:
-  release:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build && python -m build
+      - name: Wheel installs and runs in a clean venv
+        run: |
+          python -m venv /tmp/w && /tmp/w/bin/pip install dist/*.whl
+          /tmp/w/bin/vitrine --help && /tmp/w/bin/vitrine demo
+      - name: sdist tests pass
+        run: |
+          mkdir /tmp/s && tar xzf dist/*.tar.gz -C /tmp/s && cd /tmp/s/vitrine-*
+          python -m pip install ".[dev]" && python -m pytest -q -m "not realdata"
+      - name: Image builds and answers /health
+        run: |
+          docker build -t vitrine:rel .
+          docker run -d --name v -p 127.0.0.1:8000:8000 vitrine:rel
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && exit 0; sleep 2; done
+          docker logs v; exit 1
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Build wheel and sdist
@@ -25,6 +50,8 @@ jobs:
         with:
           context: .
           push: true
+          sbom: true
+          provenance: mode=max
           tags: |
             ghcr.io/${{ github.repository }}:${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:latest
@@ -33,8 +60,8 @@ jobs:
       - name: Release notes from CHANGELOG
         run: |
           v="${GITHUB_REF_NAME#v}"
-          awk -v v="$v" '$0 ~ "^## \[" v "\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
-          test -s notes.md || echo "See CHANGELOG.md" > notes.md
+          awk -v v="$v" 'index($0, "## [" v "]")==1 {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+          test -s notes.md || { echo "no CHANGELOG section for $v"; exit 1; }
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

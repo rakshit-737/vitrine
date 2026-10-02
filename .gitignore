@@ -9,3 +9,41 @@ data/
 .ruff_cache/
 .venv/
 site/
+dist/
+build/
+venv/
+env/
+.env
+.coverage
+htmlcov/
+.mypy_cache/
+# models and dataset artefacts (never in git)
+*.ubj
+vitrine_xgb.json
+models/
+lgbm_*.txt
+*.model
+*.tar.bz2
+*.bz2
+*.zip
+*.part
+*.parts/
+*.blocks.json
+*.jsonl
+*.jsonl.gz
+!tests/fixtures/*.jsonl.gz
+# never store binaries
+*.exe
+*.dll
+*.sys
+*.bin
+*.vitrine
+# LaTeX build output
+paper/*.aux
+paper/*.log
+paper/*.bbl
+paper/*.blg
+paper/*.out
+paper/*.synctex.gz
+paper/*.fls
+paper/*.fdb_latexmk

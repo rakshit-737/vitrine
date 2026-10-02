@@ -1,0 +1,14 @@
+name: Bug report
+description: Something in VITRINE does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes: {label: What happened, description: Command run, full output, expected behaviour}
+    validations: {required: true}
+  - type: input
+    id: version
+    attributes: {label: Version, description: "`pip show vitrine` and Python version"}
+  - type: markdown
+    attributes:
+      value: "Do not attach malware samples. Share hashes or the JSON report instead."
