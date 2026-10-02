@@ -18,4 +18,7 @@
 - [ ] Problem-space adversarial evaluation on benign binaries (secml-malware style section and overlay injection).
 - Capstone byte-sequence atoms are out of scope: they need binaries, which the safety rules exclude.
 - [ ] Per-cluster (HDBSCAN) rule generation instead of per-AVClass-family.
+- [ ] EMBER2024 challenge set evaluation and a representation-only ablation (deferred for time; not run).
+- [ ] Drift parity on more than string counters: the parser-based features are still computed by LIEF (2018) and pefile (2024); a both-extractor run on benign files would need the 2018 LIEF 0.9 toolchain.
+- [ ] Release v1.1.0 with the current `main` (the v1.0.0 assets predate the latest fixes).
 - [x] Full-budget EMBER 2018 reference: the authors' published model is now scored on our test rows.
