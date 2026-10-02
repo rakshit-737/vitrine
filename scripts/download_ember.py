@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Download the EMBER 2018 (feature version 2) raw-feature dataset with checksum verification.
+"""Download the EMBER 2018 (feature version 2) or EMBER 2017 (v1) raw-feature dataset with checksum verification.
 
 The archive contains *pre-extracted JSON features only* -- no PE binaries, no malware.
 Resumable, chunked, parallel HTTP range download (the host is slow on some links), followed by
@@ -23,6 +23,14 @@ import urllib.request
 from pathlib import Path
 
 DATASETS = {
+    # EMBER 2017, feature version 1: the exact dataset of the EMBER paper (Anderson & Roth 2018).
+    # Also ships the authors' benchmark model (ember_model_2017.txt).
+    "2017": {
+        "url": "https://ember.elastic.co/ember_dataset.tar.bz2",
+        "size": 1_673_963_887,
+        "md5": "2bc1f3c36c387c81b78bc69a97b0bd30",  # GCS ETag
+        "sha256": "a5603de2f34f02ab6e21df7a0f97ec4ac84ddc65caee33fb610093dd6f9e1df9",
+    },
     "2018": {
         "url": "https://ember.elastic.co/ember_dataset_2018_2.tar.bz2",
         "size": 1_696_539_273,
