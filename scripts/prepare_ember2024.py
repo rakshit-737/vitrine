@@ -6,7 +6,7 @@ Writes to ``<data>/ember2024/processed/`` for ``split`` in {train, test}:
 * ``{split}_X2.f32``  EMBER feature-version-2 vector (2,381-dim) of the record translated by
   :mod:`vitrine.ember3` -- the *same* representation as the EMBER 2018 matrices, for cross-year runs
 * ``{split}_X3.f32``  native EMBER feature-version-3 vector (2,568-dim), computed with the
-  EMBER2024 authors' ``thrember`` code (``--thrember`` = path to ``EMBER2024/src`` at the pinned commit ``THREMBER_COMMIT``)
+  EMBER2024 authors' ``thrember`` code (``--thrember`` = path to ``EMBER2024/src`` at ``THREMBER_COMMIT``)
   -- used to reproduce the EMBER2024 paper baseline
 * ``{split}_F.npy``   VITRINE's 91 interpretable features (on the translated record)
 * ``{split}_meta.csv`` sha256, label, family, week_id, first_submission_date
