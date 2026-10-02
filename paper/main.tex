@@ -79,16 +79,25 @@ Train $\rightarrow$ test & ROC AUC (95\% CI) & TPR@1\% & FPR / recall at source 
 At equal training size, an in-period 2024 model beats the 2018 model on 2024 by +0.023 AUC
 (+0.021, +0.026). The 2018 model's weekly AUC over EMBER2024 ranges 0.918--0.992. The schema
 translation itself costs only 0.0006 AUC (0.0003--0.0008) when the EMBER2024 paper configuration is
-trained on native vs translated vectors of identical rows, so the drop is not a translation artefact;
-it still mixes time with collection and extractor changes.
+trained on native vs translated vectors of identical rows. That control shows that little information
+is lost inside 2024; it cannot detect a feature defined differently in 2018 and 2024, and the drop
+still mixes time with collection and extractor changes.
 
-\textbf{Attribution.} The top drift-weighted features are \texttt{n\_embedded\_mz}, \texttt{is\_dll},
-\texttt{cert\_kb}, \texttt{n\_imports}, \texttt{os\_major}, \texttt{size\_kb} and \texttt{linker\_major}.
-Retraining without the top ten \emph{reduces} 2024 AUC by 0.0057 (0.0043--0.0073); dropping ten random
-features has no significant effect. Drift is attributable but not removable by feature deletion.
+\textbf{Attribution.} The raw top drift-weighted feature, \texttt{n\_embedded\_mz}, is a definition
+change: EMBER v2 counts the bytes \texttt{MZ} anywhere in a file, the v3 record only strings containing
+\texttt{!This program}. On the same 600 benign System32 files the two definitions agree exactly on 13\%
+of files and differ by PSI 8.9, more than its cross-dataset PSI (3.7). We therefore exclude 4 redefined
+string counters and 6 proxy flags. Among the remaining features, \texttt{is\_dll} and \texttt{cert\_kb}
+shift in benign files only (PSI$_\text{mal}\le0.003$), pointing to benign-sample selection, while
+\texttt{n\_imports}, \texttt{os\_major}, \texttt{size\_kb}, \texttt{linker\_major}, \texttt{code\_ratio} and
+\texttt{avg\_string\_len} shift in both classes; these are still computed by different parsers (LIEF vs
+pefile). Retraining the 2018 model (99k rows, 3 seeds) without the top ten faithful features changes
+2024 AUC by $-0.0040$ ($-0.0059$, $-0.0016$) at a 2018 cost of $-0.0025$; 20 group-matched random
+draws of ten faithful features average $-0.0011$ ($-0.0035$ to $+0.0015$) and none is worse. Drift is
+partly attributable to named artifacts, but not removable by deleting them.
 
 \textbf{Reference models.} The EMBER authors' published 2018 model, scored by us on the same 200k test
-rows, reaches AUC 0.9964, 96.5\% / 87.0\% TPR at 1\% / 0.1\% FPR (reproducing their notebook); VITRINE
+rows, reaches AUC 0.9964, 96.5\% / 87.0\% TPR at 1\% / 0.1\% FPR (consistent with their notebook, 86.8\% at 0.1\% FPR, within our CI; scored on our clean-room vectors, whose 50 entry-section-name hash dimensions differ from elastic/ember); VITRINE
 is behind by 0.0047 AUC (0.0045--0.0049), 7.8 and 12.7 points. The released EMBER2024 Win32 model scores
 AUC 0.9983 on our test subsample (paper: 0.9984).
 

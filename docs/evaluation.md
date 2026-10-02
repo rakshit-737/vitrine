@@ -40,7 +40,7 @@ zero-event rates use the rule of three. Adversarial comparisons use exact McNema
 
 Paired difference VITRINE XGB − published model (bootstrap 95 % CI): **AUC −0.0047 (−0.0049, −0.0045);
 TPR @ 1 % −7.8 pt (−8.3, −7.5); TPR @ 0.1 % −12.7 pt (−14.4, −11.2)** (`results/ember_published.json`).
-Our score for the published model reproduces the authors' notebook (0.99643 AUC, 96.5 % / 86.8 %).
+Our score for the published model is consistent with the authors' notebook (0.99643 AUC, 96.5 % / 86.8 %) within its CI. Caveat: it was scored on VITRINE's clean-room v2 vectors, whose 50 entry-section-name hash dimensions differ from elastic/ember's (whole name vs per character).
 Seed 0, used in older headlines, is the best of the three seeds.
 
 **(worse) Cost of interpretability.** Earlier revisions compared VITRINE only with our memory-limited
@@ -101,13 +101,31 @@ looks malicious to it. Across the 64 EMBER2024 weeks the 2018 model's AUC ranges
 (TESSERACT-style AUT of the weekly AUC curve: 0.970).
 
 **Explainable drift.** Ranking the named features by PSI (2018 vs 2024 test, per class) times the
-2018 model's mean |SHAP| puts `n_embedded_mz`, `is_dll`, `cert_kb`, `n_imports`, `os_major`,
-`size_kb` and `linker_major` on top: embedded executables, DLL share, signing and toolchain/OS
-versions changed and the model relied on them. **(negative result)** Retraining the 2018 model
-without the top-10 drift-weighted features does *not* buy robustness: AUC on 2024 changes by
-−0.0057 (−0.0073, −0.0043) and in-period AUC by −0.0037, while dropping 10 random features changes
-neither significantly. The drift is attributable to named artifacts, but it is not removable by
-dropping them; retraining on recent data is what helps.
+2018 model's mean |SHAP| puts `n_embedded_mz` first, but that feature is **not comparable across the
+two datasets**: EMBER v2 counts the bytes `MZ` anywhere in the file, while the v3 record only has
+strings containing `!This program ` (the nearest counter our translation can use). On the same 600
+benign System32 files the two definitions agree exactly on 13 % of files and differ by PSI 8.9, more
+than the cross-dataset PSI of 3.7 (`results/ember2024_drift_parity.json`). Its rank is a definition
+change, not drift. The within-2024 translation control (§3) cannot detect this, because it never
+compares a 2018 definition with a 2024 one.
+
+Restricted to features with the same definition in both schemas (`parser` and `byte_level` classes in
+`ember2024_drift_parity.json`; the 4 redefined string counters and 6 proxy flags are excluded), the
+top features are `is_dll` and `cert_kb`, which shift **in benign files only** (PSI_mal ≤ 0.003) and so
+point to how each dataset selected its benign files, and then `n_imports`, `os_major`, `size_kb`,
+`linker_major`, `code_ratio` and `avg_string_len`, which shift **in both classes** (PSI ≥ 0.25) and are
+the better candidates for temporal (toolchain/OS-version) change. Parser-based features still differ in
+extractor (LIEF 0.9 vs pefile), so even these are not isolated from extractor change.
+
+**(negative result)** Retraining the 2018 model (99k-row subsample, 3 seeds) without the top-10
+faithful drift features (`is_dll`, `cert_kb`, `n_imports`, `os_major`, `size_kb`, `linker_major`,
+`code_ratio`, `avg_string_len`, `unaccounted_ratio`, `max_section_entropy`) changes 2024 AUC by
+−0.0040 (−0.0059, −0.0016) at an in-period 2018 cost of −0.0025 (−0.0027, −0.0022). 20 random draws of
+10 faithful features matched by feature group change 2024 AUC by −0.0011 on average (2.5-97.5 %:
+−0.0035 to +0.0015); none of the 20 is worse than the top-10 ablation in AUC. The earlier full-data
+ablation (`ember2024_drift.json`, which also dropped `n_embedded_mz`) gave −0.0057 on 2024 at a
+2018 cost of −0.0037. Dropping the drifting features hurts rather than helps; retraining on recent
+data is what helps.
 
 **Confounds.** 2018 → 2024 mixes temporal drift with a dataset change: different collection
 (EMBER 2018 was selected to be harder), extractor (LIEF 0.9 vs pefile) and the v3 → v2 translation.
@@ -131,7 +149,8 @@ Test set: our 27,715-file subsample of the 12 EMBER2024 Win32 test weeks (`scrip
 The released model reproduces the paper's AUC on our subsample. Our retrain on ~4 % of the paper's
 training rows is 0.0017 AUC (0.0014-0.0020) behind it. **Translation control:** on identical rows the
 v3 → v2 translation costs only 0.0006 AUC (0.0003-0.0008) and 0.8 pt TPR @ 1 % FPR, far less than the
-0.018-0.021 AUC lost from 2018 to 2024, so the cross-time drop is not a translation artefact. Not
+0.018-0.021 AUC lost from 2018 to 2024. This shows that little information is lost *inside* 2024; it
+does not rule out definition mismatches *across* datasets (see `n_embedded_mz` in §2). Not
 reproduced: the EMBER 2017 paper setup (feature version 1 needs its own vectorizer and a 1.7 GB
 download); its published numbers are shown in §1 for context only.
 

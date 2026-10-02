@@ -2,7 +2,7 @@
 
 **Static-first PE triage that explains every verdict and writes a candidate YARA rule, without ever running the sample.**
 
-**Novel contribution:** 91 *named* features make temporal drift measurable and attributable: a model trained on EMBER 2018 and tested on EMBER2024 loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate falls (silent decay); the shift concentrates in a few named artifacts, yet dropping them does not recover robustness ([Evaluation §2](evaluation.md#2-cross-time-ember-2018-ember2024)).
+**Novel contribution:** 91 *named* features make temporal drift measurable and attributable: a model trained on EMBER 2018 and tested on EMBER2024 loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate falls (silent decay); among features defined identically in both schemas the shift splits into benign-only selection artifacts (DLL share, signing) and both-class toolchain artifacts (imports, OS/linker versions), yet dropping them does not recover robustness; the top raw-PSI feature (`n_embedded_mz`) turned out to be a schema-definition change ([Evaluation §2](evaluation.md#2-cross-time-ember-2018-ember2024)).
 
 [![Triage UI](figures/demo_triage.png)](demo/index.html)
 

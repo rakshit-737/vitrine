@@ -8,7 +8,7 @@
 
 **Static-first PE triage that explains every verdict and writes a candidate YARA rule, without ever running the sample.**
 
-**Novel contribution:** an explainable static triage pipeline whose 91 *named* features make temporal drift measurable and attributable: trained on EMBER 2018 and tested on EMBER2024, it loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate *falls* (silent decay), and the shift concentrates in a few named artifacts (embedded executables, DLL share, signing, toolchain versions), yet dropping those features does not recover robustness ([Evaluation §2](https://rakshit-737.github.io/vitrine/evaluation/#2-cross-time-ember-2018-ember2024), all with bootstrap CIs over 3 seeds).
+**Novel contribution:** an explainable static triage pipeline whose 91 *named* features make temporal drift measurable and attributable: trained on EMBER 2018 and tested on EMBER2024, it loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate *falls* (silent decay), and, among features defined identically in both schemas, the shift that the model relied on is in benign-only selection artifacts (DLL share, signing) and both-class toolchain artifacts (import count, OS and linker versions, size); dropping them does not recover robustness. The top raw-PSI feature, `n_embedded_mz`, is a schema-definition change, not drift (PSI 8.9 between its v2 and v3 definitions on the same System32 files) ([Evaluation §2](https://rakshit-737.github.io/vitrine/evaluation/#2-cross-time-ember-2018-ember2024), all with bootstrap CIs over 3 seeds).
 
 [![Triage UI on a synthetic inert sample](docs/figures/demo_triage.png)](https://rakshit-737.github.io/vitrine/demo/)
 
