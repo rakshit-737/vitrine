@@ -1,7 +1,8 @@
 # Limitations and roadmap
 
 - **No live samples by design.** Real-file scoring is validated only on benign binaries. Malware performance comes from EMBER's LIEF-extracted features, and VITRINE's own extractor differs from LIEF in small ways ([ADR 0002](adr/0002-own-extractor-emits-ember-schema.md)).
-- **Temporal drift.** EMBER stops in 2018. The model is a 2018 detector and needs retraining on modern features (for example EMBER2024) for real use.
+- **Temporal drift.** Measured: a 2018 model loses 0.018 AUC and 29 pt of recall at its threshold on EMBER2024 ([Evaluation §2](evaluation.md#2-cross-time-ember-2018-ember2024)). Retrain on recent data for real use. EMBER2024 is used as a ~7 % per-week subsample.
+- Detection is below the authors' published full-data EMBER 2018 model (−0.0047 AUC); EMBER 2018 training here is a 50 % subsample.
 - The LightGBM baselines are memory-limited reproductions (150k rows; 100 trees for the paper config, 300 for the tuned 2018 config). The published 2017-set numbers are shown only for context.
 - The adversarial evaluation works in feature space. It bounds what naive edits can do, and it is not a problem-space attack on real binaries.
 - YARA structural rules abstain on about half the families. String and byte-sequence atoms from code sections (capstone) are not implemented.
@@ -10,8 +11,11 @@
 
 ## Roadmap
 
-- [ ] Train and evaluate on EMBER2024 / SOREL-20M features (temporal generalisation to 2024).
+- [x] Evaluate across EMBER 2018 / EMBER2024 (done). SOREL-20M is out of scope (size).
+- [ ] Full-data EMBER 2018 retrain (no subsample) in a GitHub Actions job, to separate data from representation in the gap to the published model.
+- [ ] Attribution-guided (SHAP-ranked) YARA atoms, the spec's open research question.
+- [ ] Reproduce the EMBER 2017 (feature v1) paper setup.
 - [ ] Problem-space adversarial evaluation on benign binaries (secml-malware style section and overlay injection).
-- [ ] Capstone byte-sequence atoms for YARA, plus a yarGen-style goodware string DB.
+- Capstone byte-sequence atoms are out of scope: they need binaries, which the safety rules exclude.
 - [ ] Per-cluster (HDBSCAN) rule generation instead of per-AVClass-family.
-- [ ] A full-data, full-budget (1,000-round) tuned LightGBM 2018 baseline on a bigger machine.
+- [x] Full-budget EMBER 2018 reference: the authors' published model is now scored on our test rows.
