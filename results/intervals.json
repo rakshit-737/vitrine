@@ -1,0 +1,877 @@
+{
+  "adversarial": {
+    "n": 3000,
+    "rows": [
+      {
+        "perturbation": "none",
+        "vitrine_xgb": {
+          "detection_rate": 0.8706666666666667,
+          "ci95": [
+            0.8581830178900516,
+            0.8822022622549068
+          ]
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.741,
+          "ci95": [
+            0.725022389130038,
+            0.756361205784355
+          ]
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.8646666666666667,
+          "ci95": [
+            0.8519583325277988,
+            0.8764422938018634
+          ]
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8936666666666667,
+          "ci95": [
+            0.8821279177027613,
+            0.9041985354008321
+          ]
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9803333333333333,
+          "ci95": [
+            0.9747157214293537,
+            0.984722397895183
+          ]
+        },
+        "xgb_vs_lgbm2018_unpaired": {
+          "z": 0.6857815505505344,
+          "p": 0.49285087214642737
+        }
+      },
+      {
+        "perturbation": "overlay",
+        "vitrine_xgb": {
+          "detection_rate": 0.775,
+          "ci95": [
+            0.7597110167209663,
+            0.7895856164801044
+          ]
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.643,
+          "ci95": [
+            0.6256825266752961,
+            0.6599517225892606
+          ]
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.735,
+          "ci95": [
+            0.7189140950891435,
+            0.7504848460099534
+          ]
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.811,
+          "ci95": [
+            0.7965958924840598,
+            0.8246086636087876
+          ]
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9753333333333334,
+          "ci95": [
+            0.9691454589040336,
+            0.9803054489077567
+          ]
+        },
+        "xgb_vs_lgbm2018_unpaired": {
+          "z": 3.6025967268796926,
+          "p": 0.0003150541070807501
+        }
+      },
+      {
+        "perturbation": "section",
+        "vitrine_xgb": {
+          "detection_rate": 0.752,
+          "ci95": [
+            0.7362309171893163,
+            0.7671245430531194
+          ]
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.6296666666666667,
+          "ci95": [
+            0.6122312790147921,
+            0.6467704062157735
+          ]
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7066666666666667,
+          "ci95": [
+            0.6901186068525245,
+            0.7226861356743408
+          ]
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.7883333333333333,
+          "ci95": [
+            0.7733519453027108,
+            0.8025772519323512
+          ]
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.973,
+          "ci95": [
+            0.9665673662810922,
+            0.9782228428247494
+          ]
+        },
+        "xgb_vs_lgbm2018_unpaired": {
+          "z": 3.9522002803293925,
+          "p": 7.743588694852009e-05
+        }
+      },
+      {
+        "perturbation": "imports",
+        "vitrine_xgb": {
+          "detection_rate": 0.7686666666666667,
+          "ci95": [
+            0.7532392947624138,
+            0.7834068705225112
+          ]
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.602,
+          "ci95": [
+            0.5843645851519106,
+            0.6193745297081228
+          ]
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.784,
+          "ci95": [
+            0.7689161660885792,
+            0.7983574478354357
+          ]
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8536666666666667,
+          "ci95": [
+            0.840566922121782,
+            0.8658618388798376
+          ]
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9626666666666667,
+          "ci95": [
+            0.9552697423618957,
+            0.9688802296176027
+          ]
+        },
+        "xgb_vs_lgbm2018_unpaired": {
+          "z": -1.425139760715253,
+          "p": 0.1541168052019176
+        }
+      },
+      {
+        "perturbation": "header",
+        "vitrine_xgb": {
+          "detection_rate": 0.791,
+          "ci95": [
+            0.7760828736078238,
+            0.8051728364340365
+          ]
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.7056666666666667,
+          "ci95": [
+            0.6891037230879201,
+            0.7217035771363959
+          ]
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.8353333333333334,
+          "ci95": [
+            0.8216345441309281,
+            0.8481744413239534
+          ]
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8236666666666667,
+          "ci95": [
+            0.8096178210591708,
+            0.8368876708659682
+          ]
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9633333333333334,
+          "ci95": [
+            0.9559937359506702,
+            0.9694878642305279
+          ]
+        },
+        "xgb_vs_lgbm2018_unpaired": {
+          "z": -4.415668099829347,
+          "p": 1.0069849021535088e-05
+        }
+      },
+      {
+        "perturbation": "all",
+        "vitrine_xgb": {
+          "detection_rate": 0.39866666666666667,
+          "ci95": [
+            0.3812863398288885,
+            0.41630617351277754
+          ]
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.366,
+          "ci95": [
+            0.34894410419891325,
+            0.3833986272594741
+          ]
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.44133333333333336,
+          "ci95": [
+            0.4236512113509573,
+            0.459165506899481
+          ]
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.5873333333333334,
+          "ci95": [
+            0.5696156614735397,
+            0.6048276329491034
+          ]
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.8573333333333333,
+          "ci95": [
+            0.8443612268755454,
+            0.8693914892354215
+          ]
+        },
+        "xgb_vs_lgbm2018_unpaired": {
+          "z": -3.3479569642090103,
+          "p": 0.0008140965219244753
+        }
+      }
+    ]
+  },
+  "system32": {
+    "n": 2999,
+    "fp_upper95_when_zero": 0.0010003334444814939,
+    "floor_rate": 0.03401133711237079,
+    "floor_ci95": [
+      0.02809705906022818,
+      0.041117870089684275
+    ]
+  },
+  "yara": {
+    "families_with_vitrine_rule": [
+      "xtrat",
+      "installmonster",
+      "zusy",
+      "vtflooder",
+      "fareit",
+      "ramnit",
+      "adposhel",
+      "sivis"
+    ],
+    "mean_coverage_on_vitrine_families": {
+      "vitrine": 0.31522278113742,
+      "imphash_baseline": 0.2679034767583909,
+      "frequency_baseline": 0.22010132961503134
+    },
+    "vitrine_ruleset_benign_fp": 5,
+    "vitrine_ruleset_specificity": 0.99995,
+    "vitrine_ruleset_fp_rate_ci95": [
+      2.1357194468385736e-05,
+      0.0001170520768033956
+    ],
+    "vitrine_rules_under_1pct_coverage": [
+      "installmonster",
+      "zusy",
+      "fareit",
+      "adposhel"
+    ],
+    "imphash_fp_by_family": {
+      "xtrat": 69,
+      "installmonster": 777,
+      "zusy": 0,
+      "vtflooder": 0,
+      "zbot": 0,
+      "fareit": 0,
+      "ramnit": 0,
+      "sality": 0,
+      "adposhel": 0,
+      "emotet": 0,
+      "high": 10714,
+      "sivis": 0,
+      "flystudio": 0,
+      "wapomi": 36,
+      "upatre": 0
+    },
+    "imphash_zero_fp_families_with_coverage": [
+      "zbot",
+      "ramnit",
+      "sality",
+      "adposhel",
+      "sivis",
+      "flystudio",
+      "upatre"
+    ],
+    "per_family": [
+      {
+        "family": "xtrat",
+        "vitrine": {
+          "coverage": 0.9765041493775933,
+          "coverage_ci95": [
+            0.9742692375231243,
+            0.9785492161670495
+          ],
+          "n_test_siblings": 19280,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.9765041493775933,
+          "coverage_ci95": [
+            0.9742692375231243,
+            0.9785492161670495
+          ],
+          "n_test_siblings": 19280,
+          "benign_fp": 69,
+          "benign_fp_rate_ci95": [
+            0.0005453062169532079,
+            0.0008730538855344674
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.00019920609847873385
+          ],
+          "n_test_siblings": 19280,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        }
+      },
+      {
+        "family": "installmonster",
+        "vitrine": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.01133703896230397
+          ],
+          "n_test_siblings": 335,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.01133703896230397
+          ],
+          "n_test_siblings": 335,
+          "benign_fp": 777,
+          "benign_fp_rate_ci95": [
+            0.007244382339084259,
+            0.008333433833729243
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.01133703896230397
+          ],
+          "n_test_siblings": 335,
+          "benign_fp": 30,
+          "benign_fp_rate_ci95": [
+            0.0002101586812541139,
+            0.0004282313834613759
+          ]
+        }
+      },
+      {
+        "family": "zusy",
+        "vitrine": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.022225332087015413
+          ],
+          "n_test_siblings": 169,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.022225332087015413
+          ],
+          "n_test_siblings": 169,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.011834319526627219,
+          "coverage_ci95": [
+            0.003251419493628345,
+            0.04211650828363522
+          ],
+          "n_test_siblings": 169,
+          "benign_fp": 5901,
+          "benign_fp_rate_ci95": [
+            0.05756636342116443,
+            0.06048751617587157
+          ]
+        }
+      },
+      {
+        "family": "vtflooder",
+        "vitrine": {
+          "coverage": 0.3125,
+          "coverage_ci95": [
+            0.17952541633609734,
+            0.4856667830095541
+          ],
+          "n_test_siblings": 32,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.1071791982550706
+          ],
+          "n_test_siblings": 32,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.1071791982550706
+          ],
+          "n_test_siblings": 32,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        }
+      },
+      {
+        "family": "zbot",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.09343263371699391,
+          "coverage_ci95": [
+            0.08860191012906957,
+            0.09849827201007602
+          ],
+          "n_test_siblings": 13293,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.1294666365756413,
+          "coverage_ci95": [
+            0.12386649941430582,
+            0.13528086798811098
+          ],
+          "n_test_siblings": 13293,
+          "benign_fp": 1637,
+          "benign_fp_rate_ci95": [
+            0.01560189230836224,
+            0.017175263158914836
+          ]
+        }
+      },
+      {
+        "family": "fareit",
+        "vitrine": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.005609267329272336
+          ],
+          "n_test_siblings": 681,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.005609267329272336
+          ],
+          "n_test_siblings": 681,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.17327459618208516,
+          "coverage_ci95": [
+            0.1467014918083633,
+            0.20351308082236527
+          ],
+          "n_test_siblings": 681,
+          "benign_fp": 588,
+          "benign_fp_rate_ci95": [
+            0.005424743132629828,
+            0.006373218241749237
+          ]
+        }
+      },
+      {
+        "family": "ramnit",
+        "vitrine": {
+          "coverage": 0.24156976744186046,
+          "coverage_ci95": [
+            0.2334086677228974,
+            0.24992318880782946
+          ],
+          "n_test_siblings": 10320,
+          "benign_fp": 3,
+          "benign_fp_rate_ci95": [
+            1.0202758544517341e-05,
+            8.820804925176732e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.17587209302325582,
+          "coverage_ci95": [
+            0.16864786943325213,
+            0.18333752992755833
+          ],
+          "n_test_siblings": 10320,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.262015503875969,
+          "coverage_ci95": [
+            0.25362127686423724,
+            0.27058683698633096
+          ],
+          "n_test_siblings": 10320,
+          "benign_fp": 12426,
+          "benign_fp_rate_ci95": [
+            0.12222985460937956,
+            0.12631901207646434
+          ]
+        }
+      },
+      {
+        "family": "sality",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.029613259668508286,
+          "coverage_ci95": [
+            0.02631535871378295,
+            0.03331032186346576
+          ],
+          "n_test_siblings": 9050,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.18917127071823203,
+          "coverage_ci95": [
+            0.1812348562868771,
+            0.19737144849672653
+          ],
+          "n_test_siblings": 9050,
+          "benign_fp": 6138,
+          "benign_fp_rate_ci95": [
+            0.05990911250581038,
+            0.06288458501307197
+          ]
+        }
+      },
+      {
+        "family": "adposhel",
+        "vitrine": {
+          "coverage": 0.0026246719160104987,
+          "coverage_ci95": [
+            0.00046346938935608924,
+            0.014715401511390044
+          ],
+          "n_test_siblings": 381,
+          "benign_fp": 2,
+          "benign_fp_rate_ci95": [
+            5.484738516524055e-06,
+            7.292683754201227e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.0026246719160104987,
+          "coverage_ci95": [
+            0.00046346938935608924,
+            0.014715401511390044
+          ],
+          "n_test_siblings": 381,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.32545931758530183,
+          "coverage_ci95": [
+            0.2803569010867505,
+            0.3740462383058596
+          ],
+          "n_test_siblings": 381,
+          "benign_fp": 6988,
+          "benign_fp_rate_ci95": [
+            0.06831633180773122,
+            0.07147671268823722
+          ]
+        }
+      },
+      {
+        "family": "emotet",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            5.421010862427522e-20,
+            0.0007827186050987861
+          ],
+          "n_test_siblings": 4904,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            5.421010862427522e-20,
+            0.0007827186050987861
+          ],
+          "n_test_siblings": 4904,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        }
+      },
+      {
+        "family": "high",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.0970464135021097,
+          "coverage_ci95": [
+            0.07740375984062497,
+            0.12101990049756564
+          ],
+          "n_test_siblings": 711,
+          "benign_fp": 10714,
+          "benign_fp_rate_ci95": [
+            0.10523809716113339,
+            0.10907208478968539
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.05063291139240506,
+          "coverage_ci95": [
+            0.036795094087064974,
+            0.06930040147332567
+          ],
+          "n_test_siblings": 711,
+          "benign_fp": 8572,
+          "benign_fp_rate_ci95": [
+            0.08400075706444317,
+            0.08747107050411866
+          ]
+        }
+      },
+      {
+        "family": "sivis",
+        "vitrine": {
+          "coverage": 0.9885836603638958,
+          "coverage_ci95": [
+            0.9839283515996542,
+            0.9919016125019882
+          ],
+          "n_test_siblings": 2803,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "imphash_baseline": {
+          "coverage": 0.9882268997502676,
+          "coverage_ci95": [
+            0.9835127843952547,
+            0.9916046350082486
+          ],
+          "n_test_siblings": 2803,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.9882268997502676,
+          "coverage_ci95": [
+            0.9835127843952547,
+            0.9916046350082486
+          ],
+          "n_test_siblings": 2803,
+          "benign_fp": 17,
+          "benign_fp_rate_ci95": [
+            0.00010614727173743861,
+            0.0002722527803873228
+          ]
+        }
+      },
+      {
+        "family": "flystudio",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.5397727272727273,
+          "coverage_ci95": [
+            0.4660740433057615,
+            0.6117723003115816
+          ],
+          "n_test_siblings": 176,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.7386363636363636,
+          "coverage_ci95": [
+            0.6691213565806138,
+            0.7979567051234444
+          ],
+          "n_test_siblings": 176,
+          "benign_fp": 1,
+          "benign_fp_rate_ci95": [
+            1.7652477303783126e-06,
+            5.664709659040966e-05
+          ]
+        }
+      },
+      {
+        "family": "wapomi",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.05340314136125655,
+          "coverage_ci95": [
+            0.04084916134502842,
+            0.06953557207155904
+          ],
+          "n_test_siblings": 955,
+          "benign_fp": 36,
+          "benign_fp_rate_ci95": [
+            0.00026006211445195267,
+            0.0004983233406900272
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.193717277486911,
+          "coverage_ci95": [
+            0.1698991592429958,
+            0.21998955007553134
+          ],
+          "n_test_siblings": 955,
+          "benign_fp": 12604,
+          "benign_fp_rate_ci95": [
+            0.12399728907660044,
+            0.1281114408585627
+          ]
+        }
+      },
+      {
+        "family": "upatre",
+        "vitrine": null,
+        "imphash_baseline": {
+          "coverage": 0.19063545150501673,
+          "coverage_ci95": [
+            0.15014602953187028,
+            0.238973278239215
+          ],
+          "n_test_siblings": 299,
+          "benign_fp": 0,
+          "benign_fp_rate_ci95": [
+            0.0,
+            3.841311258303963e-05
+          ]
+        },
+        "frequency_baseline": {
+          "coverage": 0.0,
+          "coverage_ci95": [
+            0.0,
+            0.012684719046240528
+          ],
+          "n_test_siblings": 299,
+          "benign_fp": 210,
+          "benign_fp_rate_ci95": [
+            0.0018347600430236428,
+            0.002403491734486548
+          ]
+        }
+      }
+    ]
+  },
+  "shap_deletion_ratio_topk_over_random": {
+    "1": 29.28687112933183,
+    "3": 29.733164149599446,
+    "5": 37.00270130207445,
+    "10": 28.38383213118301
+  }
+}

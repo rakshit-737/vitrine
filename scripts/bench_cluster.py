@@ -69,7 +69,17 @@ def main() -> None:
                    "nmi": float(normalized_mutual_info_score(labels[m], pred[m])),
                    "homogeneity": float(homogeneity_score(labels[m], pred[m])),
                    "completeness": float(completeness_score(labels[m], pred[m])),
-                   "purity": float(purity / max(m.sum(), 1))}
+                   "purity": float(purity / max(m.sum(), 1)),
+                   "scored_on": "clustered (non-noise) points only" if algo == "hdbscan" else "all points"}
+            if algo == "hdbscan":  # also score on ALL points, so HDBSCAN and k-means are comparable
+                single = pred.copy()
+                single[~m] = np.arange(pred.max() + 1, pred.max() + 1 + int((~m).sum()))
+                one = np.where(m, pred, -1)
+                row["all_points"] = {
+                    "noise_as_singletons": {"ari": float(adjusted_rand_score(labels, single)),
+                                            "nmi": float(normalized_mutual_info_score(labels, single))},
+                    "noise_as_one_cluster": {"ari": float(adjusted_rand_score(labels, one)),
+                                             "nmi": float(normalized_mutual_info_score(labels, one))}}
             print(row, flush=True)
             rows.append(row)
     dump("clustering.json", {"families": top, "n_samples": int(len(idx)), "rows": rows})

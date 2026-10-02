@@ -79,6 +79,10 @@ RULES: list[Rule] = [
 HIGH_RISK_ATTACK_IDS = {r.attack_id for r in RULES if r.high_risk}
 
 
+# XML namespace / schema URLs in manifests are not network indicators (e.g. every signed Windows binary)
+_NAMESPACE_URLS = ("xmlns", "schemas.microsoft.com", "www.w3.org/", "schemas.xmlsoap.org")
+
+
 def tag_imports(import_names: Iterable[str], strings: list[str] | None = None,
                 string_stats: dict | None = None, rules: list[Rule] = RULES) -> list[Capability]:
     """Tag capabilities from imported API names plus either raw strings or EMBER string stats."""
@@ -101,7 +105,8 @@ def tag_imports(import_names: Iterable[str], strings: list[str] | None = None,
             ev += [f"import {by_norm[i]}" for i in hit if f"import {by_norm[i]}" not in ev]
         if r.any_string_substr:
             if strings is not None:
-                hit_s = [s for s in strings if any(x in s for x in r.any_string_substr)]
+                hit_s = [s for s in strings if any(x in s for x in r.any_string_substr)
+                         and not (r.attack_id == "T1071.001" and any(n in s for n in _NAMESPACE_URLS))]
                 if not hit_s:
                     continue
                 ev += [f"string {s!r}" for s in hit_s[:3]]

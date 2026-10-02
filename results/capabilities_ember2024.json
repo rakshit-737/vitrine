@@ -1,0 +1,417 @@
+{
+  "n_records": 135423,
+  "n_with_capa_output": 46275,
+  "label_source": "EMBER2024 capa ttps/mbc and AV-derived packer tags (joyce8/EMBER2024 rev 3d23efef)",
+  "rules_vs_capa_attack": [
+    {
+      "rule": "registry path strings",
+      "attack_id": "T1012",
+      "high_risk": false,
+      "tp": 273,
+      "fp": 30,
+      "fn": 21016,
+      "precision": 0.900990099009901,
+      "precision_ci95": [
+        0.8621762374786087,
+        0.9297636813770095
+      ],
+      "recall": 0.01282352388557471,
+      "recall_ci95": [
+        0.011397625812817965,
+        0.01442520576576963
+      ]
+    },
+    {
+      "rule": "dynamic API resolution",
+      "attack_id": "T1027.007",
+      "high_risk": false,
+      "tp": 20637,
+      "fp": 10657,
+      "fn": 6242,
+      "precision": 0.659455486674762,
+      "precision_ci95": [
+        0.6541857424487127,
+        0.6646860881575902
+      ],
+      "recall": 0.7677740987387923,
+      "recall_ci95": [
+        0.7626881173125223,
+        0.7727835523043355
+      ]
+    },
+    {
+      "rule": "modify memory protection",
+      "attack_id": "T1055",
+      "high_risk": false,
+      "tp": 793,
+      "fp": 9478,
+      "fn": 230,
+      "precision": 0.07720767208645701,
+      "precision_ci95": [
+        0.07220221600298726,
+        0.08252926722158893
+      ],
+      "recall": 0.7751710654936461,
+      "recall_ci95": [
+        0.7485867537554916,
+        0.7996965232428814
+      ]
+    },
+    {
+      "rule": "process injection (remote thread)",
+      "attack_id": "T1055.002",
+      "high_risk": true,
+      "tp": 260,
+      "fp": 4,
+      "fn": 763,
+      "precision": 0.9848484848484849,
+      "precision_ci95": [
+        0.9616967894750391,
+        0.9940925088926144
+      ],
+      "recall": 0.2541544477028348,
+      "recall_ci95": [
+        0.22842837895530685,
+        0.2817199543836247
+      ]
+    },
+    {
+      "rule": "APC injection",
+      "attack_id": "T1055.004",
+      "high_risk": true,
+      "tp": 50,
+      "fp": 3,
+      "fn": 973,
+      "precision": 0.9433962264150944,
+      "precision_ci95": [
+        0.8462979168981911,
+        0.9805633385150642
+      ],
+      "recall": 0.04887585532746823,
+      "recall_ci95": [
+        0.03726848738989606,
+        0.0638585735879046
+      ]
+    },
+    {
+      "rule": "process hollowing",
+      "attack_id": "T1055.012",
+      "high_risk": true,
+      "tp": 352,
+      "fp": 13,
+      "fn": 671,
+      "precision": 0.9643835616438357,
+      "precision_ci95": [
+        0.9400246641781445,
+        0.9790694124039541
+      ],
+      "recall": 0.34408602150537637,
+      "recall_ci95": [
+        0.31560627634563465,
+        0.3737323286943638
+      ]
+    },
+    {
+      "rule": "keylogging via hook/polling",
+      "attack_id": "T1056.001",
+      "high_risk": true,
+      "tp": 3069,
+      "fp": 1040,
+      "fn": 1784,
+      "precision": 0.746897055244585,
+      "precision_ci95": [
+        0.7333765569345897,
+        0.7599563420636105
+      ],
+      "recall": 0.632392334638368,
+      "recall_ci95": [
+        0.6187273094161125,
+        0.6458479316937784
+      ]
+    },
+    {
+      "rule": "process enumeration",
+      "attack_id": "T1057",
+      "high_risk": false,
+      "tp": 2893,
+      "fp": 126,
+      "fn": 5627,
+      "precision": 0.9582643259357403,
+      "precision_ci95": [
+        0.95052907796718,
+        0.9648348396229587
+      ],
+      "recall": 0.33955399061032865,
+      "recall_ci95": [
+        0.3295728584306777,
+        0.34967973991853435
+      ]
+    },
+    {
+      "rule": "HTTP client / embedded URL",
+      "attack_id": "T1071.001",
+      "high_risk": false,
+      "tp": 9,
+      "fp": 32437,
+      "fn": 4,
+      "precision": 0.0002773839610429637,
+      "precision_ci95": [
+        0.00014594368356277257,
+        0.0005271400000173535
+      ],
+      "recall": 0.6923076923076923,
+      "recall_ci95": [
+        0.42369343180549035,
+        0.8731929634428948
+      ]
+    },
+    {
+      "rule": "raw socket networking",
+      "attack_id": "T1095",
+      "high_risk": false,
+      "tp": 0,
+      "fp": 2738,
+      "fn": 0,
+      "precision": 0.0,
+      "precision_ci95": [
+        1.0842021724855044e-19,
+        0.0014010506728373683
+      ],
+      "recall": null,
+      "recall_ci95": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "rule": "download file from internet",
+      "attack_id": "T1105",
+      "high_risk": true,
+      "tp": 107,
+      "fp": 359,
+      "fn": 504,
+      "precision": 0.2296137339055794,
+      "precision_ci95": [
+        0.19373029374216513,
+        0.26991857063748737
+      ],
+      "recall": 0.1751227495908347,
+      "recall_ci95": [
+        0.14704180146343926,
+        0.2072632892155924
+      ]
+    },
+    {
+      "rule": "create process",
+      "attack_id": "T1106",
+      "high_risk": false,
+      "tp": 0,
+      "fp": 16757,
+      "fn": 0,
+      "precision": 0.0,
+      "precision_ci95": [
+        0.0,
+        0.00022919247999165867
+      ],
+      "recall": null,
+      "recall_ci95": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "rule": "registry modification",
+      "attack_id": "T1112",
+      "high_risk": false,
+      "tp": 10440,
+      "fp": 3519,
+      "fn": 1023,
+      "precision": 0.7479045776918117,
+      "precision_ci95": [
+        0.7406338249227054,
+        0.7550389233793835
+      ],
+      "recall": 0.9107563465061502,
+      "recall_ci95": [
+        0.9053987838599926,
+        0.9158386976049766
+      ]
+    },
+    {
+      "rule": "screen capture",
+      "attack_id": "T1113",
+      "high_risk": false,
+      "tp": 1663,
+      "fp": 2223,
+      "fn": 204,
+      "precision": 0.4279464745239321,
+      "precision_ci95": [
+        0.4124687290549508,
+        0.4435665346110964
+      ],
+      "recall": 0.8907337975361542,
+      "recall_ci95": [
+        0.8757720932489637,
+        0.904090889325571
+      ]
+    },
+    {
+      "rule": "clipboard data access",
+      "attack_id": "T1115",
+      "high_risk": false,
+      "tp": 1148,
+      "fp": 36,
+      "fn": 3784,
+      "precision": 0.9695945945945946,
+      "precision_ci95": [
+        0.9581942786540173,
+        0.9779575888721502
+      ],
+      "recall": 0.23276561232765614,
+      "recall_ci95": [
+        0.22118238163466203,
+        0.24476480852694993
+      ]
+    },
+    {
+      "rule": "token privilege adjustment",
+      "attack_id": "T1134",
+      "high_risk": false,
+      "tp": 7109,
+      "fp": 63,
+      "fn": 1650,
+      "precision": 0.9912158393753486,
+      "precision_ci95": [
+        0.9887779535085145,
+        0.9931277979541117
+      ],
+      "recall": 0.8116223313163603,
+      "recall_ci95": [
+        0.8032977233717334,
+        0.8196737209541204
+      ]
+    },
+    {
+      "rule": "Windows crypto API usage",
+      "attack_id": "T1486",
+      "high_risk": false,
+      "tp": 0,
+      "fp": 771,
+      "fn": 0,
+      "precision": 0.0,
+      "precision_ci95": [
+        0.0,
+        0.004957735259211365
+      ],
+      "recall": null,
+      "recall_ci95": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "rule": "system shutdown/reboot",
+      "attack_id": "T1529",
+      "high_risk": false,
+      "tp": 6519,
+      "fp": 72,
+      "fn": 185,
+      "precision": 0.9890760127446518,
+      "precision_ci95": [
+        0.9862662900061456,
+        0.9913159673166665
+      ],
+      "recall": 0.9724045346062052,
+      "recall_ci95": [
+        0.9682045558144801,
+        0.9760634384254405
+      ]
+    },
+    {
+      "rule": "service creation / persistence",
+      "attack_id": "T1543.003",
+      "high_risk": false,
+      "tp": 664,
+      "fp": 12,
+      "fn": 1424,
+      "precision": 0.9822485207100592,
+      "precision_ci95": [
+        0.9692303665333383,
+        0.9898167635593306
+      ],
+      "recall": 0.31800766283524906,
+      "recall_ci95": [
+        0.2983822136913467,
+        0.3383015336379271
+      ]
+    },
+    {
+      "rule": "run-key persistence string",
+      "attack_id": "T1547.001",
+      "high_risk": false,
+      "tp": 0,
+      "fp": 0,
+      "fn": 5817,
+      "precision": null,
+      "precision_ci95": [
+        0.0,
+        1.0
+      ],
+      "recall": 0.0,
+      "recall_ci95": [
+        0.0,
+        0.0006599490551100505
+      ]
+    },
+    {
+      "rule": "anti-debugging checks",
+      "attack_id": "T1622",
+      "high_risk": false,
+      "tp": 37,
+      "fp": 27594,
+      "fn": 5,
+      "precision": 0.001339075675871304,
+      "precision_ci95": [
+        0.0009717039928905111,
+        0.001845082885973529
+      ],
+      "recall": 0.8809523809523809,
+      "recall_ci95": [
+        0.7499960973799032,
+        0.9480619667224176
+      ]
+    }
+  ],
+  "anti_debug_T1622_vs_mbc_B0001": {
+    "tp": 17065,
+    "fp": 10566,
+    "fn": 7459,
+    "precision": 0.6176034164525352,
+    "precision_ci95": [
+      0.6118573510697194,
+      0.6233167862483582
+    ],
+    "recall": 0.6958489642798891,
+    "recall_ci95": [
+      0.6900608867958261,
+      0.7015756954989233
+    ]
+  },
+  "packing_vs_packer_tag": {
+    "tp": 2857,
+    "fp": 10204,
+    "fn": 1638,
+    "precision": 0.21874282214225557,
+    "precision_ci95": [
+      0.21173644663126603,
+      0.22591459389937188
+    ],
+    "recall": 0.63559510567297,
+    "recall_ci95": [
+      0.6214157780905214,
+      0.6495428700765431
+    ],
+    "flagged": 13061,
+    "tagged": 4495
+  }
+}

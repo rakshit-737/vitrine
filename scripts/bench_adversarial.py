@@ -78,6 +78,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data")
     ap.add_argument("--n", type=int, default=3000)
+    ap.add_argument("--draws", type=int, default=3, help="independent donor draws per perturbation")
     a = ap.parse_args()
     data = data_dir(a.data)
     md = data / "models"
@@ -105,37 +106,76 @@ def main() -> None:
             thr = threshold_for_fpr(yv, np.load(md / f"{name}_val_scores.npy"), 0.01)
             models[name] = ("X", bst.predict, thr)
 
+    results = {"n_malware": len(mal), "threshold": "validation-calibrated 1% FPR (score models)"}
     hr = FEATURE_NAMES.index("high_risk_capabilities")
-    kinds = ["none", "overlay", "section", "imports", "header", "all"]
-    results = {"n_malware": len(mal), "threshold": "validation-calibrated 1% FPR", "rows": []}
-    det_base = {}
-    for kind in kinds:
-        raws = mal if kind == "none" else [perturb(r, donors[rng.integers(len(donors))], kind) for r in mal]
-        F = np.asarray([vector_raw(r) for r in raws], dtype=np.float32)
-        X = vectorize_many(raws)
-        row = {"perturbation": kind}
-        for name, (inp, fn, thr) in models.items():
-            det = fn(F if inp == "F" else X) >= thr
-            if kind == "none":
-                det_base[name] = det
-            base = det_base[name]
-            row[name] = {"detection_rate": float(det.mean()),
-                         "evasion_rate_of_detected": float((base & ~det).sum() / max(base.sum(), 1))}
-        # VITRINE triage: score OR capability floor
-        det = (xgbm.score_many(F) >= xgbm.thresholds["fpr_1pct"]) | (F[:, hr] > 0)
-        if kind == "none":
-            det_base["vitrine_triage"] = det
-        base = det_base["vitrine_triage"]
-        row["vitrine_triage"] = {"detection_rate": float(det.mean()),
-                                 "evasion_rate_of_detected": float((base & ~det).sum() / max(base.sum(), 1))}
-        print(kind, {k: round(v["detection_rate"], 4) for k, v in row.items() if isinstance(v, dict)}, flush=True)
-        results["rows"].append(row)
+    from _stats import mcnemar_p, wilson
 
-    # the price of the capability floor: benign samples it would flag for review
+    # triage operating point: score >= 1 % threshold OR capability floor; measure its benign FPR on the
+    # test set and give the score-only model the same FPR budget for a fair comparison
     _, Fte, yte, _ = load_split(data, "test", vectors=False)
+    s_te = np.load(md / "vitrine_xgb_test_scores.npy")
+    thr1 = xgbm.thresholds["fpr_1pct"]
+    tri_fpr = float(((s_te[yte == 0] >= thr1) | (Fte[yte == 0, hr] > 0)).mean())
+    thr_matched = threshold_for_fpr(yte, s_te, tri_fpr)
+    results["triage_benign_fpr_test"] = tri_fpr
+    results["xgb_threshold_at_triage_fpr"] = thr_matched
+    donor_hr = np.asarray([vector_raw(d)[hr] > 0 for d in donors])
+    clean = [d for d, h in zip(donors, donor_hr) if not h]
+    pools = {"any_benign_donor": donors, "donors_without_high_risk_capability": clean}
+    results["donors"] = {"n": len(donors), "with_high_risk_capability": float(donor_hr.mean())}
+    results["draws"] = a.draws
+    results["pools"] = {}
+    kinds = ["none", "overlay", "section", "imports", "header", "all"]
+    names = [*models, "vitrine_triage", "xgb_at_triage_fpr"]
+    for pool, dl in pools.items():
+        rows = []
+        base, floor0 = {}, None
+        for kind in kinds:
+            acc = {n: [] for n in names}
+            extra = {"floor_only": [], "floor_switched_on_by_donor": []}
+            for draw in range(1 if kind == "none" else a.draws):
+                rr = np.random.default_rng(1000 * draw + kinds.index(kind))
+                raws = mal if kind == "none" else [perturb(r, dl[rr.integers(len(dl))], kind) for r in mal]
+                F = np.asarray([vector_raw(r) for r in raws], dtype=np.float32)
+                X = vectorize_many(raws)
+                dets = {}
+                for name, (inp, fn, thr) in models.items():
+                    dets[name] = fn(F if inp == "F" else X) >= thr
+                sx = xgbm.score_many(F)
+                fl = F[:, hr] > 0
+                dets["vitrine_triage"] = (sx >= thr1) | fl
+                dets["xgb_at_triage_fpr"] = sx >= thr_matched
+                if kind == "none":
+                    base, floor0 = dets, fl
+                for n_ in names:
+                    acc[n_].append(dets[n_])
+                fo = dets["vitrine_triage"] & ~(sx >= thr1)
+                extra["floor_only"].append(fo.mean())
+                extra["floor_switched_on_by_donor"].append((fo & ~floor0).mean())
+            row = {"perturbation": kind}
+            for n_ in names:
+                k = int(np.mean([d.sum() for d in acc[n_]]).round())
+                row[n_] = {"detection_rate": float(np.mean([d.mean() for d in acc[n_]])),
+                           "draw_rates": [float(d.mean()) for d in acc[n_]],
+                           "ci95_wilson_draw0": wilson(int(acc[n_][0].sum()), len(mal)),
+                           "evasion_rate_of_detected": float(np.mean([(base[n_] & ~d).sum() / max(base[n_].sum(), 1)
+                                                                      for d in acc[n_]])),
+                           "mean_detected": k}
+            row["floor_only_rate"] = float(np.mean(extra["floor_only"]))
+            row["floor_switched_on_by_donor_rate"] = float(np.mean(extra["floor_switched_on_by_donor"]))
+            if "lgbm_ember_2018" in acc:
+                row["mcnemar_p_xgb_vs_lgbm2018_draw0"] = mcnemar_p(acc["vitrine_xgb"][0], acc["lgbm_ember_2018"][0])
+            row["mcnemar_p_triage_vs_xgb_matched_draw0"] = mcnemar_p(acc["vitrine_triage"][0],
+                                                                     acc["xgb_at_triage_fpr"][0])
+            print(pool, kind, {k_: round(v["detection_rate"], 4) for k_, v in row.items() if isinstance(v, dict)},
+                  "floor-only", round(row["floor_only_rate"], 4),
+                  "switched", round(row["floor_switched_on_by_donor_rate"], 4), flush=True)
+            rows.append(row)
+        results["pools"][pool] = rows
+    results["rows"] = results["pools"]["any_benign_donor"]
     results["capability_floor_benign_flag_rate"] = float((Fte[yte == 0, hr] > 0).mean())
     results["capability_floor_malware_flag_rate"] = float((Fte[yte == 1, hr] > 0).mean())
-    print("floor benign flag rate", results["capability_floor_benign_flag_rate"])
+    print("triage benign FPR", tri_fpr, "floor benign flag rate", results["capability_floor_benign_flag_rate"])
     dump("adversarial.json", results)
 
 

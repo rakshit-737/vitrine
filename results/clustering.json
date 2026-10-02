@@ -22,7 +22,18 @@
       "nmi": 0.7715998878411754,
       "homogeneity": 0.967620032888628,
       "completeness": 0.6416205997407145,
-      "purity": 0.9767932489451476
+      "purity": 0.9767932489451476,
+      "scored_on": "clustered (non-noise) points only",
+      "all_points": {
+        "noise_as_singletons": {
+          "ari": 0.34127198227904626,
+          "nmi": 0.5893020116274589
+        },
+        "noise_as_one_cluster": {
+          "ari": 0.2596577681613173,
+          "nmi": 0.6160176034734685
+        }
+      }
     },
     {
       "embedding": "interpretable",
@@ -33,7 +44,8 @@
       "nmi": 0.6242555490065466,
       "homogeneity": 0.6008560487779799,
       "completeness": 0.6495514226066582,
-      "purity": 0.6744
+      "purity": 0.6744,
+      "scored_on": "all points"
     },
     {
       "embedding": "ember_svd",
@@ -44,7 +56,18 @@
       "nmi": 0.7998793522250975,
       "homogeneity": 0.9610828084749647,
       "completeness": 0.6849859242161521,
-      "purity": 0.9768064228367529
+      "purity": 0.9768064228367529,
+      "scored_on": "clustered (non-noise) points only",
+      "all_points": {
+        "noise_as_singletons": {
+          "ari": 0.4255574558745769,
+          "nmi": 0.6069785861612338
+        },
+        "noise_as_one_cluster": {
+          "ari": 0.34751975811951913,
+          "nmi": 0.6627901214030291
+        }
+      }
     },
     {
       "embedding": "ember_svd",
@@ -55,7 +78,8 @@
       "nmi": 0.5046420256798516,
       "homogeneity": 0.4484969790731211,
       "completeness": 0.5768556372540403,
-      "purity": 0.5164
+      "purity": 0.5164,
+      "scored_on": "all points"
     }
   ]
 }

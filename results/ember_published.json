@@ -1,0 +1,85 @@
+{
+  "model": "elastic/ember ember_model_2018.txt (published by the EMBER authors)",
+  "trees": 1000,
+  "n_features": 2381,
+  "trained_on": "all labelled EMBER 2018 training rows Jan-Oct 2018 (authors); not our subsample",
+  "vectorizer_caveat": "scored on VITRINE's clean-room EMBER v2 vectors; the 50 entry-section-name hash dims differ from elastic/ember (whole-name vs per-character hashing)",
+  "ember2018_test": {
+    "roc_auc": {
+      "point": 0.9964055320999999,
+      "lo": 0.996215038935,
+      "hi": 0.99658170749
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.9649,
+      "lo": 0.96311925,
+      "hi": 0.96648025
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.86978,
+      "lo": 0.8601087500000001,
+      "hi": 0.8883304999999999
+    }
+  },
+  "diagnostic_leaked_2018_10_threshold": {
+    "note": "2018-10 is in the published model's training data; do not use as an operating point",
+    "threshold": 0.00011703973390748703,
+    "ember2018_test": {
+      "threshold": 0.00011703973390748703,
+      "precision": 0.8436451448906965,
+      "recall": 0.99567,
+      "f1": 0.9133749197321347,
+      "fpr": 0.18453,
+      "tp": 99567,
+      "fp": 18453,
+      "tn": 81547,
+      "fn": 433
+    }
+  },
+  "paired_vitrine_xgb_minus_published": {
+    "roc_auc": {
+      "mean": -0.004712284200500003,
+      "lo": -0.004921362757499914,
+      "hi": -0.004518757632499956
+    },
+    "tpr_at_fpr_1pct": {
+      "mean": -0.07846199000000001,
+      "lo": -0.08256074999999996,
+      "hi": -0.07499974999999996
+    },
+    "tpr_at_fpr_0.1pct": {
+      "mean": -0.12661998,
+      "lo": -0.14363175000000003,
+      "hi": -0.11189974999999999
+    }
+  },
+  "ember2024_test_translated": {
+    "roc_auc": {
+      "point": 0.9833257545691831,
+      "lo": 0.9822593271093792,
+      "hi": 0.9843184726664537
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.8001328572614796,
+      "lo": 0.7882566636220212,
+      "hi": 0.8113447645935398
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.7279747571203189,
+      "lo": 0.7179253508262061,
+      "hi": 0.7368658141659055
+    },
+    "at_2018_test_1pct_threshold": {
+      "threshold": 0.8416902352279133,
+      "precision": 0.9998788172564227,
+      "recall": 0.6851282902931163,
+      "f1": 0.8131066765213106,
+      "fpr": 6.380806533945891e-05,
+      "tp": 8251,
+      "fp": 1,
+      "tn": 15671,
+      "fn": 3792
+    }
+  },
+  "runtime_seconds": 1086
+}

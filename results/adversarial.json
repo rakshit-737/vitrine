@@ -1,120 +1,1375 @@
 {
   "n_malware": 3000,
-  "threshold": "validation-calibrated 1% FPR",
+  "threshold": "validation-calibrated 1% FPR (score models)",
+  "triage_benign_fpr_test": 0.1165,
+  "xgb_threshold_at_triage_fpr": 0.14792266488075256,
+  "donors": {
+    "n": 3770,
+    "with_high_risk_capability": 0.21724137931034482
+  },
+  "draws": 3,
+  "pools": {
+    "any_benign_donor": [
+      {
+        "perturbation": "none",
+        "vitrine_xgb": {
+          "detection_rate": 0.8706666666666667,
+          "draw_rates": [
+            0.8706666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8581830178900516,
+            0.8822022622549068
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2612
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.741,
+          "draw_rates": [
+            0.741
+          ],
+          "ci95_wilson_draw0": [
+            0.725022389130038,
+            0.756361205784355
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2223
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.8646666666666667,
+          "draw_rates": [
+            0.8646666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8519583325277988,
+            0.8764422938018634
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2594
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8936666666666667,
+          "draw_rates": [
+            0.8936666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8821279177027613,
+            0.9041985354008321
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2681
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9803333333333333,
+          "draw_rates": [
+            0.9803333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.9747157214293537,
+            0.984722397895183
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2941
+        },
+        "floor_only_rate": 0.023,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 0.36215955793672755,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 7.925901329477696e-60
+      },
+      {
+        "perturbation": "overlay",
+        "vitrine_xgb": {
+          "detection_rate": 0.7751111111111112,
+          "draw_rates": [
+            0.781,
+            0.7696666666666667,
+            0.7746666666666666
+          ],
+          "ci95_wilson_draw0": [
+            0.7658466533696427,
+            0.7954346336467241
+          ],
+          "evasion_rate_of_detected": 0.13016845329249618,
+          "mean_detected": 2325
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.6431111111111112,
+          "draw_rates": [
+            0.6413333333333333,
+            0.644,
+            0.644
+          ],
+          "ci95_wilson_draw0": [
+            0.6240003386728732,
+            0.6583048400874347
+          ],
+          "evasion_rate_of_detected": 0.18173639226270807,
+          "mean_detected": 1929
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7351111111111112,
+          "draw_rates": [
+            0.737,
+            0.7326666666666667,
+            0.7356666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.7209497737754946,
+            0.7524440519287008
+          ],
+          "evasion_rate_of_detected": 0.1706502184528399,
+          "mean_detected": 2205
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8111111111111112,
+          "draw_rates": [
+            0.8176666666666667,
+            0.805,
+            0.8106666666666666
+          ],
+          "ci95_wilson_draw0": [
+            0.8034464444715822,
+            0.8310743936382606
+          ],
+          "evasion_rate_of_detected": 0.11090389158274276,
+          "mean_detected": 2433
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9753333333333334,
+          "draw_rates": [
+            0.975,
+            0.975,
+            0.976
+          ],
+          "ci95_wilson_draw0": [
+            0.9687764150013717,
+            0.9800086787095686
+          ],
+          "evasion_rate_of_detected": 0.011674033775359855,
+          "mean_detected": 2926
+        },
+        "floor_only_rate": 0.036000000000000004,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 4.413598454646661e-09,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 4.290173467186031e-118
+      },
+      {
+        "perturbation": "section",
+        "vitrine_xgb": {
+          "detection_rate": 0.7521111111111112,
+          "draw_rates": [
+            0.751,
+            0.7566666666666667,
+            0.7486666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.7352114148445271,
+            0.7661466030953593
+          ],
+          "evasion_rate_of_detected": 0.16117917304747323,
+          "mean_detected": 2256
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.6296666666666667,
+          "draw_rates": [
+            0.6253333333333333,
+            0.6346666666666667,
+            0.629
+          ],
+          "ci95_wilson_draw0": [
+            0.6078626740829797,
+            0.6424834278365384
+          ],
+          "evasion_rate_of_detected": 0.19313240365871945,
+          "mean_detected": 1889
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7067777777777776,
+          "draw_rates": [
+            0.705,
+            0.7156666666666667,
+            0.6996666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.6884271863122117,
+            0.7210484857104046
+          ],
+          "evasion_rate_of_detected": 0.2029041377537908,
+          "mean_detected": 2120
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.7884444444444445,
+          "draw_rates": [
+            0.786,
+            0.794,
+            0.7853333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7709631468998671,
+            0.8003053516292465
+          ],
+          "evasion_rate_of_detected": 0.13974884993161754,
+          "mean_detected": 2365
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.973,
+          "draw_rates": [
+            0.9733333333333334,
+            0.973,
+            0.9726666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.9669349430266634,
+            0.9785210801800281
+          ],
+          "evasion_rate_of_detected": 0.012467414711549359,
+          "mean_detected": 2919
+        },
+        "floor_only_rate": 0.036333333333333336,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 3.7781155415006005e-09,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 4.7797115045527715e-138
+      },
+      {
+        "perturbation": "imports",
+        "vitrine_xgb": {
+          "detection_rate": 0.7686666666666667,
+          "draw_rates": [
+            0.768,
+            0.764,
+            0.774
+          ],
+          "ci95_wilson_draw0": [
+            0.7525583409195513,
+            0.782756196163674
+          ],
+          "evasion_rate_of_detected": 0.12621235324144972,
+          "mean_detected": 2306
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.602,
+          "draw_rates": [
+            0.603,
+            0.5983333333333334,
+            0.6046666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.5853707865971054,
+            0.6203657705654775
+          ],
+          "evasion_rate_of_detected": 0.19943019943019943,
+          "mean_detected": 1806
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7839999999999999,
+          "draw_rates": [
+            0.7836666666666666,
+            0.7853333333333333,
+            0.783
+          ],
+          "ci95_wilson_draw0": [
+            0.7685750525412725,
+            0.7980327472818924
+          ],
+          "evasion_rate_of_detected": 0.09663325623233103,
+          "mean_detected": 2352
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8537777777777777,
+          "draw_rates": [
+            0.8536666666666667,
+            0.8486666666666667,
+            0.859
+          ],
+          "ci95_wilson_draw0": [
+            0.840566922121782,
+            0.8658618388798376
+          ],
+          "evasion_rate_of_detected": 0.07783165485515355,
+          "mean_detected": 2561
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9625555555555555,
+          "draw_rates": [
+            0.9613333333333334,
+            0.9626666666666667,
+            0.9636666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.9538234685125888,
+            0.9676632470635105
+          ],
+          "evasion_rate_of_detected": 0.02130794514337527,
+          "mean_detected": 2888
+        },
+        "floor_only_rate": 0.08511111111111112,
+        "floor_switched_on_by_donor_rate": 0.04988888888888889,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 0.04621675404003925,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 1.0488559454634877e-66
+      },
+      {
+        "perturbation": "header",
+        "vitrine_xgb": {
+          "detection_rate": 0.7908888888888889,
+          "draw_rates": [
+            0.7916666666666666,
+            0.7976666666666666,
+            0.7833333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7767657526191283,
+            0.8058215856244315
+          ],
+          "evasion_rate_of_detected": 0.10566615620214394,
+          "mean_detected": 2373
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.7056666666666667,
+          "draw_rates": [
+            0.7086666666666667,
+            0.704,
+            0.7043333333333334
+          ],
+          "ci95_wilson_draw0": [
+            0.6921486583793715,
+            0.7246509687525926
+          ],
+          "evasion_rate_of_detected": 0.07572349677612836,
+          "mean_detected": 2117
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.8353333333333334,
+          "draw_rates": [
+            0.8323333333333334,
+            0.8383333333333334,
+            0.8353333333333334
+          ],
+          "ci95_wilson_draw0": [
+            0.8185423353361487,
+            0.8452743232110846
+          ],
+          "evasion_rate_of_detected": 0.053585196607555896,
+          "mean_detected": 2506
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8236666666666667,
+          "draw_rates": [
+            0.823,
+            0.83,
+            0.818
+          ],
+          "ci95_wilson_draw0": [
+            0.8089318303258899,
+            0.8362420333975495
+          ],
+          "evasion_rate_of_detected": 0.09038915827427578,
+          "mean_detected": 2471
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9632222222222223,
+          "draw_rates": [
+            0.965,
+            0.9606666666666667,
+            0.964
+          ],
+          "ci95_wilson_draw0": [
+            0.9578063398318523,
+            0.9710043308535946
+          ],
+          "evasion_rate_of_detected": 0.020627904340927122,
+          "mean_detected": 2890
+        },
+        "floor_only_rate": 0.032777777777777774,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 9.283061851948009e-08,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 2.276668780644113e-104
+      },
+      {
+        "perturbation": "all",
+        "vitrine_xgb": {
+          "detection_rate": 0.39877777777777784,
+          "draw_rates": [
+            0.4,
+            0.4096666666666667,
+            0.38666666666666666
+          ],
+          "ci95_wilson_draw0": [
+            0.38260818029115184,
+            0.41764758945391334
+          ],
+          "evasion_rate_of_detected": 0.554364471669219,
+          "mean_detected": 1196
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.3658888888888889,
+          "draw_rates": [
+            0.37833333333333335,
+            0.37066666666666664,
+            0.3486666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.3611451704532323,
+            0.39583268273659705
+          ],
+          "evasion_rate_of_detected": 0.5339631129104814,
+          "mean_detected": 1098
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.4414444444444445,
+          "draw_rates": [
+            0.44433333333333336,
+            0.44966666666666666,
+            0.43033333333333335
+          ],
+          "ci95_wilson_draw0": [
+            0.42663504365508437,
+            0.462174001503002
+          ],
+          "evasion_rate_of_detected": 0.5,
+          "mean_detected": 1324
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.5872222222222222,
+          "draw_rates": [
+            0.584,
+            0.5923333333333334,
+            0.5853333333333334
+          ],
+          "ci95_wilson_draw0": [
+            0.5662658877244686,
+            0.6015192656896766
+          ],
+          "evasion_rate_of_detected": 0.3769737660077086,
+          "mean_detected": 1762
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.8572222222222222,
+          "draw_rates": [
+            0.8573333333333333,
+            0.8566666666666667,
+            0.8576666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8443612268755454,
+            0.8693914892354215
+          ],
+          "evasion_rate_of_detected": 0.13340133741357815,
+          "mean_detected": 2572
+        },
+        "floor_only_rate": 0.18844444444444444,
+        "floor_switched_on_by_donor_rate": 0.12977777777777777,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 9.170388189213464e-07,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 7.912313743515058e-155
+      }
+    ],
+    "donors_without_high_risk_capability": [
+      {
+        "perturbation": "none",
+        "vitrine_xgb": {
+          "detection_rate": 0.8706666666666667,
+          "draw_rates": [
+            0.8706666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8581830178900516,
+            0.8822022622549068
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2612
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.741,
+          "draw_rates": [
+            0.741
+          ],
+          "ci95_wilson_draw0": [
+            0.725022389130038,
+            0.756361205784355
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2223
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.8646666666666667,
+          "draw_rates": [
+            0.8646666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8519583325277988,
+            0.8764422938018634
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2594
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8936666666666667,
+          "draw_rates": [
+            0.8936666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8821279177027613,
+            0.9041985354008321
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2681
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9803333333333333,
+          "draw_rates": [
+            0.9803333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.9747157214293537,
+            0.984722397895183
+          ],
+          "evasion_rate_of_detected": 0.0,
+          "mean_detected": 2941
+        },
+        "floor_only_rate": 0.023,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 0.36215955793672755,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 7.925901329477696e-60
+      },
+      {
+        "perturbation": "overlay",
+        "vitrine_xgb": {
+          "detection_rate": 0.7848888888888889,
+          "draw_rates": [
+            0.782,
+            0.7853333333333333,
+            0.7873333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7668696973257801,
+            0.7964090319931362
+          ],
+          "evasion_rate_of_detected": 0.1232771822358346,
+          "mean_detected": 2355
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.6355555555555555,
+          "draw_rates": [
+            0.6393333333333333,
+            0.6316666666666667,
+            0.6356666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.6219820097198487,
+            0.6563282844353604
+          ],
+          "evasion_rate_of_detected": 0.18638476533213377,
+          "mean_detected": 1907
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7276666666666666,
+          "draw_rates": [
+            0.7336666666666667,
+            0.722,
+            0.7273333333333334
+          ],
+          "ci95_wilson_draw0": [
+            0.7175572068511996,
+            0.7491784778444982
+          ],
+          "evasion_rate_of_detected": 0.1791313287072732,
+          "mean_detected": 2183
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8188888888888889,
+          "draw_rates": [
+            0.8146666666666667,
+            0.8193333333333334,
+            0.8226666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.8003628611615193,
+            0.8281656500406754
+          ],
+          "evasion_rate_of_detected": 0.10530896431679722,
+          "mean_detected": 2457
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.977,
+          "draw_rates": [
+            0.978,
+            0.975,
+            0.978
+          ],
+          "ci95_wilson_draw0": [
+            0.9721076702355893,
+            0.9826697503829991
+          ],
+          "evasion_rate_of_detected": 0.010880652839170349,
+          "mean_detected": 2931
+        },
+        "floor_only_rate": 0.034,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 7.111056970246337e-11,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 1.0435365833699944e-125
+      },
+      {
+        "perturbation": "section",
+        "vitrine_xgb": {
+          "detection_rate": 0.7513333333333333,
+          "draw_rates": [
+            0.7536666666666667,
+            0.751,
+            0.7493333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7379303341903057,
+            0.768754196556379
+          ],
+          "evasion_rate_of_detected": 0.15862685043389482,
+          "mean_detected": 2254
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.6274444444444444,
+          "draw_rates": [
+            0.6263333333333333,
+            0.6286666666666667,
+            0.6273333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.6088706820988543,
+            0.6434728621232133
+          ],
+          "evasion_rate_of_detected": 0.1949317738791423,
+          "mean_detected": 1882
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7047777777777777,
+          "draw_rates": [
+            0.7046666666666667,
+            0.7033333333333334,
+            0.7063333333333334
+          ],
+          "ci95_wilson_draw0": [
+            0.6880889336135422,
+            0.7207209243082243
+          ],
+          "evasion_rate_of_detected": 0.2014906193780519,
+          "mean_detected": 2114
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.7872222222222223,
+          "draw_rates": [
+            0.789,
+            0.7873333333333333,
+            0.7853333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.774034589627432,
+            0.8032262358093297
+          ],
+          "evasion_rate_of_detected": 0.13763521074226037,
+          "mean_detected": 2362
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9734444444444444,
+          "draw_rates": [
+            0.972,
+            0.9726666666666667,
+            0.9756666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.9654659955638838,
+            0.9773267712394085
+          ],
+          "evasion_rate_of_detected": 0.012127394310325286,
+          "mean_detected": 2920
+        },
+        "floor_only_rate": 0.03588888888888889,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 8.594224334118918e-11,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 1.1718946075622622e-133
+      },
+      {
+        "perturbation": "imports",
+        "vitrine_xgb": {
+          "detection_rate": 0.7784444444444444,
+          "draw_rates": [
+            0.781,
+            0.7816666666666666,
+            0.7726666666666666
+          ],
+          "ci95_wilson_draw0": [
+            0.7658466533696427,
+            0.7954346336467241
+          ],
+          "evasion_rate_of_detected": 0.11396120469627362,
+          "mean_detected": 2335
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.616,
+          "draw_rates": [
+            0.6173333333333333,
+            0.616,
+            0.6146666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.5998014336224661,
+            0.6345651298766574
+          ],
+          "evasion_rate_of_detected": 0.18053681211575948,
+          "mean_detected": 1848
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.7947777777777777,
+          "draw_rates": [
+            0.7976666666666666,
+            0.7903333333333333,
+            0.7963333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7829143527072178,
+            0.8116576393516381
+          ],
+          "evasion_rate_of_detected": 0.0850681058853765,
+          "mean_detected": 2384
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8119999999999999,
+          "draw_rates": [
+            0.814,
+            0.8146666666666667,
+            0.8073333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7996778071167874,
+            0.8275190758837079
+          ],
+          "evasion_rate_of_detected": 0.09859505159766256,
+          "mean_detected": 2436
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9623333333333334,
+          "draw_rates": [
+            0.9666666666666667,
+            0.9593333333333334,
+            0.961
+          ],
+          "ci95_wilson_draw0": [
+            0.9596228935228089,
+            0.972516847666887
+          ],
+          "evasion_rate_of_detected": 0.020514564207185764,
+          "mean_detected": 2887
+        },
+        "floor_only_rate": 0.033555555555555554,
+        "floor_switched_on_by_donor_rate": 0.0001111111111111111,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 0.03521800186034647,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 3.9447512945114155e-111
+      },
+      {
+        "perturbation": "header",
+        "vitrine_xgb": {
+          "detection_rate": 0.7747777777777779,
+          "draw_rates": [
+            0.769,
+            0.773,
+            0.7823333333333333
+          ],
+          "ci95_wilson_draw0": [
+            0.7535797915046974,
+            0.7837321878810771
+          ],
+          "evasion_rate_of_detected": 0.12161817253700868,
+          "mean_detected": 2324
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.7008888888888888,
+          "draw_rates": [
+            0.7,
+            0.698,
+            0.7046666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.6833544880214235,
+            0.7161339724884461
+          ],
+          "evasion_rate_of_detected": 0.07647323436797121,
+          "mean_detected": 2103
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.8327777777777777,
+          "draw_rates": [
+            0.8306666666666667,
+            0.8326666666666667,
+            0.835
+          ],
+          "ci95_wilson_draw0": [
+            0.8168251087430762,
+            0.8436624792999081
+          ],
+          "evasion_rate_of_detected": 0.05409920328964277,
+          "mean_detected": 2498
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.8097777777777777,
+          "draw_rates": [
+            0.8063333333333333,
+            0.806,
+            0.817
+          ],
+          "ci95_wilson_draw0": [
+            0.7918044528275122,
+            0.8200787058534381
+          ],
+          "evasion_rate_of_detected": 0.10344398856148203,
+          "mean_detected": 2429
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.9572222222222222,
+          "draw_rates": [
+            0.9583333333333334,
+            0.9543333333333334,
+            0.959
+          ],
+          "ci95_wilson_draw0": [
+            0.9505772083509719,
+            0.9649171803174793
+          ],
+          "evasion_rate_of_detected": 0.026181570894253655,
+          "mean_detected": 2872
+        },
+        "floor_only_rate": 0.034999999999999996,
+        "floor_switched_on_by_donor_rate": 0.0,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 4.2451462347935915e-16,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 3.798623770198309e-107
+      },
+      {
+        "perturbation": "all",
+        "vitrine_xgb": {
+          "detection_rate": 0.4121111111111111,
+          "draw_rates": [
+            0.408,
+            0.4136666666666667,
+            0.4146666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.39054205030352757,
+            0.4256932578619324
+          ],
+          "evasion_rate_of_detected": 0.5412200102092904,
+          "mean_detected": 1236
+        },
+        "lgbm_ember_paper": {
+          "detection_rate": 0.38477777777777783,
+          "draw_rates": [
+            0.382,
+            0.37966666666666665,
+            0.39266666666666666
+          ],
+          "ci95_wilson_draw0": [
+            0.3647748210540685,
+            0.39952698724510843
+          ],
+          "evasion_rate_of_detected": 0.5075723496776128,
+          "mean_detected": 1154
+        },
+        "lgbm_ember_2018": {
+          "detection_rate": 0.46422222222222215,
+          "draw_rates": [
+            0.4593333333333333,
+            0.4666666666666667,
+            0.4666666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.4415640055994042,
+            0.47720667409692225
+          ],
+          "evasion_rate_of_detected": 0.4739141608840915,
+          "mean_detected": 1393
+        },
+        "vitrine_triage": {
+          "detection_rate": 0.47077777777777774,
+          "draw_rates": [
+            0.4663333333333333,
+            0.4723333333333333,
+            0.4736666666666667
+          ],
+          "ci95_wilson_draw0": [
+            0.4485364178666177,
+            0.48421635794755424
+          ],
+          "evasion_rate_of_detected": 0.485142359815989,
+          "mean_detected": 1412
+        },
+        "xgb_at_triage_fpr": {
+          "detection_rate": 0.8575555555555555,
+          "draw_rates": [
+            0.8596666666666667,
+            0.858,
+            0.855
+          ],
+          "ci95_wilson_draw0": [
+            0.8467772371603647,
+            0.871636177656551
+          ],
+          "evasion_rate_of_detected": 0.13226793607616458,
+          "mean_detected": 2573
+        },
+        "floor_only_rate": 0.058666666666666666,
+        "floor_switched_on_by_donor_rate": 0.0002222222222222222,
+        "mcnemar_p_xgb_vs_lgbm2018_draw0": 4.572632896053957e-08,
+        "mcnemar_p_triage_vs_xgb_matched_draw0": 1.9926090816357928e-287
+      }
+    ]
+  },
   "rows": [
     {
       "perturbation": "none",
       "vitrine_xgb": {
         "detection_rate": 0.8706666666666667,
-        "evasion_rate_of_detected": 0.0
+        "draw_rates": [
+          0.8706666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.8581830178900516,
+          0.8822022622549068
+        ],
+        "evasion_rate_of_detected": 0.0,
+        "mean_detected": 2612
       },
       "lgbm_ember_paper": {
         "detection_rate": 0.741,
-        "evasion_rate_of_detected": 0.0
+        "draw_rates": [
+          0.741
+        ],
+        "ci95_wilson_draw0": [
+          0.725022389130038,
+          0.756361205784355
+        ],
+        "evasion_rate_of_detected": 0.0,
+        "mean_detected": 2223
       },
       "lgbm_ember_2018": {
         "detection_rate": 0.8646666666666667,
-        "evasion_rate_of_detected": 0.0
+        "draw_rates": [
+          0.8646666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.8519583325277988,
+          0.8764422938018634
+        ],
+        "evasion_rate_of_detected": 0.0,
+        "mean_detected": 2594
       },
       "vitrine_triage": {
         "detection_rate": 0.8936666666666667,
-        "evasion_rate_of_detected": 0.0
-      }
+        "draw_rates": [
+          0.8936666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.8821279177027613,
+          0.9041985354008321
+        ],
+        "evasion_rate_of_detected": 0.0,
+        "mean_detected": 2681
+      },
+      "xgb_at_triage_fpr": {
+        "detection_rate": 0.9803333333333333,
+        "draw_rates": [
+          0.9803333333333333
+        ],
+        "ci95_wilson_draw0": [
+          0.9747157214293537,
+          0.984722397895183
+        ],
+        "evasion_rate_of_detected": 0.0,
+        "mean_detected": 2941
+      },
+      "floor_only_rate": 0.023,
+      "floor_switched_on_by_donor_rate": 0.0,
+      "mcnemar_p_xgb_vs_lgbm2018_draw0": 0.36215955793672755,
+      "mcnemar_p_triage_vs_xgb_matched_draw0": 7.925901329477696e-60
     },
     {
       "perturbation": "overlay",
       "vitrine_xgb": {
-        "detection_rate": 0.7856666666666666,
-        "evasion_rate_of_detected": 0.12021439509954059
+        "detection_rate": 0.7751111111111112,
+        "draw_rates": [
+          0.781,
+          0.7696666666666667,
+          0.7746666666666666
+        ],
+        "ci95_wilson_draw0": [
+          0.7658466533696427,
+          0.7954346336467241
+        ],
+        "evasion_rate_of_detected": 0.13016845329249618,
+        "mean_detected": 2325
       },
       "lgbm_ember_paper": {
-        "detection_rate": 0.6376666666666667,
-        "evasion_rate_of_detected": 0.1862348178137652
+        "detection_rate": 0.6431111111111112,
+        "draw_rates": [
+          0.6413333333333333,
+          0.644,
+          0.644
+        ],
+        "ci95_wilson_draw0": [
+          0.6240003386728732,
+          0.6583048400874347
+        ],
+        "evasion_rate_of_detected": 0.18173639226270807,
+        "mean_detected": 1929
       },
       "lgbm_ember_2018": {
-        "detection_rate": 0.742,
-        "evasion_rate_of_detected": 0.16422513492675406
+        "detection_rate": 0.7351111111111112,
+        "draw_rates": [
+          0.737,
+          0.7326666666666667,
+          0.7356666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.7209497737754946,
+          0.7524440519287008
+        ],
+        "evasion_rate_of_detected": 0.1706502184528399,
+        "mean_detected": 2205
       },
       "vitrine_triage": {
-        "detection_rate": 0.8226666666666667,
-        "evasion_rate_of_detected": 0.09958970533383066
-      }
+        "detection_rate": 0.8111111111111112,
+        "draw_rates": [
+          0.8176666666666667,
+          0.805,
+          0.8106666666666666
+        ],
+        "ci95_wilson_draw0": [
+          0.8034464444715822,
+          0.8310743936382606
+        ],
+        "evasion_rate_of_detected": 0.11090389158274276,
+        "mean_detected": 2433
+      },
+      "xgb_at_triage_fpr": {
+        "detection_rate": 0.9753333333333334,
+        "draw_rates": [
+          0.975,
+          0.975,
+          0.976
+        ],
+        "ci95_wilson_draw0": [
+          0.9687764150013717,
+          0.9800086787095686
+        ],
+        "evasion_rate_of_detected": 0.011674033775359855,
+        "mean_detected": 2926
+      },
+      "floor_only_rate": 0.036000000000000004,
+      "floor_switched_on_by_donor_rate": 0.0,
+      "mcnemar_p_xgb_vs_lgbm2018_draw0": 4.413598454646661e-09,
+      "mcnemar_p_triage_vs_xgb_matched_draw0": 4.290173467186031e-118
     },
     {
       "perturbation": "section",
       "vitrine_xgb": {
-        "detection_rate": 0.751,
-        "evasion_rate_of_detected": 0.16079632465543645
+        "detection_rate": 0.7521111111111112,
+        "draw_rates": [
+          0.751,
+          0.7566666666666667,
+          0.7486666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.7352114148445271,
+          0.7661466030953593
+        ],
+        "evasion_rate_of_detected": 0.16117917304747323,
+        "mean_detected": 2256
       },
       "lgbm_ember_paper": {
-        "detection_rate": 0.6303333333333333,
-        "evasion_rate_of_detected": 0.1871345029239766
+        "detection_rate": 0.6296666666666667,
+        "draw_rates": [
+          0.6253333333333333,
+          0.6346666666666667,
+          0.629
+        ],
+        "ci95_wilson_draw0": [
+          0.6078626740829797,
+          0.6424834278365384
+        ],
+        "evasion_rate_of_detected": 0.19313240365871945,
+        "mean_detected": 1889
       },
       "lgbm_ember_2018": {
-        "detection_rate": 0.7033333333333334,
-        "evasion_rate_of_detected": 0.2035466461063994
+        "detection_rate": 0.7067777777777776,
+        "draw_rates": [
+          0.705,
+          0.7156666666666667,
+          0.6996666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.6884271863122117,
+          0.7210484857104046
+        ],
+        "evasion_rate_of_detected": 0.2029041377537908,
+        "mean_detected": 2120
       },
       "vitrine_triage": {
-        "detection_rate": 0.7863333333333333,
-        "evasion_rate_of_detected": 0.1409921671018277
-      }
+        "detection_rate": 0.7884444444444445,
+        "draw_rates": [
+          0.786,
+          0.794,
+          0.7853333333333333
+        ],
+        "ci95_wilson_draw0": [
+          0.7709631468998671,
+          0.8003053516292465
+        ],
+        "evasion_rate_of_detected": 0.13974884993161754,
+        "mean_detected": 2365
+      },
+      "xgb_at_triage_fpr": {
+        "detection_rate": 0.973,
+        "draw_rates": [
+          0.9733333333333334,
+          0.973,
+          0.9726666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.9669349430266634,
+          0.9785210801800281
+        ],
+        "evasion_rate_of_detected": 0.012467414711549359,
+        "mean_detected": 2919
+      },
+      "floor_only_rate": 0.036333333333333336,
+      "floor_switched_on_by_donor_rate": 0.0,
+      "mcnemar_p_xgb_vs_lgbm2018_draw0": 3.7781155415006005e-09,
+      "mcnemar_p_triage_vs_xgb_matched_draw0": 4.7797115045527715e-138
     },
     {
       "perturbation": "imports",
       "vitrine_xgb": {
-        "detection_rate": 0.771,
-        "evasion_rate_of_detected": 0.12212863705972435
+        "detection_rate": 0.7686666666666667,
+        "draw_rates": [
+          0.768,
+          0.764,
+          0.774
+        ],
+        "ci95_wilson_draw0": [
+          0.7525583409195513,
+          0.782756196163674
+        ],
+        "evasion_rate_of_detected": 0.12621235324144972,
+        "mean_detected": 2306
       },
       "lgbm_ember_paper": {
         "detection_rate": 0.602,
-        "evasion_rate_of_detected": 0.19883040935672514
+        "draw_rates": [
+          0.603,
+          0.5983333333333334,
+          0.6046666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.5853707865971054,
+          0.6203657705654775
+        ],
+        "evasion_rate_of_detected": 0.19943019943019943,
+        "mean_detected": 1806
       },
       "lgbm_ember_2018": {
-        "detection_rate": 0.782,
-        "evasion_rate_of_detected": 0.09984579799537394
+        "detection_rate": 0.7839999999999999,
+        "draw_rates": [
+          0.7836666666666666,
+          0.7853333333333333,
+          0.783
+        ],
+        "ci95_wilson_draw0": [
+          0.7685750525412725,
+          0.7980327472818924
+        ],
+        "evasion_rate_of_detected": 0.09663325623233103,
+        "mean_detected": 2352
       },
       "vitrine_triage": {
-        "detection_rate": 0.855,
-        "evasion_rate_of_detected": 0.07646400596792241
-      }
+        "detection_rate": 0.8537777777777777,
+        "draw_rates": [
+          0.8536666666666667,
+          0.8486666666666667,
+          0.859
+        ],
+        "ci95_wilson_draw0": [
+          0.840566922121782,
+          0.8658618388798376
+        ],
+        "evasion_rate_of_detected": 0.07783165485515355,
+        "mean_detected": 2561
+      },
+      "xgb_at_triage_fpr": {
+        "detection_rate": 0.9625555555555555,
+        "draw_rates": [
+          0.9613333333333334,
+          0.9626666666666667,
+          0.9636666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.9538234685125888,
+          0.9676632470635105
+        ],
+        "evasion_rate_of_detected": 0.02130794514337527,
+        "mean_detected": 2888
+      },
+      "floor_only_rate": 0.08511111111111112,
+      "floor_switched_on_by_donor_rate": 0.04988888888888889,
+      "mcnemar_p_xgb_vs_lgbm2018_draw0": 0.04621675404003925,
+      "mcnemar_p_triage_vs_xgb_matched_draw0": 1.0488559454634877e-66
     },
     {
       "perturbation": "header",
       "vitrine_xgb": {
-        "detection_rate": 0.7916666666666666,
-        "evasion_rate_of_detected": 0.1060490045941807
+        "detection_rate": 0.7908888888888889,
+        "draw_rates": [
+          0.7916666666666666,
+          0.7976666666666666,
+          0.7833333333333333
+        ],
+        "ci95_wilson_draw0": [
+          0.7767657526191283,
+          0.8058215856244315
+        ],
+        "evasion_rate_of_detected": 0.10566615620214394,
+        "mean_detected": 2373
       },
       "lgbm_ember_paper": {
-        "detection_rate": 0.702,
-        "evasion_rate_of_detected": 0.08007197480881692
+        "detection_rate": 0.7056666666666667,
+        "draw_rates": [
+          0.7086666666666667,
+          0.704,
+          0.7043333333333334
+        ],
+        "ci95_wilson_draw0": [
+          0.6921486583793715,
+          0.7246509687525926
+        ],
+        "evasion_rate_of_detected": 0.07572349677612836,
+        "mean_detected": 2117
       },
       "lgbm_ember_2018": {
-        "detection_rate": 0.8346666666666667,
-        "evasion_rate_of_detected": 0.052428681572860444
+        "detection_rate": 0.8353333333333334,
+        "draw_rates": [
+          0.8323333333333334,
+          0.8383333333333334,
+          0.8353333333333334
+        ],
+        "ci95_wilson_draw0": [
+          0.8185423353361487,
+          0.8452743232110846
+        ],
+        "evasion_rate_of_detected": 0.053585196607555896,
+        "mean_detected": 2506
       },
       "vitrine_triage": {
-        "detection_rate": 0.823,
-        "evasion_rate_of_detected": 0.09250279746363298
-      }
+        "detection_rate": 0.8236666666666667,
+        "draw_rates": [
+          0.823,
+          0.83,
+          0.818
+        ],
+        "ci95_wilson_draw0": [
+          0.8089318303258899,
+          0.8362420333975495
+        ],
+        "evasion_rate_of_detected": 0.09038915827427578,
+        "mean_detected": 2471
+      },
+      "xgb_at_triage_fpr": {
+        "detection_rate": 0.9632222222222223,
+        "draw_rates": [
+          0.965,
+          0.9606666666666667,
+          0.964
+        ],
+        "ci95_wilson_draw0": [
+          0.9578063398318523,
+          0.9710043308535946
+        ],
+        "evasion_rate_of_detected": 0.020627904340927122,
+        "mean_detected": 2890
+      },
+      "floor_only_rate": 0.032777777777777774,
+      "floor_switched_on_by_donor_rate": 0.0,
+      "mcnemar_p_xgb_vs_lgbm2018_draw0": 9.283061851948009e-08,
+      "mcnemar_p_triage_vs_xgb_matched_draw0": 2.276668780644113e-104
     },
     {
       "perturbation": "all",
       "vitrine_xgb": {
-        "detection_rate": 0.4023333333333333,
-        "evasion_rate_of_detected": 0.5520673813169985
+        "detection_rate": 0.39877777777777784,
+        "draw_rates": [
+          0.4,
+          0.4096666666666667,
+          0.38666666666666666
+        ],
+        "ci95_wilson_draw0": [
+          0.38260818029115184,
+          0.41764758945391334
+        ],
+        "evasion_rate_of_detected": 0.554364471669219,
+        "mean_detected": 1196
       },
       "lgbm_ember_paper": {
-        "detection_rate": 0.37066666666666664,
-        "evasion_rate_of_detected": 0.524966261808367
+        "detection_rate": 0.3658888888888889,
+        "draw_rates": [
+          0.37833333333333335,
+          0.37066666666666664,
+          0.3486666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.3611451704532323,
+          0.39583268273659705
+        ],
+        "evasion_rate_of_detected": 0.5339631129104814,
+        "mean_detected": 1098
       },
       "lgbm_ember_2018": {
-        "detection_rate": 0.44666666666666666,
-        "evasion_rate_of_detected": 0.4915188897455667
+        "detection_rate": 0.4414444444444445,
+        "draw_rates": [
+          0.44433333333333336,
+          0.44966666666666666,
+          0.43033333333333335
+        ],
+        "ci95_wilson_draw0": [
+          0.42663504365508437,
+          0.462174001503002
+        ],
+        "evasion_rate_of_detected": 0.5,
+        "mean_detected": 1324
       },
       "vitrine_triage": {
-        "detection_rate": 0.589,
-        "evasion_rate_of_detected": 0.3782170831779187
-      }
+        "detection_rate": 0.5872222222222222,
+        "draw_rates": [
+          0.584,
+          0.5923333333333334,
+          0.5853333333333334
+        ],
+        "ci95_wilson_draw0": [
+          0.5662658877244686,
+          0.6015192656896766
+        ],
+        "evasion_rate_of_detected": 0.3769737660077086,
+        "mean_detected": 1762
+      },
+      "xgb_at_triage_fpr": {
+        "detection_rate": 0.8572222222222222,
+        "draw_rates": [
+          0.8573333333333333,
+          0.8566666666666667,
+          0.8576666666666667
+        ],
+        "ci95_wilson_draw0": [
+          0.8443612268755454,
+          0.8693914892354215
+        ],
+        "evasion_rate_of_detected": 0.13340133741357815,
+        "mean_detected": 2572
+      },
+      "floor_only_rate": 0.18844444444444444,
+      "floor_switched_on_by_donor_rate": 0.12977777777777777,
+      "mcnemar_p_xgb_vs_lgbm2018_draw0": 9.170388189213464e-07,
+      "mcnemar_p_triage_vs_xgb_matched_draw0": 7.912313743515058e-155
     }
   ],
   "capability_floor_benign_flag_rate": 0.1087,

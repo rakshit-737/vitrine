@@ -12,8 +12,13 @@ tuned against the *training* benign pool (16,392 samples in the committed run). 
   * optional: hit-rate on a local benign corpus (e.g. C:/Windows/System32), via VITRINE's dissector
 
 Baselines: (a) exact-imphash rule of the group's most common imphash, (b) naive frequency rule
-(the 8 most frequent imports in the group, all required, no benign filtering) -- a yarGen-like
-string-frequency approach without the benign-corpus step.
+(the 8 most frequent imports in the group, all required, no benign filtering). Like-for-like
+baselines that use the *same* training benign pool as VITRINE (no test leakage):
+(c) ``imphash_filtered``: the most common of the group's top-5 imphashes that hits no training
+benign, else abstain; (d) ``frequency_filtered`` (the yarGen principle): the 8 most frequent imports
+present in < 0.2 % of training benign, smallest ``N of them`` with zero training-benign hits, else
+abstain. Ablation (e) ``vitrine_no_abstain``: VITRINE's rule, or the naive frequency rule where
+VITRINE abstains.
 
     python scripts/bench_yara.py --data D:/.../vitrine [--benign-dir C:/Windows/System32 --benign-limit 3000]
 """
@@ -28,6 +33,9 @@ import numpy as np
 from _common import REPO, data_dir, dump, iter_jsonl_gz, load_split
 
 from vitrine.yara_synth import StructuralRule, structural_atoms, synthesize_structural
+
+KINDS = ("vitrine", "imphash_baseline", "frequency_baseline", "imphash_filtered", "frequency_filtered",
+         "vitrine_no_abstain")
 
 
 def _pick(sha: str, mod: int) -> bool:
@@ -88,6 +96,23 @@ def main() -> None:
         freq = [x for x, _ in Counter(x for s in g for x in s if x[0] == "imp").most_common(8)]
         if freq:
             rules[(fam, "frequency_baseline")] = StructuralRule("fq", freq, len(freq), fam, len(g))
+        # like-for-like baselines tuned on the same training benign pool
+        for ih, _ in Counter(next((x[1] for x in s if x[0] == "imphash"), "") for s in g).most_common(5):
+            r = StructuralRule("ihf", [("imphash", ih)], 1, fam, len(g))
+            if ih and not any(r.matches_atoms(b) for b in benign_train):
+                rules[(fam, "imphash_filtered")] = r
+                break
+        ben_n = Counter(x for b in benign_train for x in b if x[0] == "imp")
+        ok = [x for x, _ in Counter(x for s in g for x in s if x[0] == "imp").most_common()
+              if ben_n[x] < 0.002 * len(benign_train)][:8]
+        for thr in range(1, len(ok) + 1):
+            r = StructuralRule("fqf", ok, thr, fam, len(g))
+            if not any(r.matches_atoms(b) for b in benign_train):
+                rules[(fam, "frequency_filtered")] = r
+                break
+        best = rules.get((fam, "vitrine")) or rules.get((fam, "frequency_baseline"))
+        if best:
+            rules[(fam, "vitrine_no_abstain")] = best
     del groups
 
     cnt = {k: Counter() for k in rules}
@@ -127,7 +152,7 @@ def main() -> None:
     rows = []
     for fam in fams:
         row = dict(meta_rows[fam])
-        for kind in ("vitrine", "imphash_baseline", "frequency_baseline"):
+        for kind in KINDS:
             k = (fam, kind)
             if k not in rules:
                 row[kind] = None
@@ -162,7 +187,7 @@ def main() -> None:
                    "mean_cross_family": agg(k, "cross_family_hits"),
                    "total_local_fp": int(sum(r[k].get("local_benign_fp", 0) for r in rows if r.get(k))),
                    "rules": sum(1 for r in rows if r.get(k))}
-               for k in ("vitrine", "imphash_baseline", "frequency_baseline")}
+               for k in KINDS}
     print(summary)
     dump("yara_structural.json", {"min_support": a.min_support, "n_test_benign": n_benign, "n_local_benign": n_local,
                                   "benign_train_pool": len(benign_train), "summary": summary, "families": rows})
