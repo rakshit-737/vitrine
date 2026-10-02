@@ -32,6 +32,8 @@ plugins:
         python:
           paths: [.]
           options: {show_source: false, docstring_style: google, show_root_heading: true}
+not_in_nav: |
+  benchmarks.md
 nav:
   - Home: index.md
   - Getting started: getting-started.md

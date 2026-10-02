@@ -8,7 +8,7 @@
 
 **Static-first PE triage that explains every verdict and writes a candidate YARA rule, without ever running the sample.**
 
-**Novel contribution:** an explainable static triage pipeline whose 91 *named* features make temporal drift measurable and attributable: trained on EMBER 2018 and tested on EMBER2024, it loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate *falls* (silent decay), and, among features defined identically in both schemas, the shift that the model relied on is in benign-only selection artifacts (DLL share, signing) and both-class toolchain artifacts (import count, OS and linker versions, size); dropping them does not recover robustness. The top raw-PSI feature, `n_embedded_mz`, is a schema-definition change, not drift (PSI 8.9 between its v2 and v3 definitions on the same System32 files) ([Evaluation §2](https://rakshit-737.github.io/vitrine/evaluation/#2-cross-time-ember-2018-ember2024), all with bootstrap CIs over 3 seeds).
+**Novel contribution:** an explainable static triage pipeline whose 91 *named* features make temporal drift measurable and give a ranked hypothesis about its source: trained on EMBER 2018 and tested on EMBER2024, it loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate *falls* (silent decay), and, among features defined identically in both schemas, a drift-weighted ranking (PSI x mean|SHAP|; correlational, and extractor change is not isolated) points to benign-only selection artifacts (DLL share, signing) and both-class toolchain artifacts (import count, OS and linker versions, size); dropping them does not recover robustness. The top raw-PSI feature, `n_embedded_mz`, is a schema-definition change, not drift (PSI 8.9 between its v2 and v3 definitions on the same System32 files) ([Evaluation §2](https://rakshit-737.github.io/vitrine/evaluation/#2-cross-time-ember-2018-ember2024), AUC and TPR figures with bootstrap CIs over 3 seeds; the 29 pt recall drop is a 3-seed mean and the PSI 8.9 is one 600-file sample, neither bootstrapped).
 
 [![Triage UI on a synthetic inert sample](docs/figures/demo_triage.png)](https://rakshit-737.github.io/vitrine/demo/)
 
@@ -21,7 +21,7 @@ VITRINE parses a PE file (headers, sections, imports, exports, resources, entrop
 1. **No install:** open the [static demo](https://rakshit-737.github.io/vitrine/demo/) (precomputed: synthetic samples plus real System32 files scored by the EMBER model).
 2. **pip** (numpy only):
    ```bash
-   pip install https://github.com/rakshit-737/vitrine/releases/download/v1.0.0/vitrine-1.0.0-py3-none-any.whl
+   pip install https://github.com/rakshit-737/vitrine/releases/download/v1.1.0/vitrine-1.1.0-py3-none-any.whl
    vitrine demo
    ```
    ```text
@@ -31,10 +31,9 @@ VITRINE parses a PE file (headers, sections, imports, exports, resources, entrop
      +0.887  1 high-risk capability rule(s) matched (injection/download/keylogging)
      +0.801  4 injection API(s) imported
    ```
-   The v1.0.0 release predates the latest fixes on `main` (CLI error handling, `--version`, API upload limits); for those, `pip install git+https://github.com/rakshit-737/vitrine`.
 3. **Docker** (API + UI on localhost only):
    ```bash
-   docker run --rm -p 127.0.0.1:8000:8000 ghcr.io/rakshit-737/vitrine:v1.0.0   # http://127.0.0.1:8000
+   docker run --rm -p 127.0.0.1:8000:8000 ghcr.io/rakshit-737/vitrine:v1.1.0   # http://127.0.0.1:8000
    ```
 
 ## Headline results
@@ -48,7 +47,7 @@ Full methodology, every table and all intervals: **[Evaluation](https://rakshit-
 | VITRINE XGBoost on EMBER 2018 test (mean of 3 seeds) | AUC 0.9913; TPR 88.3 % @ 1 % FPR, 74.1 % @ 0.1 % FPR | `ember_ci.json` |
 | **(worse)** vs the EMBER authors' *published* 2018 model, same test rows | AUC −0.0047 (−0.0049, −0.0045); −7.8 pt @ 1 %; −12.7 pt (−14.4, −11.2) @ 0.1 % | `ember_published.json` |
 | Published 2018 model, our reproduction of its score | AUC 0.9964, 96.5 % / 87.0 % (authors' notebook: 0.9964, 96.5 % / 86.8 %) | `ember_published.json` |
-| EMBER2024 released Win32 model on our test subsample | AUC 0.9983 (0.9980-0.9985); paper 0.9984 | `ember2024_baselines.json` |
+| EMBER2024 released Win32 model scored on our test subsample (not the full published setup; paper config retrained only on ~4 % of rows) | AUC 0.9983 (0.9980-0.9985); paper 0.9984 | `ember2024_baselines.json` |
 | 2018 model → 2024 test | AUC 0.9730 (0.9710-0.9748); recall at 2018 threshold 58.6 % (was 88.0 %), FPR 0.07 % | `ember2024_drift.json` |
 | 2024 model → 2018 test | AUC 0.8860 (0.8810-0.8895); 44.8 % FPR at its own threshold | `ember2024_drift.json` |
 | Auto-YARA, 15 families, out of time | VITRINE 16.8 % coverage, 5 FPs / 100k benign; benign-filtered imphash baseline 13.9 %, 7 FPs | `yara_structural.json` |

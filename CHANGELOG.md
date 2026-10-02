@@ -5,7 +5,14 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-02
+
 ### Added
+- EMBER 2017 (feature v1) paper setup reproduced exactly in a GitHub Actions job: AUC 0.99911
+  (0.99905-0.99917) vs 0.99911 published (`ember2017_repro.json`).
+- v2/v3 feature-definition parity check on System32 files; drift attribution restricted to faithful
+  features, with per-class patterns and 20 group-matched random-removal draws.
+- Docs redirect for the old `/benchmarks/` URL, mermaid parse check in CI, deferred audit items listed.
 - EMBER2024 (Win32, features only): resumable sha256-range subsample fetcher with per-range SHA-256
   manifest, pinned thrember vectorization, v3 -> v2 adapter (`vitrine/ember3.py`) with tests.
 - Cross-time evaluation EMBER 2018 <-> EMBER2024 with seed-pooled bootstrap CIs, a same-size 2018
@@ -38,6 +45,10 @@ All notable changes to this project are documented here. The format follows
   bounded reads, zip-slip guard; Docker base pinned by digest, HEALTHCHECK.
 
 ### Fixed
+- Drift attribution is described as a correlational ranking (hypothesis), not an established cause;
+  the paper states the random-draw comparison holds in AUC only (14 of 20 draws are worse at 0.1 % FPR).
+- Third-party actions in release/paper workflows pinned to commit SHAs; Starlette TestClient
+  deprecation warning filtered; `benchmarks.md` marked `not_in_nav`.
 - Release notes were never taken from CHANGELOG (awk escape); the step now fails on empty notes.
 - XML-namespace URLs no longer trigger T1071.001; sdist ships test fixtures; CLI errors are one line.
 
@@ -118,3 +129,7 @@ All notable changes to this project are documented here. The format follows
 - Initial MVP: stdlib PE dissector, capa-style tagger, linear model with exact linear SHAP,
   string-based YARA synthesis with specificity and coverage validation, and synthetic inert PE
   families.
+
+[Unreleased]: https://github.com/rakshit-737/vitrine/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/rakshit-737/vitrine/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/rakshit-737/vitrine/releases/tag/v1.0.0

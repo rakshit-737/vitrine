@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vitrine"
-version = "1.0.0"
+version = "1.1.0"
 description = "Static-first, explainable PE triage with auto-synthesized YARA rules (never executes samples)"
 readme = "README.md"
 license = "MIT"
@@ -47,6 +47,7 @@ packages = ["vitrine", "vitrine.static"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["realdata: needs the EMBER 2018 download and/or local Windows binaries (skipped when absent)"]
+filterwarnings = ["ignore:.*with `starlette.testclient` is deprecated"]
 
 [tool.ruff]
 line-length = 120

@@ -93,8 +93,9 @@ shift in benign files only (PSI$_\text{mal}\le0.003$), pointing to benign-sample
 \texttt{avg\_string\_len} shift in both classes; these are still computed by different parsers (LIEF vs
 pefile). Retraining the 2018 model (99k rows, 3 seeds) without the top ten faithful features changes
 2024 AUC by $-0.0040$ ($-0.0059$, $-0.0016$) at a 2018 cost of $-0.0025$; 20 group-matched random
-draws of ten faithful features average $-0.0011$ ($-0.0035$ to $+0.0015$) and none is worse. Drift is
-partly attributable to named artifacts, but not removable by deleting them.
+draws of ten faithful features average $-0.0011$ ($-0.0035$ to $+0.0015$) and none is worse in AUC; at TPR@0.1\% FPR, 14 of 20 random draws are worse than the top ten
+(mean $-0.063$ vs $-0.043$). The ranking is a correlational hypothesis about the source of drift, not an
+established attribution, and it is not removable by deleting the named features.
 
 \textbf{EMBER paper reproduction.} Under the published setup (EMBER 2017 feature v1, 2{,}351 dims,
 elastic/ember vectorizer, LightGBM defaults, 600k labelled rows, run in GitHub Actions) we obtain AUC
