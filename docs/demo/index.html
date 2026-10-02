@@ -107,7 +107,7 @@ function render(d) {
   $("out").classList.remove("hidden");
   $("verdict").innerHTML = `<span class="${d.verdict}">${d.verdict}</span>`;
   $("facts").innerHTML = [
-    ["score", d.score.toFixed(4)], ["family (nearest)", d.family || "-"], ["packed", d.packed],
+    ["score", d.score.toFixed(4)], ["family (nearest)", esc(d.family || "-")], ["packed", d.packed],
     ["route to dynamic", d.route_to_dynamic ? "yes" : "no"], ["sha256", `<span class="mono">${d.sha256}</span>`],
   ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join("");
   const max = Math.max(0.001, ...d.attributions.map((a) => Math.abs(a.contribution)));

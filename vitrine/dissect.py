@@ -21,6 +21,7 @@ PACKER_SECTION_NAMES = {"upx0", "upx1", "upx2", ".aspack", ".adata", "mpress1", 
                         ".packed", "pec2", ".mpress1", ".mpress2"}
 MAX_IMPORT_DLLS = 512
 MAX_FUNCS_PER_DLL = 8192
+MAX_TOTAL_IMPORTS = 20_000  # per file, import + delay-import entries combined
 MAX_EXPORTS = 16384
 
 DATA_DIRECTORY_NAMES = [
@@ -143,11 +144,19 @@ def dissect(data: bytes) -> PEReport:
 
     thunk_fmt, thunk_sz, ord_flag = ("<Q", 8, 1 << 63) if plus else ("<I", 4, 1 << 31)
 
+    budget = [MAX_TOTAL_IMPORTS]  # shared across import and delay-import tables
+    seen_tables: set[int] = set()
+
     def read_thunks(toff: int) -> list[str]:
         funcs: list[str] = []
-        if toff < 0:
+        if toff < 0 or toff in seen_tables:
             return funcs
+        seen_tables.add(toff)
         for j in range(MAX_FUNCS_PER_DLL):
+            if budget[0] <= 0:
+                anomalies.append("import budget exhausted")
+                break
+            budget[0] -= 1
             try:
                 (th,) = _u(thunk_fmt, data, toff + thunk_sz * j)
             except PEParseError:

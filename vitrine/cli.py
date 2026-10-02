@@ -38,11 +38,24 @@ def _print(res: TriageResult) -> None:
         print(res.structural_rule)
 
 
-def _load_dir(d: str | None, limit: int = 0) -> list[bytes]:
+MAX_FILE = 32 * 1024 * 1024  # same cap as the API upload limit
+
+
+def _load_dir(d: str | None, limit: int = 400) -> list[bytes]:
+    """Read up to ``limit`` PE files (by suffix, each at most 32 MiB) from ``d``; 0 = no limit."""
     if not d:
         return []
-    files = [p for p in sorted(Path(d).iterdir()) if p.is_file()]
-    return [p.read_bytes() for p in (files[:limit] if limit else files)]
+    out = []
+    for p in sorted(Path(d).iterdir()):
+        if p.is_file() and p.suffix.lower() in PE_SUFFIXES:
+            try:
+                if p.stat().st_size <= MAX_FILE:
+                    out.append(p.read_bytes())
+            except OSError:
+                continue
+            if limit and len(out) >= limit:
+                break
+    return out
 
 
 def _model(path: str | None):
@@ -106,7 +119,9 @@ def cmd_serve(a) -> None:
 
     from .api import create_app
 
-    uvicorn.run(create_app(a.model, a.benign_dir), host=a.host, port=a.port)
+    hosts = ["127.0.0.1", "localhost", *a.allowed_host]
+    uvicorn.run(create_app(a.model, a.benign_dir, allowed_hosts=hosts, enable_docs=a.enable_docs),
+                host=a.host, port=a.port, limit_concurrency=16)
 
 
 def cmd_demo(a) -> None:
@@ -144,35 +159,61 @@ def cmd_demo(a) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(prog="vitrine", description=__doc__)
+    from . import __version__
+
+    fmt = argparse.ArgumentDefaultsHelpFormatter
+    p = argparse.ArgumentParser(prog="vitrine", description=__doc__, formatter_class=fmt)
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
-    g = sub.add_parser("gen-corpus", help="write synthetic inert PE corpus")
-    g.add_argument("out"), g.add_argument("-n", type=int, default=10), g.add_argument("--seed", type=int, default=0)
+    g = sub.add_parser("gen-corpus", help="write synthetic inert PE corpus", formatter_class=fmt)
+    g.add_argument("out", help="output directory (one sub-folder per family)")
+    g.add_argument("-n", type=int, default=10, help="samples per family")
+    g.add_argument("--seed", type=int, default=0, help="RNG seed")
     g.set_defaults(fn=cmd_gen)
-    t = sub.add_parser("train", help="train the linear demo model on the synthetic corpus")
-    t.add_argument("--out", default="vitrine_model.json"), t.add_argument("-n", type=int, default=20)
-    t.add_argument("--seed", type=int, default=0)
+    t = sub.add_parser("train", help="train the linear demo model on the synthetic corpus", formatter_class=fmt)
+    t.add_argument("--out", default="vitrine_model.json", help="where to save the model JSON")
+    t.add_argument("-n", type=int, default=20, help="training samples per family")
+    t.add_argument("--seed", type=int, default=0, help="RNG seed")
     t.set_defaults(fn=cmd_train)
-    an = sub.add_parser("analyze", help="statically analyze a PE file")
-    an.add_argument("file")
-    an.add_argument("--model", help="model file (EMBER-trained vitrine_xgb.json or linear demo model)")
+    an = sub.add_parser("analyze", help="statically analyze a PE file", formatter_class=fmt)
+    an.add_argument("file", help="PE file to analyze (read only, never executed)")
+    an.add_argument("--model", help="model file (EMBER-trained vitrine_xgb.json or linear demo model); "
+                    "default: train the synthetic demo model")
     an.add_argument("--benign-dir", help="benign corpus for YARA specificity validation")
-    an.add_argument("--benign-limit", type=int, default=0)
+    an.add_argument("--benign-limit", type=int, default=400, help="max benign PE files to load (0 = all)")
     an.add_argument("--siblings-dir", help="suspected same-family samples for YARA coverage")
-    an.add_argument("--json", action="store_true")
+    an.add_argument("--json", action="store_true", help="print the full JSON report")
     an.set_defaults(fn=cmd_analyze)
-    sc = sub.add_parser("scan", help="triage every PE in a directory (JSON lines)")
-    sc.add_argument("dir"), sc.add_argument("--model"), sc.add_argument("--limit", type=int, default=0)
-    sc.add_argument("--recursive", action="store_true")
+    sc = sub.add_parser("scan", help="triage every PE in a directory (JSON lines)", formatter_class=fmt)
+    sc.add_argument("dir", help="directory to scan")
+    sc.add_argument("--model", help="model file (default: synthetic demo model)")
+    sc.add_argument("--limit", type=int, default=0, help="stop after this many files (0 = all)")
+    sc.add_argument("--recursive", action="store_true", help="descend into sub-directories")
     sc.set_defaults(fn=cmd_scan)
-    sv = sub.add_parser("serve", help="run the FastAPI service + triage UI")
-    sv.add_argument("--model"), sv.add_argument("--benign-dir")
-    sv.add_argument("--host", default="127.0.0.1"), sv.add_argument("--port", type=int, default=8000)
+    sv = sub.add_parser("serve", help="run the FastAPI service + triage UI", formatter_class=fmt)
+    sv.add_argument("--model", help="model file (default: synthetic demo model)")
+    sv.add_argument("--benign-dir", help="benign corpus for rule validation (first 400 PE files)")
+    sv.add_argument("--host", default="127.0.0.1", help="bind address (keep localhost for a lab tool)")
+    sv.add_argument("--port", type=int, default=8000, help="TCP port")
+    sv.add_argument("--allowed-host", action="append", default=[], help="extra Host header to accept")
+    sv.add_argument("--enable-docs", action="store_true", help="serve /docs (loads Swagger UI from a CDN)")
     sv.set_defaults(fn=cmd_serve)
-    d = sub.add_parser("demo", help="end-to-end demo on synthetic samples")
+    d = sub.add_parser("demo", help="end-to-end demo on synthetic samples", formatter_class=fmt)
     d.set_defaults(fn=cmd_demo)
     a = p.parse_args(argv)
-    a.fn(a)
+    try:
+        a.fn(a)
+    except ImportError as e:
+        extra = "api" if getattr(e, "name", "") in ("fastapi", "uvicorn", "starlette") else "ml"
+        print(f"vitrine: missing optional dependency {e.name!r}; install it with: pip install 'vitrine[{extra}]'",
+              file=sys.stderr)
+        return 2
+    except FileNotFoundError as e:
+        print(f"vitrine: no such file: {e.filename}", file=sys.stderr)
+        return 2
+    except PEParseError as e:
+        print(f"vitrine: not a parseable PE file: {e}", file=sys.stderr)
+        return 2
     return 0
 
 

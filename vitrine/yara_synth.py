@@ -69,21 +69,39 @@ def synthesize(name: str, group: list[bytes], benign: list[bytes], family: str |
     return YaraRule(safe, "\n".join(lines) + "\n", strs, threshold)
 
 
-_STR_LINE = re.compile(r'^\s*\$\w+\s*=\s*"((?:[^"\\]|\\.)*)"', re.M)
-_COND = re.compile(r"(\d+) of them")
+_STR_LINE = re.compile(r'[ \t]*\$\w{0,64}[ \t]*=[ \t]*"((?:[^"\\]|\\.){0,4096})"(?:[ \t]+(?:ascii|wide|nocase))*[ \t]*')
+_COND = re.compile(r"\b(\d{1,4}) of them\b")
+MAX_RULE_LINES = 2000
 
 
 def parse(text: str) -> tuple[list[str], int]:
-    strs = [_unesc(m) for m in _STR_LINE.findall(text)]
-    m = _COND.search(text)
-    return strs, int(m.group(1)) if m else len(strs)
+    """Parse the restricted YARA subset line by line (bounded work per line, no backtracking blow-up)."""
+    strs: list[str] = []
+    thr = None
+    for line in text.splitlines()[:MAX_RULE_LINES]:
+        if len(line) > 8192:
+            continue
+        m = _STR_LINE.fullmatch(line)
+        if m:
+            strs.append(_unesc(m.group(1)))
+            continue
+        if thr is None:
+            c = _COND.search(line)
+            if c:
+                thr = int(c.group(1))
+    return strs, thr if thr is not None else len(strs)
+
+
+def match_parsed(strs: list[str], thr: int, data: bytes) -> bool:
+    """Match an already-parsed rule (parse once, match many)."""
+    if data[:2] != b"MZ":
+        return False
+    return sum(1 for s in strs if s.encode() in data) >= thr
 
 
 def match(rule: YaraRule | str, data: bytes) -> bool:
     strs, thr = parse(rule.text if isinstance(rule, YaraRule) else rule)
-    if data[:2] != b"MZ":
-        return False
-    return sum(1 for s in strs if s.encode() in data) >= thr
+    return match_parsed(strs, thr, data)
 
 
 def validate(rule: YaraRule, benign: list[bytes], siblings: list[bytes]) -> YaraRule:

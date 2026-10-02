@@ -129,7 +129,14 @@ def test_api_roundtrip():
     r = c.post("/api/analyze", content=make_sample("keylogger", 4),
                headers={"Content-Type": "application/octet-stream"})
     assert r.status_code == 200 and r.json()["verdict"] in {"MALICIOUS", "SUSPICIOUS"}
-    assert c.post("/api/analyze", content=b"not a pe").status_code == 422
+    octet = {"Content-Type": "application/octet-stream"}
+    assert c.post("/api/analyze", content=b"not a pe", headers=octet).status_code == 422
+    assert c.post("/api/analyze", content=b"MZ").status_code == 415  # no octet-stream content type
+    big = {**octet, "Content-Length": str(64 * 1024 * 1024)}
+    assert c.post("/api/analyze", content=b"MZ", headers=big).status_code == 413
+    assert c.post("/api/yara/validate", json={"text": "x" * 70000}).status_code == 422
+    assert c.get("/docs").status_code == 404
+    assert c.get("/health", headers={"Host": "evil.example"}).status_code == 400
     assert "VITRINE" in c.get("/").text
     v = c.post("/api/yara/validate", json={"text": 'rule a {\n strings:\n  $a = "zzz"\n condition:\n  1 of them\n}'})
     assert v.status_code == 200 and v.json()["strings"] == 1

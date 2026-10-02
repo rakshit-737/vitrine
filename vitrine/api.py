@@ -10,20 +10,27 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import __version__
 from .dissect import PEParseError
 from .triage import analyze, load_model, train_default
-from .yara_synth import match, parse
+from .yara_synth import match_parsed, parse
 
 MAX_UPLOAD = 32 * 1024 * 1024
 STATIC = Path(__file__).parent / "static"
 
 
+MAX_RULE = 65536
+SECURITY_HEADERS = {"Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; "
+                    "style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'",
+                    "X-Content-Type-Options": "nosniff"}
+
+
 class RuleIn(BaseModel):
-    text: str
+    text: str = Field(max_length=MAX_RULE)
 
 
 def _load_benign(d: str | None, limit: int = 400) -> list[bytes]:
@@ -41,9 +48,14 @@ def _load_benign(d: str | None, limit: int = 400) -> list[bytes]:
     return out
 
 
-def create_app(model_path: str | None = None, benign_dir: str | None = None, benign_limit: int = 400) -> FastAPI:
+def create_app(model_path: str | None = None, benign_dir: str | None = None, benign_limit: int = 400,
+               allowed_hosts: list[str] | None = None, enable_docs: bool = False) -> FastAPI:
+    """Build the API. Interactive /docs (which load a CDN) are off unless ``enable_docs``."""
     app = FastAPI(title="VITRINE", version=__version__,
-                  description="Static-first explainable PE triage. Never executes uploaded files.")
+                  description="Static-first explainable PE triage. Never executes uploaded files.",
+                  docs_url="/docs" if enable_docs else None, redoc_url=None)
+    app.add_middleware(TrustedHostMiddleware,
+                       allowed_hosts=allowed_hosts or ["127.0.0.1", "localhost", "testserver"])
     model = load_model(model_path) if model_path else train_default()
     benign = _load_benign(benign_dir, benign_limit)
     kind = type(model).__name__
@@ -59,11 +71,23 @@ def create_app(model_path: str | None = None, benign_dir: str | None = None, ben
 
     @app.post("/api/analyze")
     async def analyze_ep(request: Request, rules: bool = True):
-        data = await request.body()
+        ctype = request.headers.get("content-type", "").split(";")[0].strip()
+        if ctype != "application/octet-stream":
+            raise HTTPException(415, "POST the file bytes as Content-Type: application/octet-stream")
+        try:
+            declared = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            raise HTTPException(400, "bad Content-Length") from None
+        if declared > MAX_UPLOAD:
+            raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
+        buf = bytearray()
+        async for chunk in request.stream():
+            buf += chunk
+            if len(buf) > MAX_UPLOAD:
+                raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
+        data = bytes(buf)
         if not data:
             raise HTTPException(400, "empty body: POST the file bytes as application/octet-stream")
-        if len(data) > MAX_UPLOAD:
-            raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
         try:
             res = analyze(data, model, benign if (rules and benign) else None)
         except PEParseError as e:
@@ -75,12 +99,12 @@ def create_app(model_path: str | None = None, benign_dir: str | None = None, ben
         strs, thr = parse(rule.text)
         if not strs:
             raise HTTPException(422, "no text strings found (native validator supports text strings + 'N of them')")
-        hits = sum(match(rule.text, b) for b in benign)
+        hits = sum(match_parsed(strs, thr, b) for b in benign)
         return {"strings": len(strs), "threshold": thr, "benign_total": len(benign), "benign_hits": hits,
                 "specificity": (1 - hits / len(benign)) if benign else None}
 
     @app.get("/", response_class=HTMLResponse)
     def index():
-        return (STATIC / "index.html").read_text(encoding="utf-8")
+        return HTMLResponse((STATIC / "index.html").read_text(encoding="utf-8"), headers=SECURITY_HEADERS)
 
     return app
