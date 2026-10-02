@@ -8,8 +8,11 @@ Two directions:
 * :func:`vectorize` / :func:`vectorize_many` turn raw-feature dicts (from EMBER JSONL or from
   :func:`raw_features`) into the 2381-dim EMBER v2 vector. This is a clean-room port of the
   feature hashing in ``elastic/ember`` ``features.py`` (feature version 2): same blocks, same
-  order, same hash widths. Batch vectorization hashes whole blocks at once, which is ~30x faster
-  than the reference per-sample loop.
+  order, same hash widths. Batch vectorization hashes whole blocks at once (no speed figure is claimed;
+  none is benchmarked in this repo). One known deviation: elastic/ember hashed the entry-section
+  name as a bare string, which old scikit-learn split into characters; VITRINE hashes the whole
+  name as one token by default (50 of 2,381 dims differ). ``entry_hash="chars"`` reproduces the
+  reference behaviour.
 
 Requires numpy and scikit-learn (``pip install vitrine[ml]``).
 """
@@ -168,8 +171,19 @@ def _h(n: int, input_type: str, rows: list) -> np.ndarray:
     return _hasher(n, input_type).transform(rows).toarray().astype(np.float32)
 
 
-def vectorize_many(raws: Iterable[dict]) -> np.ndarray:
-    """Vectorize raw-feature dicts into an (n, 2381) float32 matrix (EMBER feature version 2)."""
+def vectorize_many(raws: Iterable[dict], entry_hash: str = "token") -> np.ndarray:
+    """Vectorize raw-feature dicts into an (n, 2381) float32 matrix (EMBER feature version 2).
+
+    Args:
+        raws: EMBER v2 raw-feature dicts.
+        entry_hash: ``"token"`` hashes the entry-section name as one token (VITRINE default, used for
+            all committed results); ``"chars"`` hashes it per character like elastic/ember did.
+
+    Returns:
+        float32 array of shape (n, 2381).
+    """
+    if entry_hash not in ("token", "chars"):
+        raise ValueError("entry_hash must be 'token' or 'chars'")
     raws = list(raws)
     n = len(raws)
     X = np.zeros((n, VECTOR_DIM), dtype=np.float32)
@@ -219,7 +233,8 @@ def vectorize_many(raws: Iterable[dict]) -> np.ndarray:
         _h(50, "pair", [[(s["name"], s["size"]) for s in ss] for ss in secs]),
         _h(50, "pair", [[(s["name"], s["entropy"]) for s in ss] for ss in secs]),
         _h(50, "pair", [[(s["name"], s["vsize"]) for s in ss] for ss in secs]),
-        _h(50, "string", [[r["section"]["entry"]] for r in raws]),
+        _h(50, "string", [[r["section"]["entry"]] if entry_hash == "token" else list(r["section"]["entry"])
+                          for r in raws]),
         _h(50, "string", [[p for s in ss for p in s["props"] if s["name"] == r["section"]["entry"]]
                           for r, ss in zip(raws, secs)]),
     ])

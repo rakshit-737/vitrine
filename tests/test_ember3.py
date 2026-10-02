@@ -41,3 +41,13 @@ def test_to_v2_schema_details():
     assert v["header"]["optional"]["magic"] in ("PE32", "PE32_PLUS")
     assert v["general"]["vsize"] == r["header"]["optional"].get("sizeof_image", 0)
     assert all(":ordinal" not in f for fns in v["imports"].values() for f in fns)
+
+
+def test_entry_hash_modes_differ_only_in_entry_block():
+    from vitrine.ember import block_slices
+
+    v2 = [to_v2(r) for r in _recs()]
+    a, b = vectorize_many(v2), vectorize_many(v2, entry_hash="chars")
+    sec = block_slices()["section"]
+    diff = np.flatnonzero((a != b).any(axis=0))
+    assert diff.size and diff.min() >= sec.start and diff.max() < sec.stop

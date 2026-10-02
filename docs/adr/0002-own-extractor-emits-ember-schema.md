@@ -23,7 +23,7 @@ so on). `vectorize_many` is a clean-room batch port of EMBER's feature hashing (
 
 ## Verification
 
-- Import and export tables agree with pefile on 500/500 System32 files (plus a `realdata` test).
+- Import and export tables agree with pefile on System32 DLLs; the `realdata` test checks this and runs on the Windows CI job. (An earlier uncommitted 500-file check is not reproducible from the repo and is no longer quoted.)
 - A schema test checks key-for-key compatibility against real EMBER records.
 - The remaining LIEF-vs-VITRINE differences are measured, not assumed. `bench_benign.py` reports
   false-positive rates on real Windows binaries, which include this extraction shift together
