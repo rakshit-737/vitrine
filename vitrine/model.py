@@ -3,8 +3,8 @@ plus nearest-centroid family assignment.
 
 Why linear: for a linear model over standardized features, SHAP values with an
 independent-feature, mean baseline are exactly w_i * (x_i - mu_i) / sigma_i, so
-the attribution is faithful by construction. XGBoost + TreeSHAP is the planned
-upgrade (see README TODO); the Attribution contract stays the same.
+the attribution is faithful by construction. The EMBER-trained XGBoost + TreeSHAP model
+(:mod:`vitrine.gbdt`) uses the same Attribution contract; this model backs CI and the demo.
 """
 from __future__ import annotations
 

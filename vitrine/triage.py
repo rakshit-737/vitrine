@@ -9,6 +9,8 @@ Works with either verdict model:
 """
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from .capabilities import HIGH_RISK_ATTACK_IDS, tag
 from .dissect import dissect, is_packed, packing_signals
 from .ember import raw_from_report
@@ -17,6 +19,9 @@ from .model import VerdictModel
 from .models import TriageResult, Verdict
 from .synth import MALICIOUS_FAMILIES, corpus
 from .yara_synth import structural_atoms, synthesize, synthesize_structural, validate
+
+if TYPE_CHECKING:
+    from .gbdt import GBDTVerdictModel
 
 MAL_THR = 0.7
 SUS_THR = 0.3
@@ -39,8 +44,23 @@ def thresholds(model) -> tuple[float, float]:
     return t.get("fpr_0.1pct", MAL_THR), t.get("fpr_1pct", SUS_THR)
 
 
-def analyze(data: bytes, model, benign: list[bytes] | None = None,
+def analyze(data: bytes, model: VerdictModel | GBDTVerdictModel, benign: list[bytes] | None = None,
             siblings: list[bytes] | None = None) -> TriageResult:
+    """Statically triage one PE file (bytes are parsed, never executed).
+
+    Args:
+        data: raw file bytes.
+        model: a verdict model from :func:`load_model` or :func:`train_default`.
+        benign: optional benign corpus; when given, non-benign verdicts get a candidate YARA rule
+            validated for specificity against it.
+        siblings: optional suspected same-family samples, used for rule coverage.
+
+    Returns:
+        TriageResult with verdict, score, SHAP attributions, capabilities, notes and rules.
+
+    Raises:
+        PEParseError: the bytes are not a parseable PE file.
+    """
     rep = dissect(data)
     raw = raw_from_report(rep, data)
     x = vector_raw(raw)
@@ -59,7 +79,8 @@ def analyze(data: bytes, model, benign: list[bytes] | None = None,
     # packed samples starve static features: don't over-trust, route to dynamic analysis
     route = packed or verdict == Verdict.SUSPICIOUS
     if packed:
-        notes.append("static features likely starved by packing -> recommend dynamic sandbox")
+        notes.append("packed: static view is partial and packed benign files have a higher false-positive rate "
+                     "-> recommend dynamic sandbox")
     rule = None
     structural = None
     if verdict != Verdict.BENIGN and benign is not None:
@@ -71,12 +92,13 @@ def analyze(data: bytes, model, benign: list[bytes] | None = None,
         ben = [structural_atoms(raw_from_report(dissect(b))) for b in benign]
         srule = synthesize_structural(name + "_pe", group, ben, family or "unknown", min_support=0.6)
         structural = srule.text if srule else None
+    explainer = "linear SHAP" if isinstance(model, VerdictModel) else "TreeSHAP"
     return TriageResult(rep.sha256, verdict, round(score, 4), family, packed, route,
-                        model.attribute(x), caps, rule, notes, structural_rule=structural)
+                        model.attribute(x), caps, rule, notes, structural_rule=structural, explainer=explainer)
 
 
-def load_model(path: str):
-    """Load either model format by sniffing the file."""
+def load_model(path: str) -> VerdictModel | GBDTVerdictModel:
+    """Load either model format (EMBER XGBoost ``vitrine-gbdt-1`` or linear demo) by sniffing the file."""
     from pathlib import Path
 
     with open(Path(path), encoding="utf-8") as f:

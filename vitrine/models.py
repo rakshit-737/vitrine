@@ -113,6 +113,7 @@ class TriageResult:
     yara: YaraRule | None
     notes: list[str] = field(default_factory=list)
     structural_rule: str | None = None  # pe-module rule (imports/sections/imphash), see yara_synth
+    explainer: str | None = None  # "TreeSHAP" (XGBoost model) or "linear SHAP" (synthetic demo model)
 
     def to_dict(self) -> dict:
         d = asdict(self)
