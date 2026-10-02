@@ -1,0 +1,121 @@
+\documentclass[10pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs,graphicx,hyperref,amsmath}
+\usepackage[numbers]{natbib}
+\title{VITRINE: Explainable Static PE Triage and Attributable Temporal Drift\\from EMBER 2018 to EMBER2024}
+\author{Rakshit\\VIT Chennai}
+\date{Preprint, October 2026 (not peer reviewed)}
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Static machine-learning malware detectors are usually reported as a single score on a single,
+temporally adjacent test set. We present VITRINE, a static-only triage pipeline that scores Windows PE
+files with gradient-boosted trees over 91 named features, explains each verdict with exact TreeSHAP,
+tags import-level capabilities and synthesizes benign-validated YARA rules. Its named features let us
+measure \emph{and attribute} temporal drift. Trained on EMBER 2018 and tested on EMBER2024, the model
+loses 0.018 ROC AUC (0.9914 to 0.9730, 95\% CI 0.9710--0.9748) and, at its own calibrated threshold,
+recall falls from 88.0\% to 58.6\% while the false-positive rate \emph{drops} to 0.07\%: the decay is
+silent. A 2024 model scored on 2018 data fails loudly instead (44.8\% FPR). The shift concentrates in
+a few named artifacts (embedded executables, DLL share, signing, toolchain versions), but removing them
+does not recover robustness. We also report honestly where VITRINE is behind: on identical test rows the
+EMBER authors' published 2018 model is ahead by 0.0047 AUC and 12.7 points of detection at 0.1\% FPR.
+All experiments use pre-extracted features only; no binaries are handled.
+\end{abstract}
+
+\section{Introduction}
+Analysts need more than \texttt{predict() = 0.87}: they need reasons, a candidate signature, and an
+idea of whether the model still works on today's files. EMBER \citep{anderson2018ember} established
+static-feature baselines; EMBER2024 \citep{joyce2025ember2024} renewed the data; TESSERACT
+\citep{pendlebury2019tesseract} showed that evaluation must respect time. We combine these: an
+interpretable triage model whose features have names, evaluated across two dataset generations six
+years apart, with drift attributed to those names. Contributions: (i) a cross-time evaluation
+EMBER 2018 $\leftrightarrow$ EMBER2024 with seed-pooled bootstrap intervals, a same-size control and a
+schema-translation control; (ii) a feature-level drift attribution and a negative ablation result;
+(iii) a re-scoring of both datasets' published reference models on our exact rows, so that the cost
+of interpretability is measured against the real state of the art rather than an under-resourced
+reproduction; (iv) a benign-validated structural YARA synthesizer with abstention, compared with
+like-for-like benign-filtered baselines.
+
+\section{Related work}
+Static PE detectors with hashed features and GBDTs \citep{anderson2018ember,ke2017lightgbm} are strong
+but opaque. SHAP \citep{lundberg2017shap} and exact TreeSHAP \citep{lundberg2020tree} give additive
+attributions for tree ensembles \citep{chen2016xgboost}. Automatic rule generation ranges from
+frequency-based tools such as yarGen \citep{yargen} to biclustering \citep{raff2020autoyara}.
+capa \citep{capa} detects capabilities from code. Time-aware evaluation \citep{pendlebury2019tesseract}
+motivates our cross-period design.
+
+\section{Method}
+\textbf{Parsing and features.} A bounds-checked pure-Python PE parser emits the EMBER v2 raw schema;
+91 named features (header flags, mitigations, section entropy, import groups, string counters,
+capability indicators) are computed from it. EMBER2024 feature-version-3 records are translated to v2
+(section names lower-cased, a few counters approximated).
+\textbf{Model and explanation.} XGBoost (600 trees, depth 10); thresholds at 1\% and 0.1\% FPR
+calibrated on a held-out period; exact TreeSHAP contributions with sentence templates.
+\textbf{Rules.} Structural atoms (imports, section names, imphash) kept only if rare in a training
+benign pool; the smallest $N$-of threshold with zero benign hits, else abstain.
+\textbf{Drift attribution.} Per feature, population stability index between periods (per class)
+times the 2018 model's mean $|$SHAP$|$; ablation retrains without the top-10 features.
+
+\section{Experimental setup}
+EMBER 2018: deterministic 50\% sha256-prefix subsample of the 600k labelled training rows (memory
+limit of a 16\,GB laptop), 275{,}732 rows to fit, 2018-10 for calibration, 200{,}000 test files.
+EMBER2024 Win32: first 8\,MiB of each of 64 weekly files (a sha256-range sample of about 7\%;
+135{,}423 files), weeks 0--47 fit, 48--51 calibrate, 52--63 test. Three seeds per trained model;
+1{,}000-resample stratified bootstrap pooled over seeds; paired differences on shared resamples.
+
+\section{Results}
+\begin{table}[h]\centering\small
+\begin{tabular}{lcccc}\toprule
+Train $\rightarrow$ test & ROC AUC (95\% CI) & TPR@1\% & FPR / recall at source thr.\\\midrule
+2018 $\rightarrow$ 2018 & 0.9914 (0.9908--0.9922) & 88.2\% & 0.93\% / 88.0\%\\
+2018 $\rightarrow$ 2024 & 0.9730 (0.9710--0.9748) & 74.2\% & 0.07\% / 58.6\%\\
+2018 (99k) $\rightarrow$ 2024 & 0.9712 (0.9689--0.9738) & 73.8\% & 0.02\% / 51.7\%\\
+2024 (99k) $\rightarrow$ 2024 & 0.9946 (0.9940--0.9951) & 91.1\% & 1.18\% / 91.8\%\\
+2024 (99k) $\rightarrow$ 2018 & 0.8860 (0.8810--0.8895) & 33.3\% & 44.8\% / 95.5\%\\\bottomrule
+\end{tabular}
+\caption{Cross-time results, 91 named features, XGBoost, 3 seeds.}\end{table}
+
+At equal training size, an in-period 2024 model beats the 2018 model on 2024 by +0.023 AUC
+(+0.021, +0.026). The 2018 model's weekly AUC over EMBER2024 ranges 0.918--0.992. The schema
+translation itself costs only 0.0006 AUC (0.0003--0.0008) when the EMBER2024 paper configuration is
+trained on native vs translated vectors of identical rows, so the drop is not a translation artefact;
+it still mixes time with collection and extractor changes.
+
+\textbf{Attribution.} The top drift-weighted features are \texttt{n\_embedded\_mz}, \texttt{is\_dll},
+\texttt{cert\_kb}, \texttt{n\_imports}, \texttt{os\_major}, \texttt{size\_kb} and \texttt{linker\_major}.
+Retraining without the top ten \emph{reduces} 2024 AUC by 0.0057 (0.0043--0.0073); dropping ten random
+features has no significant effect. Drift is attributable but not removable by feature deletion.
+
+\textbf{Reference models.} The EMBER authors' published 2018 model, scored by us on the same 200k test
+rows, reaches AUC 0.9964, 96.5\% / 87.0\% TPR at 1\% / 0.1\% FPR (reproducing their notebook); VITRINE
+is behind by 0.0047 AUC (0.0045--0.0049), 7.8 and 12.7 points. The released EMBER2024 Win32 model scores
+AUC 0.9983 on our test subsample (paper: 0.9984).
+
+\textbf{Rules.} Over 15 families out of time, VITRINE's rules cover 16.8\% of test siblings with 5
+false positives per 100k benign files, against 13.9\% and 7 for an imphash baseline filtered on the
+same benign pool; four of VITRINE's eight rules barely generalise.
+
+\textbf{Robustness.} In a feature-space attack combining overlay, section, import and header edits,
+detection falls to about 40--44\% for all models; an import-based capability floor appears to help,
+but most of that gain is triggered by the benign donor's own imports, and it costs 11.7\% benign FPR.
+
+\section{Limitations}
+EMBER 2018 training uses half of the labelled rows, so the gap to the published model mixes data and
+representation. EMBER2024 is subsampled. The EMBER 2017 (feature v1) setup was not reproduced.
+Adversarial edits are simulated in feature space. Capability tags were compared with capa only as
+agreement, not ground truth.
+
+\section{Ethics and reproducibility}
+No malware binaries were downloaded, stored or executed; all data are pre-extracted features
+(EMBER 2018: MIT; EMBER2024: Apache-2.0) plus read-only scans of local benign Windows files. Code,
+result files, per-range SHA-256 manifests and exact commands are at
+\url{https://github.com/rakshit-737/vitrine}.
+
+\section*{Acknowledgements}
+Code, experiments and this text were developed with AI assistance (Claude, Anthropic); the author
+reviewed and is responsible for the content.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+\end{document}
