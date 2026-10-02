@@ -31,6 +31,7 @@ VITRINE parses a PE file (headers, sections, imports, exports, resources, entrop
      +0.887  1 high-risk capability rule(s) matched (injection/download/keylogging)
      +0.801  4 injection API(s) imported
    ```
+   The v1.0.0 release predates the latest fixes on `main` (CLI error handling, `--version`, API upload limits); for those, `pip install git+https://github.com/rakshit-737/vitrine`.
 3. **Docker** (API + UI on localhost only):
    ```bash
    docker run --rm -p 127.0.0.1:8000:8000 ghcr.io/rakshit-737/vitrine:v1.0.0   # http://127.0.0.1:8000

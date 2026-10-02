@@ -158,7 +158,7 @@ nothing out of time (installmonster, zusy, fareit, adposhel, all < 1 %); xtrat (
 (98.9 %) carry the mean. Per-family Wilson intervals: `results/intervals.json`. On re-run the naive
 frequency baseline moved from 55,112 to 50,355 benign FPs.
 
-## 5. Adversarial robustness (feature space, 3,000 test malware, 3 donor draws)
+## 5. Adversarial robustness (feature space, 3,000 test malware, 3 donor draws) {#adversarial-robustness}
 
 Detection rate at each score model's validation-calibrated 1 % FPR threshold. Donors are 3,770
 import-rich benign files, 21.7 % of which themselves trip a high-risk capability. 95 % Wilson CIs are
