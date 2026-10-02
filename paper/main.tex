@@ -96,6 +96,11 @@ pefile). Retraining the 2018 model (99k rows, 3 seeds) without the top ten faith
 draws of ten faithful features average $-0.0011$ ($-0.0035$ to $+0.0015$) and none is worse. Drift is
 partly attributable to named artifacts, but not removable by deleting them.
 
+\textbf{EMBER paper reproduction.} Under the published setup (EMBER 2017 feature v1, 2{,}351 dims,
+elastic/ember vectorizer, LightGBM defaults, 600k labelled rows, run in GitHub Actions) we obtain AUC
+0.99911 (0.99905--0.99917), 98.2\% and 93.0\% TPR at 1\% / 0.1\% FPR, against the paper's 0.99911,
+98.2\% and 92.99\%; all paper values lie inside our intervals.
+
 \textbf{Reference models.} The EMBER authors' published 2018 model, scored by us on the same 200k test
 rows, reaches AUC 0.9964, 96.5\% / 87.0\% TPR at 1\% / 0.1\% FPR (consistent with their notebook, 86.8\% at 0.1\% FPR, within our CI; scored on our clean-room vectors, whose 50 entry-section-name hash dimensions differ from elastic/ember); VITRINE
 is behind by 0.0047 AUC (0.0045--0.0049), 7.8 and 12.7 points. The released EMBER2024 Win32 model scores
@@ -111,7 +116,7 @@ but most of that gain is triggered by the benign donor's own imports, and it cos
 
 \section{Limitations}
 EMBER 2018 training uses half of the labelled rows, so the gap to the published model mixes data and
-representation. EMBER2024 is subsampled. The EMBER 2017 (feature v1) setup was not reproduced.
+representation. EMBER2024 is subsampled. 
 Adversarial edits are simulated in feature space. Capability tags were compared with capa only as
 agreement, not ground truth.
 

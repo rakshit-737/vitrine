@@ -1,0 +1,59 @@
+{
+  "description": "Reproduce the EMBER paper's LightGBM baseline under its published setup (runs in GitHub Actions).",
+  "dataset": "EMBER 2017 feature version 1 (ember_dataset.tar.bz2)",
+  "archive_sha256": "a5603de2f34f02ab6e21df7a0f97ec4ac84ddc65caee33fb610093dd6f9e1df9",
+  "vectorizer": "elastic/ember@d97a0b5 PEFeatureExtractor(feature_version=1)",
+  "n_features": 2351,
+  "rows": {
+    "train_total": 900000,
+    "train_labelled": 600000,
+    "test_labelled": 200000,
+    "test_malicious": 100000
+  },
+  "model": "LightGBM defaults, params={'application': 'binary'} (100 trees, 31 leaves, lr 0.1)",
+  "versions": {
+    "python": "3.8.18",
+    "lightgbm": "2.3.1",
+    "scikit_learn": "0.24.2",
+    "numpy": "1.21.6"
+  },
+  "paper": {
+    "source": "Anderson & Roth 2018, EMBER (arXiv:1804.04637), LightGBM baseline on EMBER 2017 v1",
+    "roc_auc": 0.99911,
+    "tpr_at_fpr_1pct": 0.982,
+    "tpr_at_fpr_0.1pct": 0.9299
+  },
+  "reproduction": {
+    "roc_auc": {
+      "point": 0.999112327,
+      "lo": 0.9990509110225,
+      "hi": 0.9991675274525
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.98167,
+      "lo": 0.9805197499999999,
+      "hi": 0.98297025
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.93003,
+      "lo": 0.9253195000000001,
+      "hi": 0.9333319999999999
+    }
+  },
+  "reproduction_minus_paper": {
+    "roc_auc": 2.3269999999131485e-06,
+    "tpr_at_fpr_1pct": -0.00032999999999994145,
+    "tpr_at_fpr_0.1pct": 0.0001300000000000745
+  },
+  "paper_value_inside_ci": {
+    "roc_auc": true,
+    "tpr_at_fpr_1pct": true,
+    "tpr_at_fpr_0.1pct": true
+  },
+  "bootstrap": 1000,
+  "runtime_seconds": {
+    "vectorize": 913,
+    "train": 185,
+    "total": 1136
+  }
+}

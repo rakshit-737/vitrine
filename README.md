@@ -164,7 +164,7 @@ capabilities:
 
 - Detection is clearly below the published full-data EMBER 2018 model; the gap is not decomposed into data vs representation.
 - 2018 → 2024 mixes temporal drift with collection, extractor (LIEF vs pefile) and schema-translation changes.
-- EMBER2024 is a ~7 % per-week subsample; the EMBER 2017 paper setup (v1 features) is not reproduced (only its published numbers are cited).
+- EMBER2024 is a ~7 % per-week subsample; the EMBER 2017 paper setup (v1 features, LightGBM defaults) is reproduced exactly in Actions: AUC 0.99911 (0.99905-0.99917) vs 0.99911 published (`ember2017_repro.json`).
 - Adversarial evaluation is in feature space, not on real binaries. The capability floor is not a useful detector.
 - YARA rules abstain on half the families and four emitted rules barely generalise; byte-sequence atoms need binaries, which the safety rules exclude.
 

@@ -36,7 +36,13 @@ zero-event rates use the rule of three. Adversarial comparisons use exact McNema
 | VITRINE XGBoost, mean ± sd of 3 seeds | 91 named | 275,732 | 0.9913 ± 0.0007 | 88.3 ± 0.3 % | 74.1 ± 0.4 % |
 | LightGBM, EMBER-2018 config, 300 rounds (our run) | 2,381 hashed | 150,000 | 0.9901 (0.9898-0.9905) | 89.0 % (88.2-89.4) | 56.8 % (53.2-59.0) |
 | LightGBM, paper defaults, 100 trees (our run) | 2,381 hashed | 150,000 | 0.9797 | 75.4 % | 38.9 % |
-| *Published, EMBER 2017 paper* [1], different dataset | 2,351 | 600k | 0.9991 | 98.2 % | 93.0 % |
+| *Published, EMBER 2017 paper* [1], EMBER 2017 test set | 2,351 | 600k | 0.99911 | 98.2 % | 92.99 % |
+| EMBER 2017 paper setup, **reproduced by us** (elastic/ember@d97a0b5, feature v1, LightGBM defaults, `ember2017_repro.json`) | 2,351 | 600k | **0.99911** (0.99905-0.99917) | 98.2 % (98.1-98.3) | 93.0 % (92.5-93.3) |
+| VITRINE on EMBER 2017 | - | - | n/a: v1 records lack the data directories VITRINE's features need | | |
+
+The EMBER 2017 rows use a different dataset from the rest of this table. The reproduction ran in GitHub
+Actions (`.github/workflows/ember2017.yml`: sha256-checked 1.67 GB feature archive, paper-era
+scikit-learn 0.24 / LightGBM 2.3.1, 19 min); all three paper values lie inside its 95 % CIs.
 
 Paired difference VITRINE XGB − published model (bootstrap 95 % CI): **AUC −0.0047 (−0.0049, −0.0045);
 TPR @ 1 % −7.8 pt (−8.3, −7.5); TPR @ 0.1 % −12.7 pt (−14.4, −11.2)** (`results/ember_published.json`).
@@ -150,9 +156,8 @@ The released model reproduces the paper's AUC on our subsample. Our retrain on ~
 training rows is 0.0017 AUC (0.0014-0.0020) behind it. **Translation control:** on identical rows the
 v3 → v2 translation costs only 0.0006 AUC (0.0003-0.0008) and 0.8 pt TPR @ 1 % FPR, far less than the
 0.018-0.021 AUC lost from 2018 to 2024. This shows that little information is lost *inside* 2024; it
-does not rule out definition mismatches *across* datasets (see `n_embedded_mz` in §2). Not
-reproduced: the EMBER 2017 paper setup (feature version 1 needs its own vectorizer and a 1.7 GB
-download); its published numbers are shown in §1 for context only.
+does not rule out definition mismatches *across* datasets (see `n_embedded_mz` in §2). The EMBER 2017
+paper setup is reproduced exactly in §1.
 
 ## 4. Auto-YARA on real families (15 most frequent AVClass families)
 

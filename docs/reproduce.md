@@ -36,8 +36,16 @@ you get about twice the rows and different numbers.
 | 13 | `git clone https://github.com/FutureComputing4AI/EMBER2024 && git -C EMBER2024 checkout 0ef753e8` | thrember reference code (pinned, hash-checked) | - | 1 min |
 | 14 | `python scripts/prepare_ember2024.py --data D:/data/vitrine --thrember EMBER2024/src` | `ember2024/processed/*` (2.6 GB) | `train 107708, test 27715` | ~10 min |
 | 15 | `python scripts/bench_drift.py --data D:/data/vitrine` | `results/ember2024_drift.json`, `docs/figures/drift_ember2024.png` | see Evaluation | 1-3 h (15 XGBoost fits) |
+| 15b | `python scripts/bench_drift_parity.py --data D:/data/vitrine` (also reads local `C:/Windows/System32`) | `results/ember2024_drift_parity.json` | see Evaluation §2 | 19 min, ~1.5 GB |
 | 16 | `python scripts/bench_ember2024.py --data D:/data/vitrine --released <EMBER2024_Win32.model> --config EMBER2024/examples/lgbm_config.json` | `results/ember2024_baselines.json` | released model AUC 0.9983 | ~1 h |
 | 17 | `python scripts/bench_capabilities.py --data D:/data/vitrine` | `results/capabilities_ember2024.json` | 46,275 records with capa output | ~15 min |
 
 `make data data2024 bench bench2024` runs the same commands. Tests: `python -m pytest -q`
 (real-data tests skip without the datasets; `VITRINE_DATA=D:/data/vitrine python -m pytest -m realdata`).
+
+## EMBER 2017 paper setup (GitHub Actions)
+
+`gh workflow run ember2017-repro` downloads the 1.67 GB feature archive inside the runner (sha256
+checked), vectorizes it with elastic/ember@d97a0b5 (`feature_version=1`), trains LightGBM defaults and
+uploads `ember2017_repro.json` (committed to `results/`). About 19 minutes; needs ~10 GB RAM, so it is
+not run on a laptop.
