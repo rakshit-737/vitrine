@@ -24,9 +24,9 @@ jobs:
       - name: Image builds and answers /health
         run: |
           docker build -t vitrine:rel .
-          docker run -d --name v -p 127.0.0.1:8000:8000 vitrine:rel
+          docker run -d --name vitrine-smoke -p 127.0.0.1:8000:8000 vitrine:rel
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && exit 0; sleep 2; done
-          docker logs v; exit 1
+          docker logs vitrine-smoke; exit 1
   release:
     needs: test
     runs-on: ubuntu-latest

@@ -39,6 +39,6 @@ jobs:
       - run: docker build -t vitrine:ci .
       - name: Smoke-test the container
         run: |
-          docker run -d --name v -p 127.0.0.1:8000:8000 vitrine:ci
+          docker run -d --name vitrine-smoke -p 127.0.0.1:8000:8000 vitrine:ci
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/health && exit 0; sleep 2; done
-          docker logs v; exit 1
+          docker logs vitrine-smoke; exit 1
