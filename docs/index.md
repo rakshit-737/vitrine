@@ -2,29 +2,27 @@
 
 **Static-first PE triage that explains every verdict and writes a candidate YARA rule, without ever running the sample.**
 
-A bare `predict() -> 0.87` doesn't help an analyst decide anything. VITRINE parses a PE file (headers, sections, imports, exports, resources, entropy, strings, overlay), tags capabilities with 22 capa-style rules mapped to ATT&CK, and scores the file with an XGBoost model trained on **EMBER 2018**. Exact TreeSHAP ties the score to named artifacts, which VITRINE reports in plain language. It then synthesizes a `pe`-module YARA rule and validates it against a benign corpus for specificity and against held-out family siblings for coverage. Packed samples starve static features, so VITRINE routes them to dynamic analysis instead of guessing.
+**Novel contribution:** 91 *named* features make temporal drift measurable and attributable: a model trained on EMBER 2018 and tested on EMBER2024 loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate falls (silent decay); the shift concentrates in a few named artifacts, yet dropping them does not recover robustness ([Evaluation §2](evaluation.md#2-cross-time-ember-2018-ember2024)).
 
-> **Lab-only, no malware in this repo.** VITRINE only reads bytes and never loads, maps or executes a file. All training and evaluation uses EMBER's **pre-extracted features** (JSON, no binaries). Test fixtures are synthetic inert PEs built in code (`vitrine/synth.py`) plus a 75 KB sample of EMBER feature records. The real-benign benchmark reads `C:\Windows\System32` in place, read-only. See [SECURITY.md](security.md), [THREAT_MODEL.md](threat-model.md) and [ADR 0001](adr/0001-static-only-no-live-malware.md).
+[![Triage UI](figures/demo_triage.png)](demo/index.html)
 
+| Headline (95 % CI) | Value |
+| --- | --- |
+| VITRINE XGBoost, EMBER 2018 test (3 seeds) | AUC 0.9913, 88.3 % TPR @ 1 % FPR |
+| vs published EMBER 2018 model (same rows) | −0.0047 AUC (−0.0049, −0.0045), −12.7 pt @ 0.1 % FPR **(worse)** |
+| 2018 model on EMBER2024 | AUC 0.9730 (0.9710-0.9748), recall at its threshold 88.0 % → 58.6 % |
+| Auto-YARA, 15 families | 16.8 % coverage, 5 FPs / 100k benign (filtered imphash baseline 13.9 %, 7) |
+| System32 (2,999 real binaries) | 0 false positives (upper bound 0.1 %) |
 
+<div class="grid cards" markdown>
 
-[Try the static demo](demo/index.html){ .md-button } [Benchmarks](benchmarks.md){ .md-button }
+- **[How it works](how-it-works.md)**: one sample through parse, features, SHAP, rules, triage
+- **[Evaluation](evaluation.md)**: methodology, every result, confidence intervals
+- **[Reproduce](reproduce.md)**: exact commands, expected outputs, runtimes
+- **[Demo](demo/index.html)**: the triage UI with precomputed examples
 
-## Prior art and how this differs
+</div>
 
-| Existing | What it does | VITRINE's angle |
-| --- | --- | --- |
-| EMBER / PE-malware ML [1,2] | Feature set and GBDT score | Named features and exact TreeSHAP sentences, calibrated out-of-time thresholds, triage policy |
-| yarGen / YARA-Signator | Frequency-based rule generation | Benign-filtered, structural `pe` rules. Measured specificity and coverage on 100k benign, and abstention when no rule is safe |
-| capa (Mandiant), PEframe | Capability detection | Capabilities used as model features *and* as an evasion-resistant "don't auto-clear" floor |
-| VirusTotal | Cloud multi-AV | Local, offline, explainable |
+> **Lab-only, no malware.** VITRINE only reads bytes and never executes a file. All training and evaluation uses EMBER's pre-extracted features (no binaries). See [Security](security.md), [Threat model](threat-model.md) and [ADR 0001](adr/0001-static-only-no-live-malware.md).
 
-VITRINE's contribution is **chaining these into one static-only pipeline and measuring each link on real data**. It complements dynamic sandboxes: VITRINE decides *what deserves* detonation.
-
-
-## References
-
-1. H. S. Anderson, P. Roth. *EMBER: An Open Dataset for Training Static PE Malware Machine Learning Models.* arXiv:1804.04637, 2018. EMBER 2017 LightGBM: AUC 0.99911, 92.99 % TPR at 0.1 % FPR, 98.2 % at 1 % FPR.
-2. EMBER 2018 feature-version-2 release, <https://github.com/elastic/ember>. P. Roth, *EMBER Improvements*, CAMLIS 2019.
-3. Public EMBER 2018 v2 LightGBM notebook reporting about 0.985 AUROC, <https://www.kaggle.com/code/dhoogla/ember-2018-v2f-lgbm-0-985-auroc>.
-4. Mandiant capa, <https://github.com/mandiant/capa>. Neo23x0 yarGen, <https://github.com/Neo23x0/yarGen>.
+Citations for the datasets and prior work are on the [Datasets](datasets.md) page.

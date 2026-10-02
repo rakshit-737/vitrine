@@ -17,6 +17,7 @@ theme:
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - tables
   - toc: {permalink: true}
   - pymdownx.superfences:
@@ -34,11 +35,13 @@ plugins:
 nav:
   - Home: index.md
   - Getting started: getting-started.md
+  - How it works: how-it-works.md
+  - Evaluation: evaluation.md
+  - Reproduce: reproduce.md
   - Architecture: architecture.md
   - Datasets: datasets.md
-  - Benchmarks: benchmarks.md
   - CLI & API reference: reference.md
-  - Live demo: demo/index.html
+  - Demo (static): demo/index.html
   - Threat model: threat-model.md
   - Security: security.md
   - ADRs:

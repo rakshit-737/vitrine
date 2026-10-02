@@ -3,6 +3,44 @@
 All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses semantic versioning.
 
+## [Unreleased]
+
+### Added
+- EMBER2024 (Win32, features only): resumable sha256-range subsample fetcher with per-range SHA-256
+  manifest, pinned thrember vectorization, v3 -> v2 adapter (`vitrine/ember3.py`) with tests.
+- Cross-time evaluation EMBER 2018 <-> EMBER2024 with seed-pooled bootstrap CIs, a same-size 2018
+  control, a weekly drift curve, and named-feature drift attribution plus ablation (`bench_drift.py`).
+- The EMBER authors' published 2018 model scored on our test rows (`score_published.py`), and the
+  EMBER2024 released Win32 model plus paper-config retrains on native and translated vectors
+  (`bench_ember2024.py`).
+- Capability tagger and packing heuristic validated against EMBER2024 capa/packer labels.
+- Like-for-like benign-filtered YARA baselines and a no-abstention ablation; Wilson/McNemar/rule-of-three
+  intervals (`add_intervals.py`); adversarial benchmark with clean donors, 3 draws and matched-FPR
+  comparison; clustering scored on all points.
+- Docs: How it works, Evaluation, Reproduce pages; demo screenshot; preprint in `paper/`.
+- Repo: CITATION.cff, CODEOWNERS, dependabot, issue/PR templates; CI on 3.10-3.14, Windows, Docker
+  smoke test, pip-audit; release gated on tests.
+
+### Changed (numbers that got worse are listed first)
+- **Disclosed** that EMBER 2018 training used a 50 % sha256-prefix subsample (`--train-frac 0.5`).
+- **Withdrawn:** "cost of interpretability is small" / "clearly ahead at 0.1 % FPR". The published
+  EMBER 2018 model is ahead by 0.0047 AUC, 7.8 pt at 1 % FPR and 12.7 pt at 0.1 % FPR.
+- **Withdrawn:** the capability floor's robustness claim; 13 of its 18.8 pt combined-attack gain came
+  from benign donors' imports, and it costs 11.7 % benign FPR.
+- YARA: VITRINE's lead over benign-filtered baselines is small (16.8 % vs 13.9 % coverage); the naive
+  frequency baseline's FP count moved 55,112 -> 50,355 on re-run.
+- Clustering: HDBSCAN on all points (ARI 0.341) is below k-means (0.478).
+- Headline uses the 3-seed mean; rounding of three CI bounds fixed; SHAP ratio 28-37x (was 18-37x).
+
+### Security
+- API: upload cap enforced while streaming, octet-stream required, 64 KiB rule text, Host allow-list,
+  `/docs` off by default, CSP; parser per-file import budget; download scripts require HTTP 206 and
+  bounded reads, zip-slip guard; Docker base pinned by digest, HEALTHCHECK.
+
+### Fixed
+- Release notes were never taken from CHANGELOG (awk escape); the step now fails on empty notes.
+- XML-namespace URLs no longer trigger T1071.001; sdist ships test fixtures; CLI errors are one line.
+
 ## [1.0.0] - 2026-09-26
 
 ### Added

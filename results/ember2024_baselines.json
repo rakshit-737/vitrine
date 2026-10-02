@@ -1,0 +1,134 @@
+{
+  "subsample": {
+    "train_rows": 107708,
+    "train_malicious": 49953,
+    "test_rows": 27715,
+    "test_malicious": 12043,
+    "note": "first 8 MiB of each weekly Win32 member (sha256-range sample, ~7 % of files); see results/ember2024_manifest.json"
+  },
+  "paper_win32": {
+    "roc_auc": 0.9984,
+    "pr_auc": 0.9986,
+    "source": "Joyce et al., KDD 2025 (arXiv:2506.05074), Table 5, full Win32 test split"
+  },
+  "lgbm_config": {
+    "objective": "binary",
+    "boosting": "gbdt",
+    "learning_rate": 0.1,
+    "max_depth": -1,
+    "num_leaves": 64,
+    "num_threads": 8,
+    "seed": 0,
+    "min_data_in_leaf": 100,
+    "min_sum_hessian_in_leaf": 0.001,
+    "bagging_fraction": 0.9,
+    "bagging_freq": 1,
+    "bagging_seed": 0,
+    "feature_fraction": 0.9,
+    "feature_fraction_bynode": 0.9,
+    "feature_fraction_seed": 0,
+    "max_delta_step": 0,
+    "lambda_l1": 0,
+    "lambda_l2": 1.0,
+    "verbosity": -1,
+    "is_unbalance": true,
+    "sigmoid": 1.0,
+    "boost_from_average": true,
+    "num_iterations": 500
+  },
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "released": {
+    "roc_auc": {
+      "point": 0.9982688638216037,
+      "lo": 0.9980001242039912,
+      "hi": 0.9985124787816856
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.9735115834924852,
+      "lo": 0.9690255750228349,
+      "hi": 0.9769990866063273
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.8972847297185087,
+      "lo": 0.8839138918874035,
+      "hi": 0.923447230756456
+    },
+    "pr_auc": 0.997985554535411,
+    "trees": 500
+  },
+  "retrain_v3": {
+    "roc_auc": {
+      "point": 0.9965784613811737,
+      "lo": 0.996139450977031,
+      "hi": 0.9969632114845659
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.9468294168119793,
+      "lo": 0.9399651249688615,
+      "hi": 0.9526737523872789
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.8533587976417837,
+      "lo": 0.8276965872290957,
+      "hi": 0.879023083949182
+    },
+    "pr_auc_mean": 0.9960564918438385
+  },
+  "retrain_v2_translated": {
+    "roc_auc": {
+      "point": 0.9960175883278893,
+      "lo": 0.9954760800925745,
+      "hi": 0.9964937486640203
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.939162445680755,
+      "lo": 0.9320746491737939,
+      "hi": 0.9462758448891472
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.8379971767831935,
+      "lo": 0.8104998754463173,
+      "hi": 0.8659034293780619
+    },
+    "pr_auc_mean": 0.9954454167496737
+  },
+  "paired_v3_minus_v2_translated": {
+    "roc_auc": {
+      "mean": 0.0005640818577314244,
+      "lo": 0.00027122971106968984,
+      "hi": 0.0008350377870060126
+    },
+    "tpr_at_fpr_1pct": {
+      "mean": 0.007508926347255672,
+      "lo": 0.0020758947106203074,
+      "hi": 0.012955658888981135
+    },
+    "tpr_at_fpr_0.1pct": {
+      "mean": 0.016623349663705055,
+      "lo": -0.004153865315951127,
+      "hi": 0.03678485427219136
+    }
+  },
+  "paired_released_minus_retrain_v3": {
+    "roc_auc": {
+      "mean": 0.0016950633062053455,
+      "lo": 0.0014278820295845428,
+      "hi": 0.001953586734907875
+    },
+    "tpr_at_fpr_1pct": {
+      "mean": 0.026510836170389435,
+      "lo": 0.021755376567300533,
+      "hi": 0.0316407871792743
+    },
+    "tpr_at_fpr_0.1pct": {
+      "mean": 0.04575521049572366,
+      "lo": 0.018847048077721484,
+      "hi": 0.0713339699410446
+    }
+  },
+  "runtime_seconds": 4716
+}

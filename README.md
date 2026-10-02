@@ -8,104 +8,55 @@
 
 **Static-first PE triage that explains every verdict and writes a candidate YARA rule, without ever running the sample.**
 
-A bare `predict() -> 0.87` doesn't help an analyst decide anything. VITRINE parses a PE file (headers, sections, imports, exports, resources, entropy, strings, overlay), tags capabilities with 22 capa-style rules mapped to ATT&CK, and scores the file with an XGBoost model trained on **EMBER 2018**. Exact TreeSHAP ties the score to named artifacts, which VITRINE reports in plain language. It then synthesizes a `pe`-module YARA rule and validates it against a benign corpus for specificity and against held-out family siblings for coverage. Packed samples starve static features, so VITRINE routes them to dynamic analysis instead of guessing.
+**Novel contribution:** an explainable static triage pipeline whose 91 *named* features make temporal drift measurable and attributable: trained on EMBER 2018 and tested on EMBER2024, it loses 0.018 AUC and, at its own calibrated threshold, 29 pt of recall while its false-positive rate *falls* (silent decay), and the shift concentrates in a few named artifacts (embedded executables, DLL share, signing, toolchain versions), yet dropping those features does not recover robustness ([Evaluation §2](https://rakshit-737.github.io/vitrine/evaluation/#2-cross-time-ember-2018-ember2024), all with bootstrap CIs over 3 seeds).
 
-> **Lab-only, no malware in this repo.** VITRINE only reads bytes and never loads, maps or executes a file. All training and evaluation uses EMBER's **pre-extracted features** (JSON, no binaries). Test fixtures are synthetic inert PEs built in code (`vitrine/synth.py`) plus a 75 KB sample of EMBER feature records. The real-benign benchmark reads `C:\Windows\System32` in place, read-only. See [SECURITY.md](SECURITY.md), [THREAT_MODEL.md](THREAT_MODEL.md) and [ADR 0001](docs/adr/0001-static-only-no-live-malware.md).
+[![Triage UI on a synthetic inert sample](docs/figures/demo_triage.png)](https://rakshit-737.github.io/vitrine/demo/)
 
-## Headline results (real data, reproducible)
+VITRINE parses a PE file (headers, sections, imports, exports, resources, entropy, strings, overlay), tags capabilities with 22 capa-style rules mapped to ATT&CK, and scores it with an XGBoost model trained on EMBER 2018 features. Exact TreeSHAP turns the score into plain-language reasons. It then synthesizes a `pe`-module YARA rule, validates it against benign files and held-out family siblings, and abstains when no safe rule exists. Packed files are routed to dynamic analysis.
 
-All numbers come from committed JSON in [`results/`](results/) and were produced by the scripts in [`scripts/`](scripts/). EMBER 2018 uses a **temporal split**: training on Jan–Sep 2018, calibration on Oct 2018 (held out), and testing on **200,000 samples first seen Nov–Dec 2018**. Thresholds are chosen on the validation month, so the test FPR/TPR are honest out-of-time numbers.
+> **Lab-only, no malware in this repo.** VITRINE only reads bytes and never loads, maps or executes a file. All training and evaluation uses EMBER's **pre-extracted features** (JSON, no binaries). Test fixtures are synthetic inert PEs built in code plus small samples of EMBER feature records. See [SECURITY.md](SECURITY.md), [THREAT_MODEL.md](THREAT_MODEL.md) and [ADR 0001](docs/adr/0001-static-only-no-live-malware.md).
 
-### 1. Verdict model vs. EMBER LightGBM baselines
+## Try it in 60 seconds
 
-| Model | Features | Train rows | ROC AUC | TPR @ 1 % FPR | TPR @ 0.1 % FPR | Test FPR / recall at the val-calibrated 1 % threshold |
-| --- | --- | --- | --- | --- | --- | --- |
-| **VITRINE XGBoost** (600 trees, depth 10) | **91 named** | 275,732 | **0.9917** | **88.7 %** | **74.5 %** | 0.89 % / 87.8 % (precision 99.0 %) |
-| LightGBM, EMBER-2018 tuned config (300 trees, 2048 leaves, lr 0.05) | 2,381 hashed | 150,000* | 0.9901 | **89.0 %** | 56.8 % | 0.79 % / 87.0 % |
-| LightGBM, EMBER-paper config (100 trees, 31 leaves) | 2,381 hashed | 150,000* | 0.9797 | 75.4 % | 38.9 % | 0.90 % / 74.3 % |
-| *Published:* EMBER paper LightGBM on **EMBER 2017** [1] | 2,351 | 600k labeled | 0.9991 | 98.2 % | 93.0 % | n/a (different, easier dataset) |
+1. **No install:** open the [static demo](https://rakshit-737.github.io/vitrine/demo/) (precomputed: synthetic samples plus real System32 files scored by the EMBER model).
+2. **pip** (numpy only):
+   ```bash
+   pip install https://github.com/rakshit-737/vitrine/releases/download/v1.0.0/vitrine-1.0.0-py3-none-any.whl
+   vitrine demo
+   ```
+   ```text
+   == VITRINE demo (synthetic inert PEs only) ==
+   -- 1. explainable verdict: injector --
+   verdict  MALICIOUS  score=0.989  family=injector
+     +0.887  1 high-risk capability rule(s) matched (injection/download/keylogging)
+     +0.801  4 injection API(s) imported
+   ```
+3. **Docker** (API + UI on localhost only):
+   ```bash
+   docker run --rm -p 127.0.0.1:8000:8000 ghcr.io/rakshit-737/vitrine:v1.0.0   # http://127.0.0.1:8000
+   ```
 
-![ROC on EMBER 2018 test set](docs/figures/roc_ember2018.png)
+## Headline results
 
-\* Both LightGBM baselines were trained on the same seeded 150k-row random subsample because the full 275k × 2381 float32 matrix did not fit in memory next to everything else on a 16 GB laptop ([ADR 0007](docs/adr/0007-memory-bounded-baselines.md)). The tuned run also uses 300 rounds instead of the 1,000 of the EMBER 2018 reference config, and took about 2 h. Treat both as *reproduced reference points*, not as the best LightGBM result possible: a full-data, full-budget tuned model would very likely beat the row above. EMBER 2018 was deliberately built to be harder than 2017, and public default-parameter LightGBM runs on EMBER 2018 report about 0.985 AUC [3].
+Full methodology, every table and all intervals: **[Evaluation](https://rakshit-737.github.io/vitrine/evaluation/)**. Exact commands, outputs and runtimes: **[Reproduce](https://rakshit-737.github.io/vitrine/reproduce/)**. Every number below is in a committed file under [`results/`](results/). Numbers that got worse in this revision are marked **(worse)**.
 
-**Cost of interpretability:** small, and it depends on the operating point. Against the tuned 2,381-dim LightGBM, the 91 named features are level at 1 % FPR (88.7 % vs 89.0 % read off the test ROC; 87.8 % vs 87.0 % recall at the validation-calibrated thresholds, where LightGBM's test FPR came out lower, 0.79 % vs 0.89 %). They are clearly ahead at 0.1 % FPR (74.5 % vs 56.8 %) and on AUC (0.9917 vs 0.9901), with 1.8× the training rows. They beat the EMBER-paper config everywhere. In return every verdict comes with SHAP attributions that turn into analyst sentences ([ADR 0003](docs/adr/0003-interpretable-features-plus-treeshap.md)).
+**Data and subsampling.** EMBER 2018 training uses a deterministic **50 % sha256-prefix subsample** of the 600k labelled rows (`--train-frac 0.5`, to fit 16 GB RAM): 275,732 rows to fit after holding out 2018-10 for calibration; test = all 200,000 Nov-Dec 2018 files. EMBER2024 (Win32) is a sha256-range subsample of about 7 % of every week: 135,423 files over 64 weeks.
 
-**Uncertainty and like-for-like rows** ([`results/ember_ci.json`](results/ember_ci.json), `scripts/bench_ci.py`). 95 % intervals from 300 stratified bootstrap resamples of the 200k test set; differences are *paired* (same resamples for both models). Seed variance: XGBoost retrained with seeds 0, 1, 2.
+| Result | Value (95 % CI) | Source |
+| --- | --- | --- |
+| VITRINE XGBoost on EMBER 2018 test (mean of 3 seeds) | AUC 0.9913; TPR 88.3 % @ 1 % FPR, 74.1 % @ 0.1 % FPR | `ember_ci.json` |
+| **(worse)** vs the EMBER authors' *published* 2018 model, same test rows | AUC −0.0047 (−0.0049, −0.0045); −7.8 pt @ 1 %; −12.7 pt (−14.4, −11.2) @ 0.1 % | `ember_published.json` |
+| Published 2018 model, our reproduction of its score | AUC 0.9964, 96.5 % / 87.0 % (authors' notebook: 0.9964, 96.5 % / 86.8 %) | `ember_published.json` |
+| EMBER2024 released Win32 model on our test subsample | AUC 0.9983 (0.9980-0.9985); paper 0.9984 | `ember2024_baselines.json` |
+| 2018 model → 2024 test | AUC 0.9730 (0.9710-0.9748); recall at 2018 threshold 58.6 % (was 88.0 %), FPR 0.07 % | `ember2024_drift.json` |
+| 2024 model → 2018 test | AUC 0.8860 (0.8810-0.8895); 44.8 % FPR at its own threshold | `ember2024_drift.json` |
+| Auto-YARA, 15 families, out of time | VITRINE 16.8 % coverage, 5 FPs / 100k benign; benign-filtered imphash baseline 13.9 %, 7 FPs | `yara_structural.json` |
+| Real System32 binaries (2026) | 0 / 2,999 score false positives (upper bound 0.1 %) | `benign_system32.json` |
+| **(worse)** Capability floor under combined feature-space attack | 58.7 % detection, but 13 pt of it switched on by benign donors; 47.1 % with clean donors; floor costs 11.7 % benign FPR | `adversarial.json` |
 
-| | ROC AUC | TPR @ 1 % FPR | TPR @ 0.1 % FPR |
-| --- | --- | --- | --- |
-| VITRINE XGB, 95 % bootstrap CI | 0.9915–0.9920 | 88.2–89.0 % | 73.4–75.7 % |
-| LightGBM tuned 2018, 95 % bootstrap CI | 0.9898–0.9905 | 88.3–89.4 % | 53.2–59.0 % |
-| Paired difference XGB − tuned LGBM (95 % CI) | +0.0016 (+0.0013, +0.0018) | −0.3 pt (−0.9, +0.3): **no significant difference** | +17.8 pt (+15.6, +21.6) |
-| XGB, 275k rows, 3 seeds (mean ± sd) | 0.9913 ± 0.0007 | 88.4 ± 0.3 % | 74.1 ± 0.4 % |
-| XGB, **same 150k rows as LightGBM**, 3 seeds | 0.9902 ± 0.0001 | 86.9 ± 1.6 % | 70.9 ± 0.4 % |
+The earlier claims "the cost of interpretability is small" and "clearly ahead at 0.1 % FPR" held only against our 150k-row LightGBM reproductions and are withdrawn; the published model is clearly better at detection. VITRINE's value is the explanation, rule synthesis and drift diagnosis around a competitive (not state-of-the-art) score.
 
-Like-for-like on identical rows, the XGBoost AUC advantage disappears (0.9902 vs 0.9901) and the tuned LightGBM is ahead at 1 % FPR (89.0 % vs 86.9 %); the 0.1 % FPR lead (70.9 % vs 56.8 %) survives. Part of the headline AUC gap is therefore extra training data, not the feature set.
-
-**SHAP faithfulness** (2,000 test malware):
-
-| Check | Result |
-| --- | --- |
-| Additivity: max \|Σ SHAP − margin\| | 1.7e-5 log-odds, so the contributions are exact |
-| Deletion test: replace the top-k SHAP features with the benign median | score drop 0.087 / 0.224 / 0.335 / 0.532 for k = 1 / 3 / 5 / 10 |
-| Same, but k *random* features | 0.003 / 0.008 / 0.009 / 0.019. SHAP picks the features that actually drive the score, 18–37× better than random |
-
-![global SHAP](docs/figures/shap_global_top20.png)
-
-**Packing routing rationale:** 20.8 % of the test set trips the packing heuristics, and 75 % of those samples are malicious. AUC on the packed subset is 0.9965 (XGB) / 0.9953 (tuned LGBM) / 0.9905 (paper-config LGBM). The packed flag is therefore a strong *prior*, but packed benign files (installers, protected software) are exactly where static evidence runs out, which is why VITRINE routes them to dynamic analysis.
-
-### 2. Auto-YARA on real families (15 most frequent AVClass families)
-
-Structural rules (imports, section names, imphash through YARA's `pe` module) are synthesized from 400 training samples per family and tuned against the training benign pool. Every rule is then scored on out-of-time test siblings, **all 100,000 test benign** samples and **2,999 real System32 binaries**.
-
-| Rule generator | Rules emitted | Mean coverage (families with a rule) | Coverage (all 15 families) | Benign FPs (100k EMBER test) | FPs on System32 | Cross-family hit rate |
-| --- | --- | --- | --- | --- | --- | --- |
-| **VITRINE structural** | 8 / 15 (abstains on 7) | **31.5 %** | 16.8 % | **5** (specificity 99.9994 %) | **0** | 0.005 % |
-| Exact-imphash baseline | 15 | 21.0 % | 21.0 % | 11,596 | 0 | 0.18 % |
-| Frequency baseline (yarGen-like, no benign filter) | 15 | 20.4 % | 20.4 % | 55,112 | 297 | 2.9 % |
-
-When a family has distinctive structure, the rule works: xtrat **97.7 %** and sivis **98.9 %** sibling coverage with 0 benign hits. When a family doesn't (zbot, sality, emotet, upatre and others), VITRINE **abstains** instead of shipping a noisy rule. The baselines emit rules that either miss or light up thousands of benign files. Rules are in [`results/rules/ember2018_families.yar`](results/rules/ember2018_families.yar).
-
-### 3. Adversarial robustness (feature-space, 3,000 test malware)
-
-Functionality-preserving edits are simulated on the EMBER raw features, with donor content taken from real benign samples ([ADR 0005](docs/adr/0005-adversarial-eval-in-feature-space.md)). The table shows detection rate at the validation-calibrated 1 % FPR threshold.
-
-| Perturbation | VITRINE XGB | LightGBM tuned 2018 | LightGBM paper config | VITRINE triage (score **or** high-risk capability floor) |
-| --- | --- | --- | --- | --- |
-| none | 87.1 % | 86.5 % | 74.1 % | 89.4 % |
-| append benign PE as overlay | 78.6 % | 74.2 % | 63.8 % | 82.3 % |
-| add benign data section | 75.1 % | 70.3 % | 63.0 % | 78.6 % |
-| import padding (benign donor) | 77.1 % | 78.2 % | 60.2 % | 85.5 % |
-| copy benign header fields | 79.2 % | 83.5 % | 70.2 % | 82.3 % |
-| **all combined** | **40.2 %** | **44.7 %** | **37.1 %** | **58.9 %** |
-
-Honest reading: every model is badly hurt by a combined attack, and the interpretable features are *not* more robust than the hashed EMBER vector: the tuned LightGBM holds up better against import padding, header copying and the combined attack. The capability floor retains more detections because capability rules need the *malicious* imports to disappear, and padding can't remove them. The floor has a price, though. On EMBER's raw features it flags **10.9 % of benign** test files for review, more than its 8.6 % hit rate on malware. As a *standalone* signal it isn't discriminative, and it is only useful as a "don't auto-clear" floor in front of an analyst queue.
-
-### 4. Family clustering (5,000 malware, 10 AVClass families)
-
-| Embedding | Algorithm | Clusters | Noise | ARI | NMI | Homogeneity | Purity |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 91 interpretable feats → PCA20 | HDBSCAN | 40 | 33.6 % | 0.578 | 0.772 | 0.968 | 0.977 |
-| 91 interpretable feats → PCA20 | k-means (k = true 10) | 10 | 0 | 0.478 | 0.624 | 0.601 | 0.674 |
-| EMBER 2381 → SVD20 | HDBSCAN | 31 | 32.7 % | 0.660 | 0.800 | 0.961 | 0.977 |
-| EMBER 2381 → SVD20 | k-means (k = true 10) | 10 | 0 | 0.246 | 0.505 | 0.448 | 0.516 |
-
-HDBSCAN finds **very pure** clusters (about 97 % single-family) by over-splitting families into variants and refusing to label a third of the samples. That is the right behavior for a per-cluster rule generator. AVClass labels are noisy consensus labels, so these are agreement scores rather than accuracy.
-
-### 5. Real benign binaries (domain-shift check)
-
-This benchmark takes 3,000 random PE files from this machine's `C:\Windows\System32` (2026-era Windows 11) and parses them **with VITRINE's own dissector, not LIEF**. It then scores them with models trained on 2018 LIEF features. Every flag is a false positive.
-
-| | Result |
-| --- | --- |
-| Parsed | 2,999 / 3,000 (1 over the size cap), median 168 KB |
-| VITRINE XGB false positives at the 1 % / 0.1 % thresholds | **0 / 0** (mean score 0.0005) |
-| LightGBM baseline false positives (tuned 2018 / paper config) | 0 / 0 (mean score 0.0013) and 0 / 0 (mean score 0.012) |
-| Triage verdicts | 0 MALICIOUS, 0 SUSPICIOUS by score, **102 (3.4 %) SUSPICIOUS by capability floor**, 2,897 BENIGN |
-| Most frequent capability hits | anti-debug API (T1622) 70 %, registry modification (T1112) 41 %, memory-protection changes (T1055) 11 % |
-
-The extractor swap and 8 years of drift do not produce false positives on signed Microsoft binaries. This is an easy benign set, though: every file is signed and well-formed. The capability floor is the component that pays the price here, since OS binaries legitimately import debugging and memory APIs.
+![Drift](docs/figures/drift_ember2024.png)
 
 ## Architecture
 
@@ -156,28 +107,27 @@ flowchart TB
 | `api.py` + `static/index.html` | FastAPI (`/api/analyze`, `/api/yara/validate`, `/api/model`, `/health`) and a single-file analyst UI |
 | `synth.py` | Inert synthetic PE32/PE32+ builder used by tests and the demo |
 
-## Quickstart
+## Develop
 
 ```bash
-python -m pip install -e ".[dev]"      # numpy core; dev pulls sklearn, xgboost, fastapi, pytest, ruff
-python -m pytest -q                     # 43 tests; realdata tests skip when the dataset is absent
-python -m vitrine demo                  # end-to-end on synthetic inert samples
+git clone https://github.com/rakshit-737/vitrine && cd vitrine
+python -m pip install -e ".[dev]"      # numpy core; dev adds sklearn, xgboost, fastapi, pytest, ruff
+python -m pytest -q                     # realdata tests skip when the datasets are absent
+python -m vitrine demo
 ```
 
 Triage real files (read-only) with a trained model:
 
 ```bash
-python -m vitrine analyze C:/Windows/System32/notepad.exe --model <data>/models/vitrine_xgb.json
-python -m vitrine scan C:/Windows/System32 --model <data>/models/vitrine_xgb.json > verdicts.jsonl
-python -m vitrine serve --model <data>/models/vitrine_xgb.json   # http://127.0.0.1:8000
-docker compose up                                                # same API, hardened container
+vitrine analyze C:/Windows/System32/notepad.exe --model <data>/models/vitrine_xgb.json
+vitrine scan C:/Windows/System32 --model <data>/models/vitrine_xgb.json > verdicts.jsonl
+vitrine serve --model <data>/models/vitrine_xgb.json   # http://127.0.0.1:8000 (loading the 18 MB model takes 20-60 s)
 ```
 
-Real output on this machine's `notepad.exe` (EMBER-trained model, excerpt):
+Real output on `notepad.exe` (EMBER-trained model, all tags shown):
 
 ```
 verdict  BENIGN  score=0.001  family=None
-packed   False   route_to_dynamic=False
 top drivers (SHAP, log-odds; + pushes toward malicious):
   -1.358  minimum OS major version 10
   -1.130  64-bit (PE32+) image: 1
@@ -190,82 +140,56 @@ capabilities:
   [T1112] registry modification: import RegCreateKeyW, import RegCreateKeyExW, import RegSetValueExW
 ```
 
-## Reproducing the benchmarks
+(A fourth tag, T1071.001 on the manifest's XML-namespace URL, was a false hit and is now filtered.)
 
-`make` targets exist, but every step is a plain command (this project was built on Windows without `make`):
+## Datasets
 
-```bash
-pip install -e ".[dev,bench]"
-python scripts/download_ember.py  --out D:/data/vitrine          # 1.7 GB, MD5 + SHA-256 verified, resumable
-python scripts/prepare_ember.py   --data D:/data/vitrine         # stream -> 2381-dim f32 memmap + 91 features (~5.5 GB)
-python scripts/train_ember.py     --data D:/data/vitrine --lgbm-limit 150000 --rounds-2018 300   # -> results/ember_benchmark.json
-python scripts/merge_baselines.py --data D:/data/vitrine         # fold saved baseline scores in, redraw figures
-python scripts/bench_yara.py      --data D:/data/vitrine --benign-dir C:/Windows/System32 --benign-limit 3000
-python scripts/bench_adversarial.py --data D:/data/vitrine
-python scripts/bench_cluster.py   --data D:/data/vitrine
-python scripts/bench_benign.py    --data D:/data/vitrine --dir C:/Windows/System32 --limit 3000
-VITRINE_DATA=D:/data/vitrine python -m pytest -q -m realdata   # real-data tests
-```
+| Dataset | What | Licence | Used for |
+| --- | --- | --- | --- |
+| **EMBER 2018** v2 [2] | LIEF-extracted features of 1M PE files (600k labelled train, 200k test), AVClass labels; ships the authors' benchmark model | Data MIT; `elastic/ember` code AGPL-3.0, not vendored | Training, calibration, test, YARA, clustering, adversarial |
+| **EMBER2024** Win32 [3] | pefile/thrember features (v3) with capa and packer labels, weekly 2023-09 .. 2024-12 | Apache-2.0 | Cross-time drift, baseline reproduction, capability validation |
+| Local `C:\Windows\System32` | Real current benign PEs, read in place | not redistributed | Parser checks, benign specificity |
 
-Wall-clock on a contended 16 GB / 16-thread laptop: prep about 40 min, XGBoost 2–12 min depending on contention, the LightGBM paper-config baseline about 7 min, the tuned LightGBM 2018 baseline about 2 h, and the System32 scan 18–36 min.
-
-## Dataset
-
-| Dataset | What | Size | Licence | Used for |
-| --- | --- | --- | --- | --- |
-| **EMBER 2018** (feature version 2) [2] | LIEF-extracted raw features of 1M PE files (800k train incl. 200k unlabeled, 200k test), AVClass family labels | 1.7 GB `.tar.bz2` (about 10 GB JSONL) | Data: MIT. `elastic/ember` code: AGPL-3.0 (not vendored; VITRINE's vectorizer is an independent implementation) | Training, calibration, test, auto-YARA, clustering, adversarial |
-| Local Windows install (`C:\Windows\System32`) | Real, current benign PEs | read in place, nothing copied | Microsoft, not redistributed | Parser verification, benign specificity, domain shift |
-
-No binaries, malicious or benign, are stored in the repo or the dataset folder.
-
-## Prior art and how this differs
+## Prior art
 
 | Existing | What it does | VITRINE's angle |
 | --- | --- | --- |
-| EMBER / PE-malware ML [1,2] | Feature set and GBDT score | Named features and exact TreeSHAP sentences, calibrated out-of-time thresholds, triage policy |
-| yarGen / YARA-Signator | Frequency-based rule generation | Benign-filtered, structural `pe` rules. Measured specificity and coverage on 100k benign, and abstention when no rule is safe |
-| capa (Mandiant), PEframe | Capability detection | Capabilities used as model features *and* as an evasion-resistant "don't auto-clear" floor |
-| VirusTotal | Cloud multi-AV | Local, offline, explainable |
-
-VITRINE's contribution is **chaining these into one static-only pipeline and measuring each link on real data**. It complements dynamic sandboxes: VITRINE decides *what deserves* detonation.
+| EMBER / EMBER2024 [1-3] | Feature sets and GBDT baselines | Named features, exact TreeSHAP sentences, calibrated thresholds, cross-time drift attribution |
+| yarGen, AutoYara [4,5] | Rule generation from frequent strings/bytes | Structural `pe` rules, benign-filtered, with abstention; compared with benign-filtered baselines |
+| capa [6] | Capability detection from code | Import-level rules used as features and a review floor; agreement with capa measured on EMBER2024 |
+| TESSERACT [7] | Time-aware evaluation | Applied across two EMBER generations, with feature-level drift attribution |
 
 ## Limitations
 
-- **No live samples by design.** Real-file scoring is validated only on benign binaries. Malware performance comes from EMBER's LIEF-extracted features, and VITRINE's own extractor differs from LIEF in small ways ([ADR 0002](docs/adr/0002-own-extractor-emits-ember-schema.md)).
-- **Temporal drift.** EMBER stops in 2018. The model is a 2018 detector and needs retraining on modern features (for example EMBER2024) for real use.
-- The LightGBM baselines are memory-limited reproductions (150k rows; 100 trees for the paper config, 300 for the tuned 2018 config). The published 2017-set numbers are shown only for context.
-- The adversarial evaluation works in feature space. It bounds what naive edits can do, and it is not a problem-space attack on real binaries.
-- YARA structural rules abstain on about half the families. String and byte-sequence atoms from code sections (capstone) are not implemented.
-- The capability floor is not discriminative on its own (sections 3 and 5).
-
-## Roadmap
-
-- [ ] Train and evaluate on EMBER2024 / SOREL-20M features (temporal generalisation to 2024).
-- [ ] Problem-space adversarial evaluation on benign binaries (secml-malware style section and overlay injection).
-- [ ] Capstone byte-sequence atoms for YARA, plus a yarGen-style goodware string DB.
-- [ ] Per-cluster (HDBSCAN) rule generation instead of per-AVClass-family.
-- [ ] A full-data, full-budget (1,000-round) tuned LightGBM 2018 baseline on a bigger machine.
+- Detection is clearly below the published full-data EMBER 2018 model; the gap is not decomposed into data vs representation.
+- 2018 → 2024 mixes temporal drift with collection, extractor (LIEF vs pefile) and schema-translation changes.
+- EMBER2024 is a ~7 % per-week subsample; the EMBER 2017 paper setup (v1 features) is not reproduced (only its published numbers are cited).
+- Adversarial evaluation is in feature space, not on real binaries. The capability floor is not a useful detector.
+- YARA rules abstain on half the families and four emitted rules barely generalise; byte-sequence atoms need binaries, which the safety rules exclude.
 
 ## Repository layout
 
 ```
-vitrine/         package (dissector, features, models, YARA, triage, API, UI)
-scripts/         download / prepare / train / bench (real data lives outside the repo)
-results/         committed benchmark JSON + synthesized rules
-docs/adr/        architecture decision records
-docs/figures/    ROC and SHAP figures
-tests/           pytest (synthetic inert PEs + 75 KB EMBER fixture; @realdata tests skip without data)
+vitrine/   package (dissector, features, models, YARA, triage, API, UI)
+scripts/   download / prepare / train / bench (data lives outside the repo)
+results/   committed result JSON + synthesized rules
+docs/      MkDocs site, ADRs, figures
+paper/     preprint (LaTeX)
+tests/     pytest (synthetic inert PEs + small EMBER feature fixtures)
 ```
 
-See [CHANGELOG.md](CHANGELOG.md), [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/adr/](docs/adr/).
+See [CHANGELOG.md](CHANGELOG.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CITATION.cff](CITATION.cff).
 
 ## References
 
-1. H. S. Anderson, P. Roth. *EMBER: An Open Dataset for Training Static PE Malware Machine Learning Models.* arXiv:1804.04637, 2018. EMBER 2017 LightGBM: AUC 0.99911, 92.99 % TPR at 0.1 % FPR, 98.2 % at 1 % FPR.
-2. EMBER 2018 feature-version-2 release, <https://github.com/elastic/ember>. P. Roth, *EMBER Improvements*, CAMLIS 2019.
-3. Public EMBER 2018 v2 LightGBM notebook reporting about 0.985 AUROC, <https://www.kaggle.com/code/dhoogla/ember-2018-v2f-lgbm-0-985-auroc>.
-4. Mandiant capa, <https://github.com/mandiant/capa>. Neo23x0 yarGen, <https://github.com/Neo23x0/yarGen>.
+1. H. S. Anderson, P. Roth. *EMBER: An Open Dataset for Training Static PE Malware Machine Learning Models.* arXiv:1804.04637, 2018.
+2. EMBER 2018 feature-version-2 release and benchmark model, <https://github.com/elastic/ember>.
+3. R. J. Joyce et al. *EMBER2024 - A Benchmark Dataset for Holistic Evaluation of Malware Classifiers.* KDD 2025, arXiv:2506.05074.
+4. Neo23x0 yarGen, <https://github.com/Neo23x0/yarGen>.
+5. E. Raff et al. *Automatic Yara Rule Generation Using Biclustering.* AISec 2020, arXiv:2009.03779.
+6. Mandiant capa, <https://github.com/mandiant/capa>.
+7. F. Pendlebury et al. *TESSERACT: Eliminating Experimental Bias in Malware Classification across Space and Time.* USENIX Security 2019, arXiv:1807.07838.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). For authorized, lab-only research and education.
+MIT, see [LICENSE](LICENSE). For authorized, lab-only research and education. Built with AI assistance (Claude).
