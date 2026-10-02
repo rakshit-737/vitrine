@@ -3,7 +3,8 @@
 
 For the most frequent AVClass families in the EMBER 2018 *training* malware, synthesize a
 ``pe``-module rule (imports / section names / imphash) with :func:`synthesize_structural`,
-tuned against 20k *training* benign samples. Then, on the *out-of-time* test set, measure
+tuned against the *training* benign pool (16,392 samples in the committed run). Then, on the
+*out-of-time* test set, measure
 
   * coverage     -- recall on test samples of the same family (siblings seen 1-2 months later)
   * specificity  -- 1 - hit-rate on all 100k test benign samples

@@ -127,8 +127,10 @@ def _tar_members(chunks):
 
 
 class SplitWriter:
-    def __init__(self, out: Path, split: str):
+    def __init__(self, out: Path, split: str, train_frac: float = 1.0):
         self.split, self.out = split, out
+        self.train_frac = train_frac if split == "train" else 1.0
+        self.seen = 0  # labelled rows read before the sha256-prefix subsample filter
         self.xf = open(out / f"{split}_X.f32", "wb")
         self.F: list[np.ndarray] = []
         self.meta = open(out / f"{split}_meta.csv", "w", newline="")
@@ -149,8 +151,9 @@ class SplitWriter:
         self.meta.close()
         self.struct.close()
         np.save(self.out / f"{self.split}_F.npy", np.vstack(self.F) if self.F else np.zeros((0, len(FEATURE_NAMES))))
-        (self.out / f"{self.split}_shape.json").write_text(json.dumps({"rows": self.n, "cols": 2381,
-                                                                       "features": FEATURE_NAMES}))
+        (self.out / f"{self.split}_shape.json").write_text(json.dumps({
+            "rows": self.n, "cols": 2381, "features": FEATURE_NAMES, "train_frac": self.train_frac,
+            "labelled_rows_seen": self.seen}))
 
 
 def main() -> None:
@@ -164,7 +167,7 @@ def main() -> None:
     data = Path(a.data)
     out = data / "processed"
     out.mkdir(parents=True, exist_ok=True)
-    writers = {"train": SplitWriter(out, "train"), "test": SplitWriter(out, "test")}
+    writers = {"train": SplitWriter(out, "train", a.train_frac), "test": SplitWriter(out, "test")}
     sample = gzip.open(out / "test_raw_sample.jsonl.gz", "wt", compresslevel=4)
     t0 = time.time()
 
@@ -190,6 +193,7 @@ def main() -> None:
             head = ln[:200]
             if b'"label": -1' in head or b'"label":-1' in head:
                 return False  # unlabeled: skip before paying for JSON parsing
+            writers[split].seen += 1
             if split == "train" and a.train_frac < 1.0:
                 i = head.find(b'"sha256": "')
                 return i < 0 or int(head[i + 11 : i + 15], 16) < a.train_frac * 65536

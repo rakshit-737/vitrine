@@ -59,7 +59,8 @@ def main() -> None:
     start = html.index('<div id="drop"')
     end = html.index("</div>", start) + len("</div>")
     html = html[:start] + picker + html[end:]
-    html = html.replace("<script>\n", f"<script>\nconst DEMO = {json.dumps(samples, default=str)};\n</script>\n<script>\n", 1)
+    data = json.dumps(samples, default=str)
+    html = html.replace("<script>\n", f"<script>\nconst DEMO = {data};\n</script>\n<script>\n", 1)
     # drop the upload handlers, run() and the API validation (no backend on Pages)
     html = html[: html.index("const drop = $(")] + html[html.index("function render"):]
     html = re.sub(r'\$\("validate"\)\.onclick = async \(\) => \{.*?\n\};\n', "", html, flags=re.S)
