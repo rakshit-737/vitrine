@@ -1,0 +1,1025 @@
+{
+  "description": "Is the EMBER 2018 -> EMBER2024 drift attribution confounded by the v2 <-> v3 schema translation?",
+  "feature_classes": {
+    "size_kb": "byte_level",
+    "file_entropy": "byte_level",
+    "high_entropy_window_frac": "byte_level",
+    "unaccounted_ratio": "parser",
+    "vsize_to_size": "proxy",
+    "has_signature": "proxy",
+    "has_debug": "proxy",
+    "has_tls": "proxy",
+    "has_relocations": "proxy",
+    "has_resources": "proxy",
+    "is_dotnet": "parser",
+    "has_load_config": "parser",
+    "cert_kb": "parser",
+    "is_dll": "parser",
+    "is_x64": "parser",
+    "subsystem_gui": "parser",
+    "subsystem_native": "parser",
+    "aslr": "parser",
+    "dep": "parser",
+    "cfg": "parser",
+    "n_mitigations": "parser",
+    "relocs_stripped": "parser",
+    "timestamp_suspicious": "parser",
+    "linker_major": "parser",
+    "os_major": "parser",
+    "code_ratio": "parser",
+    "n_sections": "parser",
+    "max_section_entropy": "parser",
+    "mean_section_entropy": "parser",
+    "min_section_entropy": "parser",
+    "n_high_entropy_sections": "parser",
+    "n_wx_sections": "parser",
+    "n_exec_sections": "parser",
+    "n_nonstandard_sections": "parser",
+    "n_empty_name_sections": "parser",
+    "n_virtual_only_sections": "parser",
+    "packer_section_name": "parser",
+    "entry_nonstandard": "parser",
+    "entry_writable": "parser",
+    "entry_missing": "parser",
+    "entry_entropy": "parser",
+    "max_vsize_ratio": "parser",
+    "n_dlls": "parser",
+    "n_imports": "parser",
+    "n_ordinal_imports": "parser",
+    "n_exports": "parser",
+    "imports_tiny": "parser",
+    "api_injection": "parser",
+    "api_anti_debug": "parser",
+    "api_keyboard_hook": "parser",
+    "api_network": "parser",
+    "api_crypto": "parser",
+    "api_registry": "parser",
+    "api_process": "parser",
+    "api_dynamic_resolution": "parser",
+    "api_privilege": "parser",
+    "api_service": "parser",
+    "api_memory": "parser",
+    "api_gui": "parser",
+    "n_strings": "byte_level",
+    "avg_string_len": "byte_level",
+    "string_entropy": "byte_level",
+    "n_urls": "redefined",
+    "n_paths": "redefined",
+    "n_registry": "redefined",
+    "n_embedded_mz": "redefined",
+    "printable_ratio": "byte_level",
+    "capability_count": "parser",
+    "high_risk_capabilities": "parser",
+    "cap:process injection (remote thread)": "parser",
+    "cap:process hollowing": "parser",
+    "cap:APC injection": "parser",
+    "cap:download file from internet": "parser",
+    "cap:keylogging via hook/polling": "parser",
+    "cap:dynamic API resolution": "parser",
+    "cap:create process": "parser",
+    "cap:modify memory protection": "parser",
+    "cap:anti-debugging checks": "parser",
+    "cap:token privilege adjustment": "parser",
+    "cap:service creation / persistence": "parser",
+    "cap:registry modification": "parser",
+    "cap:process enumeration": "parser",
+    "cap:screen capture": "parser",
+    "cap:clipboard data access": "parser",
+    "cap:Windows crypto API usage": "parser",
+    "cap:raw socket networking": "parser",
+    "cap:HTTP client": "parser",
+    "cap:system shutdown/reboot": "parser",
+    "cap:embedded URL": "parser",
+    "cap:run-key persistence string": "parser",
+    "cap:registry path strings": "parser"
+  },
+  "definitions": {
+    "n_embedded_mz": "v2: count of b'MZ' anywhere in the file; v3: strings containing '!This program ' (dos_msg)",
+    "n_paths": "v2: 'c:\\' case-insensitive anywhere; v3: strings matching r'\\bC:/' (forward slash, case-sensitive)",
+    "n_registry": "v2: 'HKEY_' anywhere; v3: strings matching r'\\b(?:KHEY_|KHLM|HKCU)'",
+    "n_urls": "v2: 'http(s)://' anywhere; v3: strings matching the thrember url regex (also ftp)",
+    "has_signature": "v2 LIEF flag; v3 SECURITY data-directory size > 0",
+    "has_debug": "v2 LIEF has_debug; v3 DEBUG data-directory size > 0",
+    "has_tls": "v2 LIEF has_tls; v3 TLS data-directory size > 0",
+    "has_relocations": "v2 LIEF flag; v3 BASERELOC data-directory size > 0",
+    "has_resources": "v2 LIEF flag; v3 RESOURCE data-directory size > 0",
+    "vsize_to_size": "v2 LIEF virtual_size; v3 optional.sizeof_image"
+  },
+  "parity_system32": {
+    "corpus": "C:\\Windows\\System32 (benign; deterministic every-k-th sample of PE files <= 8 MiB)",
+    "n_files": 600,
+    "n_embedded_mz": {
+      "definition": "v2: count of b'MZ' anywhere in the file; v3: strings containing '!This program ' (dos_msg)",
+      "v2_mean": 3.0233333333333334,
+      "v3_mean": 1.0,
+      "v2_median": 2.0,
+      "v3_median": 1.0,
+      "exact_agreement": 0.12666666666666668,
+      "spearman_rho": NaN,
+      "psi_v2_vs_v3_same_files": 8.93525621068662
+    },
+    "n_paths": {
+      "definition": "v2: 'c:\\' case-insensitive anywhere; v3: strings matching r'\\bC:/' (forward slash, case-sensitive)",
+      "v2_mean": 0.82,
+      "v3_mean": 0.01,
+      "v2_median": 0.0,
+      "v3_median": 0.0,
+      "exact_agreement": 0.9666666666666667,
+      "spearman_rho": 0.22720096670638923,
+      "psi_v2_vs_v3_same_files": 0.14294771778440885
+    },
+    "n_registry": {
+      "definition": "v2: 'HKEY_' anywhere; v3: strings matching r'\\b(?:KHEY_|KHLM|HKCU)'",
+      "v2_mean": 0.06166666666666667,
+      "v3_mean": 0.055,
+      "v2_median": 0.0,
+      "v3_median": 0.0,
+      "exact_agreement": 0.9816666666666667,
+      "spearman_rho": -0.008240324529742245,
+      "psi_v2_vs_v3_same_files": 0.036869707205865784
+    },
+    "n_urls": {
+      "definition": "v2: 'http(s)://' anywhere; v3: strings matching the thrember url regex (also ftp)",
+      "v2_mean": 4.621666666666667,
+      "v3_mean": 2.1416666666666666,
+      "v2_median": 0.0,
+      "v3_median": 0.0,
+      "exact_agreement": 0.7833333333333333,
+      "spearman_rho": 0.9958522661975059,
+      "psi_v2_vs_v3_same_files": 0.5384214302106537
+    }
+  },
+  "all_features_top15": [
+    {
+      "feature": "n_embedded_mz",
+      "class": "redefined",
+      "shift_pattern": "both_classes",
+      "psi_benign": 3.6562277500091005,
+      "psi_malicious": 3.5050414166117765,
+      "drift_weight": 1.0064442014611008
+    },
+    {
+      "feature": "is_dll",
+      "class": "parser",
+      "shift_pattern": "benign_only",
+      "psi_benign": 0.8563750470116942,
+      "psi_malicious": 0.0026190715645115353,
+      "drift_weight": 0.5754577872529186
+    },
+    {
+      "feature": "cert_kb",
+      "class": "parser",
+      "shift_pattern": "benign_only",
+      "psi_benign": 0.732041812038738,
+      "psi_malicious": 0.0,
+      "drift_weight": 0.5092269398001555
+    },
+    {
+      "feature": "n_imports",
+      "class": "parser",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.868916541517653,
+      "psi_malicious": 1.045375226878382,
+      "drift_weight": 0.4517027702689777
+    },
+    {
+      "feature": "os_major",
+      "class": "parser",
+      "shift_pattern": "both_classes",
+      "psi_benign": 1.4079417297476937,
+      "psi_malicious": 0.8992595637371198,
+      "drift_weight": 0.3600404388789319
+    },
+    {
+      "feature": "size_kb",
+      "class": "byte_level",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.2698799981823162,
+      "psi_malicious": 1.2778186713133441,
+      "drift_weight": 0.3405498671279295
+    },
+    {
+      "feature": "linker_major",
+      "class": "parser",
+      "shift_pattern": "both_classes",
+      "psi_benign": 1.6359430492202864,
+      "psi_malicious": 0.7559456814618559,
+      "drift_weight": 0.32568740252711514
+    },
+    {
+      "feature": "code_ratio",
+      "class": "parser",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.9512002959102137,
+      "psi_malicious": 0.6504880340307942,
+      "drift_weight": 0.31751986048309044
+    },
+    {
+      "feature": "avg_string_len",
+      "class": "byte_level",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.5690379154421669,
+      "psi_malicious": 0.7733368077662195,
+      "drift_weight": 0.3048403098832712
+    },
+    {
+      "feature": "unaccounted_ratio",
+      "class": "parser",
+      "shift_pattern": "mixed",
+      "psi_benign": 0.12885797091057663,
+      "psi_malicious": 0.5223051328285857,
+      "drift_weight": 0.23532983361708165
+    },
+    {
+      "feature": "max_section_entropy",
+      "class": "parser",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.5286428256353695,
+      "psi_malicious": 0.5854470728000325,
+      "drift_weight": 0.23081847876916872
+    },
+    {
+      "feature": "n_wx_sections",
+      "class": "parser",
+      "shift_pattern": "mixed",
+      "psi_benign": 0.18413686231317278,
+      "psi_malicious": 0.4495208535769715,
+      "drift_weight": 0.224948624548801
+    },
+    {
+      "feature": "n_exec_sections",
+      "class": "parser",
+      "shift_pattern": "mixed",
+      "psi_benign": 0.7817619488582581,
+      "psi_malicious": 0.24645845527457017,
+      "drift_weight": 0.22460208776467594
+    },
+    {
+      "feature": "n_strings",
+      "class": "byte_level",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.2502488822338373,
+      "psi_malicious": 0.9513573430595472,
+      "drift_weight": 0.1994194849821833
+    },
+    {
+      "feature": "vsize_to_size",
+      "class": "proxy",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.4373038136474267,
+      "psi_malicious": 0.8400742285783784,
+      "drift_weight": 0.196706503812859
+    }
+  ],
+  "faithful_attribution": [
+    {
+      "feature": "is_dll",
+      "class": "parser",
+      "group": "header",
+      "shift_pattern": "benign_only",
+      "psi_benign": 0.8563750470116942,
+      "psi_malicious": 0.0026190715645115353,
+      "mean_abs_shap_2018": 0.6719693541526794,
+      "drift_weight": 0.5754577872529186
+    },
+    {
+      "feature": "cert_kb",
+      "class": "parser",
+      "group": "header",
+      "shift_pattern": "benign_only",
+      "psi_benign": 0.732041812038738,
+      "psi_malicious": 0.0,
+      "mean_abs_shap_2018": 0.6956254839897156,
+      "drift_weight": 0.5092269398001555
+    },
+    {
+      "feature": "n_imports",
+      "class": "parser",
+      "group": "imports",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.868916541517653,
+      "psi_malicious": 1.045375226878382,
+      "mean_abs_shap_2018": 0.43209630250930786,
+      "drift_weight": 0.4517027702689777
+    },
+    {
+      "feature": "os_major",
+      "class": "parser",
+      "group": "header",
+      "shift_pattern": "both_classes",
+      "psi_benign": 1.4079417297476937,
+      "psi_malicious": 0.8992595637371198,
+      "mean_abs_shap_2018": 0.2557211220264435,
+      "drift_weight": 0.3600404388789319
+    },
+    {
+      "feature": "size_kb",
+      "class": "byte_level",
+      "group": "bytes_strings",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.2698799981823162,
+      "psi_malicious": 1.2778186713133441,
+      "mean_abs_shap_2018": 0.2665087580680847,
+      "drift_weight": 0.3405498671279295
+    },
+    {
+      "feature": "linker_major",
+      "class": "parser",
+      "group": "header",
+      "shift_pattern": "both_classes",
+      "psi_benign": 1.6359430492202864,
+      "psi_malicious": 0.7559456814618559,
+      "mean_abs_shap_2018": 0.1990823596715927,
+      "drift_weight": 0.32568740252711514
+    },
+    {
+      "feature": "code_ratio",
+      "class": "parser",
+      "group": "header",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.9512002959102137,
+      "psi_malicious": 0.6504880340307942,
+      "mean_abs_shap_2018": 0.33380967378616333,
+      "drift_weight": 0.31751986048309044
+    },
+    {
+      "feature": "avg_string_len",
+      "class": "byte_level",
+      "group": "bytes_strings",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.5690379154421669,
+      "psi_malicious": 0.7733368077662195,
+      "mean_abs_shap_2018": 0.3941882848739624,
+      "drift_weight": 0.3048403098832712
+    },
+    {
+      "feature": "unaccounted_ratio",
+      "class": "parser",
+      "group": "bytes_strings",
+      "shift_pattern": "mixed",
+      "psi_benign": 0.12885797091057663,
+      "psi_malicious": 0.5223051328285857,
+      "mean_abs_shap_2018": 0.450560063123703,
+      "drift_weight": 0.23532983361708165
+    },
+    {
+      "feature": "max_section_entropy",
+      "class": "parser",
+      "group": "sections",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.5286428256353695,
+      "psi_malicious": 0.5854470728000325,
+      "mean_abs_shap_2018": 0.3942601978778839,
+      "drift_weight": 0.23081847876916872
+    },
+    {
+      "feature": "n_wx_sections",
+      "class": "parser",
+      "group": "sections",
+      "shift_pattern": "mixed",
+      "psi_benign": 0.18413686231317278,
+      "psi_malicious": 0.4495208535769715,
+      "mean_abs_shap_2018": 0.5004186630249023,
+      "drift_weight": 0.224948624548801
+    },
+    {
+      "feature": "n_exec_sections",
+      "class": "parser",
+      "group": "sections",
+      "shift_pattern": "mixed",
+      "psi_benign": 0.7817619488582581,
+      "psi_malicious": 0.24645845527457017,
+      "mean_abs_shap_2018": 0.2873024046421051,
+      "drift_weight": 0.22460208776467594
+    },
+    {
+      "feature": "n_strings",
+      "class": "byte_level",
+      "group": "bytes_strings",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.2502488822338373,
+      "psi_malicious": 0.9513573430595472,
+      "mean_abs_shap_2018": 0.20961575210094452,
+      "drift_weight": 0.1994194849821833
+    },
+    {
+      "feature": "string_entropy",
+      "class": "byte_level",
+      "group": "bytes_strings",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.4237438437745979,
+      "psi_malicious": 0.8165252660209719,
+      "mean_abs_shap_2018": 0.2250179946422577,
+      "drift_weight": 0.18373287793477508
+    },
+    {
+      "feature": "entry_entropy",
+      "class": "parser",
+      "group": "sections",
+      "shift_pattern": "both_classes",
+      "psi_benign": 0.5384138057531351,
+      "psi_malicious": 0.7264480827568637,
+      "mean_abs_shap_2018": 0.22622056305408478,
+      "drift_weight": 0.16433749431081807
+    }
+  ],
+  "faithful_both_class_top": [
+    "n_imports",
+    "os_major",
+    "size_kb",
+    "linker_major",
+    "code_ratio",
+    "avg_string_len",
+    "max_section_entropy",
+    "n_strings",
+    "string_entropy",
+    "entry_entropy"
+  ],
+  "faithful_ablation": {
+    "dropped": [
+      "is_dll",
+      "cert_kb",
+      "n_imports",
+      "os_major",
+      "size_kb",
+      "linker_major",
+      "code_ratio",
+      "avg_string_len",
+      "unaccounted_ratio",
+      "max_section_entropy"
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "ablated_minus_full": {
+      "ember2018_test": {
+        "roc_auc": {
+          "mean": -0.0024550075022000016,
+          "lo": -0.0027497828150000875,
+          "hi": -0.0022075255600000425
+        },
+        "tpr_at_fpr_1pct": {
+          "mean": -0.025374140000000003,
+          "lo": -0.03083149999999997,
+          "hi": -0.02025374999999997
+        },
+        "tpr_at_fpr_0.1pct": {
+          "mean": -0.035779160000000004,
+          "lo": -0.054826750000000014,
+          "hi": -0.016296750000000023
+        }
+      },
+      "ember2024_test": {
+        "roc_auc": {
+          "mean": -0.004022891889183717,
+          "lo": -0.005924913325302655,
+          "hi": -0.0016000588323819235
+        },
+        "tpr_at_fpr_1pct": {
+          "mean": -0.040285144897450796,
+          "lo": -0.054187079631321106,
+          "hi": -0.026855849871294503
+        },
+        "tpr_at_fpr_0.1pct": {
+          "mean": -0.04318874034708959,
+          "lo": -0.10326123059038442,
+          "hi": 0.0015029477704891056
+        }
+      }
+    },
+    "group_matched_random": {
+      "n_draws": 20,
+      "group_counts": {
+        "header": 5,
+        "imports": 1,
+        "bytes_strings": 3,
+        "sections": 1
+      },
+      "summary": {
+        "ember2018_test:roc_auc": {
+          "mean": 0.0002582370505399981,
+          "p2.5": -0.0004849883148350017,
+          "p97.5": 0.0010413325643949974,
+          "frac_draws_worse_than_topk": 0.0
+        },
+        "ember2018_test:tpr_at_fpr_1pct": {
+          "mean": -0.0027880729999999994,
+          "p2.5": -0.014302265499999998,
+          "p97.5": 0.015731918999999997,
+          "frac_draws_worse_than_topk": 0.0
+        },
+        "ember2018_test:tpr_at_fpr_0.1pct": {
+          "mean": -0.015870272999999994,
+          "p2.5": -0.028758208499999993,
+          "p97.5": -0.001015610000000007,
+          "frac_draws_worse_than_topk": 0.0
+        },
+        "ember2024_test:roc_auc": {
+          "mean": -0.0011409394319517028,
+          "p2.5": -0.0035398057269325506,
+          "p97.5": 0.0015000546535710061,
+          "frac_draws_worse_than_topk": 0.0
+        },
+        "ember2024_test:tpr_at_fpr_1pct": {
+          "mean": -0.013388125882255247,
+          "p2.5": -0.03397860998090177,
+          "p97.5": 0.006510902599020165,
+          "frac_draws_worse_than_topk": 0.0
+        },
+        "ember2024_test:tpr_at_fpr_0.1pct": {
+          "mean": -0.06296730881009714,
+          "p2.5": -0.14917163082288465,
+          "p97.5": 0.00034271776135513755,
+          "frac_draws_worse_than_topk": 0.7
+        }
+      },
+      "draws": [
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "is_dotnet",
+            "is_x64",
+            "dep",
+            "n_mitigations",
+            "relocs_stripped",
+            "n_exec_sections",
+            "api_dynamic_resolution",
+            "string_entropy"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0003628252328999988,
+            "tpr_at_fpr_1pct": 0.008118819999999999,
+            "tpr_at_fpr_0.1pct": -0.02245668
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0014841335838564151,
+            "tpr_at_fpr_1pct": -0.017616374657477372,
+            "tpr_at_fpr_0.1pct": -0.1523915967782114
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "has_load_config",
+            "is_x64",
+            "subsystem_gui",
+            "dep",
+            "cfg",
+            "packer_section_name",
+            "imports_tiny",
+            "string_entropy",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0011467725550999997,
+            "tpr_at_fpr_1pct": 0.0006643400000000024,
+            "tpr_at_fpr_0.1pct": -0.004927699999999997
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0035069790753628036,
+            "tpr_at_fpr_1pct": -0.025788756954247274,
+            "tpr_at_fpr_0.1pct": -0.0495796728389936
+          }
+        },
+        {
+          "dropped": [
+            "high_entropy_window_frac",
+            "is_dotnet",
+            "has_load_config",
+            "subsystem_gui",
+            "subsystem_native",
+            "relocs_stripped",
+            "n_nonstandard_sections",
+            "api_network",
+            "n_strings",
+            "string_entropy"
+          ],
+          "ember2018_test": {
+            "roc_auc": 7.024161199999602e-05,
+            "tpr_at_fpr_1pct": -0.009116239999999998,
+            "tpr_at_fpr_0.1pct": -0.009514479999999997
+          },
+          "ember2024_test": {
+            "roc_auc": 0.0001920963821701158,
+            "tpr_at_fpr_1pct": -0.0071372581582662105,
+            "tpr_at_fpr_0.1pct": -0.00953964958897285
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "is_x64",
+            "subsystem_gui",
+            "aslr",
+            "dep",
+            "cfg",
+            "max_vsize_ratio",
+            "api_memory",
+            "n_strings"
+          ],
+          "ember2018_test": {
+            "roc_auc": 1.0796836699998424e-05,
+            "tpr_at_fpr_1pct": -0.004825359999999999,
+            "tpr_at_fpr_0.1pct": -0.010084139999999997
+          },
+          "ember2024_test": {
+            "roc_auc": 3.6492915021162365e-05,
+            "tpr_at_fpr_1pct": -0.03533920119571535,
+            "tpr_at_fpr_0.1pct": -0.07450120401893216
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "has_load_config",
+            "is_x64",
+            "cfg",
+            "n_mitigations",
+            "timestamp_suspicious",
+            "n_sections",
+            "imports_tiny",
+            "n_strings"
+          ],
+          "ember2018_test": {
+            "roc_auc": -0.00014551817639999997,
+            "tpr_at_fpr_1pct": 0.0007853399999999997,
+            "tpr_at_fpr_0.1pct": -0.011272579999999997
+          },
+          "ember2024_test": {
+            "roc_auc": 0.000735667414666951,
+            "tpr_at_fpr_1pct": -0.014043178609980903,
+            "tpr_at_fpr_0.1pct": -0.07094411691439009
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "is_dotnet",
+            "subsystem_native",
+            "aslr",
+            "n_mitigations",
+            "relocs_stripped",
+            "n_wx_sections",
+            "api_keyboard_hook",
+            "string_entropy"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0004997308719999974,
+            "tpr_at_fpr_1pct": 0.017259120000000003,
+            "tpr_at_fpr_0.1pct": -0.015835099999999998
+          },
+          "ember2024_test": {
+            "roc_auc": -0.002994968525027955,
+            "tpr_at_fpr_1pct": -0.03247479863821307,
+            "tpr_at_fpr_0.1pct": -0.07901735447978078
+          }
+        },
+        {
+          "dropped": [
+            "is_dotnet",
+            "has_load_config",
+            "subsystem_native",
+            "aslr",
+            "n_mitigations",
+            "n_virtual_only_sections",
+            "n_dlls",
+            "n_strings",
+            "string_entropy",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0006036317099999997,
+            "tpr_at_fpr_1pct": -0.00807618,
+            "tpr_at_fpr_0.1pct": -0.022873959999999995
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0012646810633090866,
+            "tpr_at_fpr_1pct": -0.011276426139666193,
+            "tpr_at_fpr_0.1pct": -0.03806659470231669
+          }
+        },
+        {
+          "dropped": [
+            "high_entropy_window_frac",
+            "subsystem_native",
+            "aslr",
+            "cfg",
+            "n_mitigations",
+            "timestamp_suspicious",
+            "n_exec_sections",
+            "n_dlls",
+            "n_strings",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": -0.0003580162481000024,
+            "tpr_at_fpr_1pct": -0.007518219999999999,
+            "tpr_at_fpr_0.1pct": -0.02129896
+          },
+          "ember2024_test": {
+            "roc_auc": -0.00035104298291001036,
+            "tpr_at_fpr_1pct": 0.011024329486008469,
+            "tpr_at_fpr_0.1pct": 0.0032335796728389966
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "is_dotnet",
+            "subsystem_gui",
+            "subsystem_native",
+            "cfg",
+            "relocs_stripped",
+            "entry_entropy",
+            "api_keyboard_hook",
+            "n_strings",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": -0.0003868972490000011,
+            "tpr_at_fpr_1pct": -0.014312439999999997,
+            "tpr_at_fpr_0.1pct": -0.030367479999999992
+          },
+          "ember2024_test": {
+            "roc_auc": 0.0016448644950455562,
+            "tpr_at_fpr_1pct": 0.0003861164161753732,
+            "tpr_at_fpr_0.1pct": -0.08179158017105374
+          }
+        },
+        {
+          "dropped": [
+            "high_entropy_window_frac",
+            "has_load_config",
+            "dep",
+            "n_mitigations",
+            "relocs_stripped",
+            "timestamp_suspicious",
+            "max_vsize_ratio",
+            "api_anti_debug",
+            "n_strings",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 3.5205928799994176e-05,
+            "tpr_at_fpr_1pct": -0.00505462,
+            "tpr_at_fpr_0.1pct": -0.026979539999999993
+          },
+          "ember2024_test": {
+            "roc_auc": 0.0013400016708886094,
+            "tpr_at_fpr_1pct": -0.005777131943867804,
+            "tpr_at_fpr_0.1pct": -0.06784090342937805
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "has_load_config",
+            "aslr",
+            "cfg",
+            "relocs_stripped",
+            "timestamp_suspicious",
+            "n_wx_sections",
+            "api_registry",
+            "string_entropy",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0006308691571000041,
+            "tpr_at_fpr_1pct": -0.006535580000000001,
+            "tpr_at_fpr_0.1pct": -0.012412059999999997
+          },
+          "ember2024_test": {
+            "roc_auc": -0.002974375532934836,
+            "tpr_at_fpr_1pct": -0.030682388109275094,
+            "tpr_at_fpr_0.1pct": -0.14561272108278667
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "has_load_config",
+            "is_x64",
+            "subsystem_native",
+            "n_mitigations",
+            "relocs_stripped",
+            "entry_writable",
+            "api_privilege",
+            "n_strings",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 5.504035100000326e-05,
+            "tpr_at_fpr_1pct": -0.009892359999999996,
+            "tpr_at_fpr_0.1pct": -0.01720896
+          },
+          "ember2024_test": {
+            "roc_auc": 0.000563606553079302,
+            "tpr_at_fpr_1pct": -0.0065840737357801184,
+            "tpr_at_fpr_0.1pct": -0.014360873536494227
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "has_load_config",
+            "is_x64",
+            "subsystem_gui",
+            "subsystem_native",
+            "dep",
+            "entry_nonstandard",
+            "api_dynamic_resolution",
+            "string_entropy"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.00022496977309999645,
+            "tpr_at_fpr_1pct": -0.002178619999999999,
+            "tpr_at_fpr_0.1pct": 0.0025239000000000034
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0012738199381008217,
+            "tpr_at_fpr_1pct": -0.01445237897533837,
+            "tpr_at_fpr_0.1pct": -0.07444640039857178
+          }
+        },
+        {
+          "dropped": [
+            "high_entropy_window_frac",
+            "is_dotnet",
+            "subsystem_native",
+            "dep",
+            "n_mitigations",
+            "relocs_stripped",
+            "min_section_entropy",
+            "api_network",
+            "n_strings",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": -0.0005737373744000023,
+            "tpr_at_fpr_1pct": -0.014291019999999998,
+            "tpr_at_fpr_0.1pct": -0.022676419999999996
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0005815943291007117,
+            "tpr_at_fpr_1pct": -0.007658390766420325,
+            "tpr_at_fpr_0.1pct": -0.08337573694262226
+          }
+        },
+        {
+          "dropped": [
+            "has_load_config",
+            "subsystem_gui",
+            "cfg",
+            "n_mitigations",
+            "timestamp_suspicious",
+            "n_sections",
+            "api_anti_debug",
+            "n_strings",
+            "string_entropy",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.00031289727069999483,
+            "tpr_at_fpr_1pct": -0.00830746,
+            "tpr_at_fpr_0.1pct": -0.005137479999999994
+          },
+          "ember2024_test": {
+            "roc_auc": -0.002736999526581563,
+            "tpr_at_fpr_1pct": -0.004156273353815493,
+            "tpr_at_fpr_0.1pct": -0.043842564145146555
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "is_dotnet",
+            "has_load_config",
+            "is_x64",
+            "subsystem_gui",
+            "n_mitigations",
+            "n_exec_sections",
+            "n_ordinal_imports",
+            "n_strings",
+            "string_entropy"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0004167134952999947,
+            "tpr_at_fpr_1pct": -0.0066321199999999966,
+            "tpr_at_fpr_0.1pct": -0.005323259999999998
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0032673165170814386,
+            "tpr_at_fpr_1pct": 0.0015223781449804892,
+            "tpr_at_fpr_0.1pct": -0.0028524454039691094
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "is_dotnet",
+            "subsystem_native",
+            "aslr",
+            "cfg",
+            "timestamp_suspicious",
+            "entry_nonstandard",
+            "api_gui",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0009247936272999953,
+            "tpr_at_fpr_1pct": 0.011591760000000001,
+            "tpr_at_fpr_0.1pct": -0.021189339999999994
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0005471006204286557,
+            "tpr_at_fpr_1pct": -0.0058893963298181475,
+            "tpr_at_fpr_0.1pct": -0.0855364942290127
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "is_x64",
+            "subsystem_gui",
+            "aslr",
+            "cfg",
+            "n_mitigations",
+            "entry_missing",
+            "api_dynamic_resolution",
+            "string_entropy",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0005901590325000019,
+            "tpr_at_fpr_1pct": 0.014043960000000001,
+            "tpr_at_fpr_0.1pct": -0.02126162
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0035695060307337507,
+            "tpr_at_fpr_1pct": -0.026430125384040524,
+            "tpr_at_fpr_0.1pct": -0.028125384040521464
+          }
+        },
+        {
+          "dropped": [
+            "has_load_config",
+            "subsystem_gui",
+            "subsystem_native",
+            "cfg",
+            "relocs_stripped",
+            "min_section_entropy",
+            "api_service",
+            "n_strings",
+            "string_entropy",
+            "printable_ratio"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.00044955923979999636,
+            "tpr_at_fpr_1pct": -0.008935799999999997,
+            "tpr_at_fpr_0.1pct": -0.018846399999999996
+          },
+          "ember2024_test": {
+            "roc_auc": -0.00030045160617875766,
+            "tpr_at_fpr_1pct": -0.0065222951091920625,
+            "tpr_at_fpr_0.1pct": -0.07959196213568047
+          }
+        },
+        {
+          "dropped": [
+            "file_entropy",
+            "high_entropy_window_frac",
+            "has_load_config",
+            "subsystem_gui",
+            "subsystem_native",
+            "aslr",
+            "timestamp_suspicious",
+            "packer_section_name",
+            "api_process",
+            "string_entropy"
+          ],
+          "ember2018_test": {
+            "roc_auc": 0.0002947033643999979,
+            "tpr_at_fpr_1pct": -0.002548779999999997,
+            "tpr_at_fpr_0.1pct": -0.020263199999999995
+          },
+          "ember2024_test": {
+            "roc_auc": -0.0024785487382989546,
+            "tpr_at_fpr_1pct": -0.02886689363115502,
+            "tpr_at_fpr_0.1pct": -0.08116250103794735
+          }
+        }
+      ]
+    }
+  },
+  "training_rows": 99144,
+  "threshold_note": "ROC-read metrics; no thresholds are calibrated in this script",
+  "runtime_seconds": 1133
+}
