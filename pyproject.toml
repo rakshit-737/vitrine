@@ -47,7 +47,6 @@ packages = ["vitrine", "vitrine.static"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["realdata: needs the EMBER 2018 download and/or local Windows binaries (skipped when absent)"]
-filterwarnings = ["ignore:.*with `starlette.testclient` is deprecated"]
 
 [tool.ruff]
 line-length = 120

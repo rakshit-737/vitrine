@@ -119,27 +119,38 @@ def test_structural_rule_text_escapes():
 
 
 def test_api_roundtrip():
+    """In-process API test over httpx's ASGI transport (no Starlette TestClient, which is deprecated)."""
     pytest.importorskip("fastapi")
-    from fastapi.testclient import TestClient
+    httpx = pytest.importorskip("httpx")
+    import asyncio
 
     from vitrine.api import create_app
 
-    c = TestClient(create_app())
-    assert c.get("/health").json()["status"] == "ok"
-    r = c.post("/api/analyze", content=make_sample("keylogger", 4),
-               headers={"Content-Type": "application/octet-stream"})
-    assert r.status_code == 200 and r.json()["verdict"] in {"MALICIOUS", "SUSPICIOUS"}
-    octet = {"Content-Type": "application/octet-stream"}
-    assert c.post("/api/analyze", content=b"not a pe", headers=octet).status_code == 422
-    assert c.post("/api/analyze", content=b"MZ").status_code == 415  # no octet-stream content type
-    big = {**octet, "Content-Length": str(64 * 1024 * 1024)}
-    assert c.post("/api/analyze", content=b"MZ", headers=big).status_code == 413
-    assert c.post("/api/yara/validate", json={"text": "x" * 70000}).status_code == 422
-    assert c.get("/docs").status_code == 404
-    assert c.get("/health", headers={"Host": "evil.example"}).status_code == 400
-    assert "VITRINE" in c.get("/").text
-    v = c.post("/api/yara/validate", json={"text": 'rule a {\n strings:\n  $a = "zzz"\n condition:\n  1 of them\n}'})
-    assert v.status_code == 200 and v.json()["strings"] == 1
+    async def run():
+        app = create_app()
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as c:
+            assert (await c.get("/health")).json()["status"] == "ok"
+            octet = {"Content-Type": "application/octet-stream"}
+            r = await c.post("/api/analyze", content=make_sample("keylogger", 4), headers=octet)
+            assert r.status_code == 200 and r.json()["verdict"] in {"MALICIOUS", "SUSPICIOUS"}
+            assert (await c.post("/api/analyze", content=b"not a pe", headers=octet)).status_code == 422
+            assert (await c.post("/api/analyze", content=b"MZ")).status_code == 415  # no octet-stream type
+            big = {**octet, "Content-Length": str(64 * 1024 * 1024)}
+            assert (await c.post("/api/analyze", content=b"MZ", headers=big)).status_code == 413
+            assert (await c.post("/api/yara/validate", json={"text": "x" * 70000})).status_code == 422
+            assert (await c.get("/docs")).status_code == 404
+            assert (await c.get("/openapi.json")).status_code == 200
+            assert (await c.get("/health", headers={"Host": "evil.example"})).status_code == 400
+            assert "VITRINE" in (await c.get("/")).text
+            rule = 'rule a {\n strings:\n  $a = "zzz"\n condition:\n  1 of them\n}'
+            v = await c.post("/api/yara/validate", json={"text": rule})
+            assert v.status_code == 200 and v.json()["strings"] == 1
+            # concurrent uploads are served (bounded by the analysis slots), none dropped
+            rs = await asyncio.gather(*[c.post("/api/analyze", content=make_sample("benign", i), headers=octet)
+                                        for i in range(5)])
+            assert all(x.status_code == 200 for x in rs)
+
+    asyncio.run(run())
 
 
 # ---------------- real data (skipped when absent)
