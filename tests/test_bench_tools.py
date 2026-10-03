@@ -103,7 +103,10 @@ def test_committed_demo_has_no_namespace_or_pki_url_hits():
     import json
     import re
 
-    html = (Path(__file__).resolve().parents[1] / "docs" / "demo" / "index.html").read_text(encoding="utf-8")
+    page = Path(__file__).resolve().parents[1] / "docs" / "demo" / "index.html"
+    if not page.exists():
+        pytest.skip("docs/demo is not shipped in the sdist")
+    html = page.read_text(encoding="utf-8")
     demo = json.loads(re.search(r"const DEMO = (\{.*?\});\n</script>", html, re.S).group(1))
     assert demo
     for name, rep in demo.items():
