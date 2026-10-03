@@ -27,5 +27,5 @@
 - [ ] EMBER2024 challenge set evaluation and a representation-only ablation (deferred for time; not run).
 - [x] Parser parity LIEF 0.9 vs pefile on the same benign files (Actions job `extractor-parity.yml`, `results/extractor_parity.json`).
 - [ ] The same parity on files closer to EMBER's benign population (signed third-party installers), which the PyPI corpus does not represent.
-- [x] Release v1.1.2 with the current `main`.
+- [x] Release v1.1.3 with the current `main`.
 - [x] Full-budget EMBER 2018 reference: the authors' published model is now scored on our test rows.

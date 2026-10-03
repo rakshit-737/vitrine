@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-03
+
+## [1.1.3] - 2026-10-03
+
 ### Added
 - Oracle marginal-alignment test of the drift ranking (`bench_drift_align.py`,
   `results/ember2024_drift_align.json`) and the removal ablation with 100 seed- and group-matched
@@ -39,7 +43,8 @@ All notable changes to this project are documented here. The format follows
   band; `n_embedded_mz` is greyed out as a definition change.
 - Docs, README, citation and package metadata point to the renamed repository
   (`rakshit-737/vitrine-malware-triage`, pages at `/vitrine-malware-triage/`); the old pages URL
-  returns 404.
+  returns 404. The GHCR image is now `ghcr.io/rakshit-737/vitrine-malware-triage`; older entries
+  below keep the old names (`rakshit-737/vitrine`, `ghcr.io/rakshit-737/vitrine`) as they were.
 
 ### Fixed
 - `prepare_ember2024.py` pinned thrember's `features.py` by the bytes of a CRLF (Windows autocrlf)
@@ -210,7 +215,8 @@ All notable changes to this project are documented here. The format follows
   string-based YARA synthesis with specificity and coverage validation, and synthetic inert PE
   families.
 
-[Unreleased]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.0.0...v1.1.0
