@@ -8,7 +8,7 @@ import time
 from collections import Counter
 from pathlib import Path
 
-from .dissect import PEParseError
+from .dissect import MAX_SIZE, PEParseError
 from .model import evaluate
 from .models import TriageResult
 from .synth import FAMILIES, MALICIOUS_FAMILIES, append_benign_section, corpus, make_sample
@@ -62,6 +62,15 @@ def _model(path: str | None):
     return load_model(path) if path else train_default()
 
 
+def _read_pe(p: Path) -> bytes:
+    """Read a file for analysis, refusing files over the parser's 128 MiB cap *before* reading them
+    (analysis needs roughly 15x the file size in memory)."""
+    size = p.stat().st_size
+    if size > MAX_SIZE:
+        raise PEParseError(f"file too large ({size:,} bytes > {MAX_SIZE:,}); skipped without reading")
+    return p.read_bytes()
+
+
 def cmd_gen(a) -> None:
     out = Path(a.out)
     for fam in FAMILIES:
@@ -82,7 +91,7 @@ def cmd_train(a) -> None:
 
 def cmd_analyze(a) -> None:
     m = _model(a.model)
-    res = analyze(Path(a.file).read_bytes(), m,
+    res = analyze(_read_pe(Path(a.file)), m,
                   _load_dir(a.benign_dir, a.benign_limit) if a.benign_dir else None, _load_dir(a.siblings_dir))
     if a.json:
         print(json.dumps(res.to_dict(), indent=1))
@@ -101,7 +110,7 @@ def cmd_scan(a) -> None:
     t0 = time.time()
     for p in files:
         try:
-            r = analyze(p.read_bytes(), m)
+            r = analyze(_read_pe(p), m)
         except (PEParseError, OSError, ValueError) as e:
             verdicts["PARSE_ERROR"] += 1
             print(json.dumps({"path": str(p), "error": str(e)}))
@@ -158,10 +167,19 @@ def cmd_demo(a) -> None:
               f"caps={[c.attack_id for c in r.capabilities]}")
 
 
+class _HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    """Show a default only when it says something (not None, False or an empty list)."""
+
+    def _get_help_string(self, action):
+        if action.default is None or action.default is False or action.default == []:
+            return action.help
+        return super()._get_help_string(action)
+
+
 def main(argv: list[str] | None = None) -> int:
     from . import __version__
 
-    fmt = argparse.ArgumentDefaultsHelpFormatter
+    fmt = _HelpFormatter
     p = argparse.ArgumentParser(prog="vitrine", description=__doc__, formatter_class=fmt)
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)

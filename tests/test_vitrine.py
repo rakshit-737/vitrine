@@ -234,3 +234,17 @@ def test_cli_scan(tmp_path, capsys):
     main(["scan", str(tmp_path / "c"), "--recursive"])
     lines = [json.loads(ln) for ln in capsys.readouterr().out.splitlines() if ln.startswith("{")]
     assert len(lines) == 7 and all("verdict" in ln for ln in lines)
+
+
+def test_cli_refuses_oversized_files_before_reading(tmp_path, capsys, monkeypatch):
+    import vitrine.cli as cli
+
+    main(["gen-corpus", str(tmp_path / "c"), "-n", "1"])
+    f = next((tmp_path / "c" / "benign").iterdir())
+    monkeypatch.setattr(cli, "MAX_SIZE", 100)  # every synthetic sample is larger than this
+    monkeypatch.setattr(cli.Path, "read_bytes", lambda self: pytest.fail("oversized file was read"))
+    assert main(["analyze", str(f)]) == 2
+    assert "too large" in capsys.readouterr().err
+    main(["scan", str(tmp_path / "c" / "benign")])
+    line = json.loads(capsys.readouterr().out.splitlines()[0])
+    assert "too large" in line["error"]
