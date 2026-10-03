@@ -85,16 +85,25 @@ def _git(*args: str) -> str:
         return ""
 
 
+def _code_state() -> tuple[str, bool]:
+    dirty = [ln for ln in _git("status", "--porcelain", "--untracked-files=no").splitlines()
+             if ln[3:].startswith(("scripts/", "vitrine/", "pyproject.toml"))]
+    return _git("rev-parse", "HEAD"), bool(dirty)
+
+
+_START_GIT = _code_state()  # commit and code state when the run started
+
+
 def provenance() -> dict:
     """Where a result came from: commit, command, UTC times, library versions, Actions run if any.
 
-    ``git_dirty`` ignores the output folders (``results/``, ``docs/figures/``), so a run from a clean
-    checkout of ``git_commit`` reproduces the file.
+    ``git_commit`` and ``git_dirty`` are taken when the script starts (see :data:`_START_GIT`);
+    ``git_dirty`` only looks at code (``scripts/``, ``vitrine/``, ``pyproject.toml``), so a run from a
+    clean checkout of ``git_commit`` reproduces the file.
     """
     import importlib.metadata as md
 
-    dirty = [ln for ln in _git("status", "--porcelain", "--untracked-files=no").splitlines()
-             if not ln[3:].startswith(("results/", "docs/figures/"))]
+    commit, dirty = _START_GIT
     pk = {}
     for name in ("numpy", "scipy", "scikit-learn", "xgboost", "lightgbm", "hdbscan"):
         try:
@@ -104,7 +113,7 @@ def provenance() -> dict:
     argv = [a.replace("\\", "/") for a in sys.argv]
     argv = [("<data>" if i and argv[i - 1] == "--data" else a) for i, a in enumerate(argv)]
     cmd = "python " + " ".join([argv[0].split("/vitrine/")[-1], *argv[1:]])
-    out = {"git_commit": _git("rev-parse", "HEAD"), "git_dirty": bool(dirty), "command": cmd,
+    out = {"git_commit": commit, "git_dirty": dirty, "command": cmd,
            "started_utc": _STARTED.isoformat(timespec="seconds"),
            "finished_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
            "python": platform.python_version(), "platform": platform.platform(terse=True),
