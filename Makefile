@@ -4,7 +4,7 @@ PY ?= python
 DATA ?= data
 SYSTEM32 ?= C:/Windows/System32
 
-.PHONY: install test lint demo data data2024 bench bench2024 serve
+.PHONY: install test lint demo data data2024 bench bench2024 render serve
 
 install:
 	$(PY) -m pip install -e ".[dev,bench]"
@@ -39,8 +39,18 @@ bench:
 
 bench2024:
 	$(PY) scripts/bench_drift.py --data $(DATA)
+	# needs results/extractor_parity.json from the extractor-parity Actions job (gh workflow run extractor-parity.yml)
+	$(PY) scripts/bench_drift.py --data $(DATA) --rank-only
+	$(PY) scripts/bench_drift_parity.py --data $(DATA) --system32 $(SYSTEM32)
+	$(PY) scripts/bench_drift_align.py --data $(DATA)
+	$(PY) scripts/plot_drift.py
+	$(PY) scripts/render_results.py
+	$(PY) scripts/bench_secondary.py --data $(DATA)
 	$(PY) scripts/bench_ember2024.py --data $(DATA) --released $(DATA)/ref/models2024/EMBER2024_Win32.model --config $(DATA)/ref/EMBER2024/examples/lgbm_config.json
 	$(PY) scripts/bench_capabilities.py --data $(DATA)
+
+render:
+	$(PY) scripts/render_results.py
 
 serve:
 	$(PY) -m vitrine serve --model $(DATA)/models/vitrine_xgb.json

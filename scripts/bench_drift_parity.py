@@ -33,7 +33,7 @@ import time
 from pathlib import Path
 
 import numpy as np
-from _common import RESULTS, data_dir, dump
+from _common import RESULTS, _clean, data_dir, dump, provenance
 from _drift_defs import PROXY, REDEFINED, feature_class, feature_group
 from _stats import paired_bootstrap_diff, psi, psi_legacy, roc_metrics, total_variation, wilson
 from bench_drift import load18, load24, score, train
@@ -104,16 +104,26 @@ def main() -> None:
     ap.add_argument("--draws", type=int, default=100)
     ap.add_argument("--boot", type=int, default=1000)
     ap.add_argument("--k", type=int, default=10)
+    ap.add_argument("--parity-out", help="compute only the System32 definition parity, write it here and exit")
+    ap.add_argument("--parity-json", help="reuse a definition parity written by --parity-out (e.g. a Windows job)")
     a = ap.parse_args()
     t0 = time.time()
     res = {"description": __doc__.split("\n\n")[0],
            "feature_classes": {n: feature_class(n) for n in FEATURE_NAMES},
            "definitions": {**REDEFINED, **PROXY}}
     s32 = Path(a.system32)
-    res["parity_system32"] = parity(s32, a.parity_files, a.boot) if s32.exists() else {"skipped": "no System32"}
+    if a.parity_json:
+        res["parity_system32"] = json.loads(Path(a.parity_json).read_text(encoding="utf-8"))
+    else:
+        res["parity_system32"] = parity(s32, a.parity_files, a.boot) if s32.exists() else {"skipped": "no System32"}
+    if a.parity_out:
+        res["parity_system32"]["provenance"] = provenance()
+        text = json.dumps(_clean(res["parity_system32"]), indent=1, allow_nan=False)
+        Path(a.parity_out).write_text(text, encoding="utf-8")
+        return
     print(json.dumps(res["parity_system32"], indent=1), flush=True)
-    res["parser_parity"] = ("not run: parser-based features were extracted by LIEF 0.9 (EMBER 2018) and "
-                            "pefile/thrember (EMBER2024); no run of both extractors on the same files was done")
+    res["parser_parity"] = ("LIEF 0.9 vs pefile on the same benign files: see extractor_parity_join "
+                            "(results/extractor_parity.json)")
 
     # ---- ranking restricted to faithful features (from bench_drift.py, with its bootstrap and controls)
     rank = json.loads((RESULTS / "ember2024_drift.json").read_text())["drift_ranking"]
@@ -212,8 +222,9 @@ def main() -> None:
                 "mean": float(v.mean()), "p2.5": float(np.percentile(v, 2.5)), "p97.5": float(np.percentile(v, 97.5)),
                 "topk_mean_over_seeds": float(np.mean([d[j] for d in top_d[t]])),
                 "n_draws_worse_than_topk": worse, "frac_draws_worse_than_topk": worse / n,
-                "mc_p_topk_more_damaging": (1 + int((rel >= 0).sum())) / (1 + n),
-                "mc_p_topk_less_damaging": (1 + int((rel <= 0).sum())) / (1 + n)}
+                # rel = draw minus top-k: a draw at least as damaging as the top-k has rel <= 0
+                "mc_p_topk_more_damaging": (1 + int((rel <= 0).sum())) / (1 + n),
+                "mc_p_topk_less_damaging": (1 + int((rel >= 0).sum())) / (1 + n)}
     ab["group_matched_random"] = {
         "n_draws": n, "group_counts": need,
         "design": ("draw i trained with seed i % 3, compared with the full and top-k models of the same seed; "

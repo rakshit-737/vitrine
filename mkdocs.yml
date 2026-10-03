@@ -1,7 +1,7 @@
 site_name: VITRINE
 site_description: Static-first, explainable PE triage with auto-synthesized YARA rules (never executes samples)
-site_url: https://rakshit-737.github.io/vitrine/
-repo_url: https://github.com/rakshit-737/vitrine
+site_url: https://rakshit-737.github.io/vitrine-malware-triage/
+repo_url: https://github.com/rakshit-737/vitrine-malware-triage
 repo_name: rakshit-737/vitrine
 edit_uri: edit/main/docs/
 theme:

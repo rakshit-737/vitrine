@@ -17,6 +17,9 @@ jobs:
           cache: pip
       - run: python -m pip install -e ".[dev]"
       - run: python -m ruff check .
+      - name: Rendered docs current, no @@ token left
+        if: matrix.python == '3.12'
+        run: python scripts/render_results.py --check
       - run: python -m pytest -q -m "not realdata"
       - run: python -m vitrine demo
       - name: Dependency audit

@@ -8,4 +8,4 @@
 - Models are serialized as JSON, never pickle, so loading a model cannot run code.
 
 ## Reporting a vulnerability
-If you find a parser crash, hang, or other issue with a crafted input, please open a private report at <https://github.com/rakshit-737/vitrine/security/advisories/new> (GitHub private vulnerability reporting). Include a *synthetic* reproducer where possible, not a live sample.
+If you find a parser crash, hang, or other issue with a crafted input, please open a private report at <https://github.com/rakshit-737/vitrine-malware-triage/security/advisories/new> (GitHub private vulnerability reporting). Include a *synthetic* reproducer where possible, not a live sample.

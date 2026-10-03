@@ -5,6 +5,53 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- Oracle marginal-alignment test of the drift ranking (`bench_drift_align.py`,
+  `results/ember2024_drift_align.json`) and the removal ablation with 100 seed- and group-matched
+  random draws (`results/ember2024_drift_parity.json`), both run on the full data in GitHub Actions
+  (`drift-heavy.yml`, run 37117414731); the System32 definition parity runs on the Windows runner.
+- `scripts/render_results.py`: README, `docs/index.md`, `docs/evaluation.md` and `paper/main.tex` are
+  rendered from `templates/` and the committed result files; CI fails on a stale rendered file or a
+  leftover `@@` token.
+- Bootstrap intervals for the System32 definition parity (Wilson agreement, total variation, PSI by
+  share floor).
+
+### Changed (numbers that got worse are listed first)
+- **Oracle alignment is a negative result**: giving the faithful top-10 features their 2018
+  class-conditional marginals lowers the frozen 2018 models' 2024 AUC by 0.0166 (0.0130-0.0204)
+  instead of recovering the 0.018 drop, and all 20 group-matched random sets end at least as high;
+  the shift is not marginal-only. Evaluation §2, the abstract and the README say so.
+- **Removal ablation, 100 draws**: dropping the faithful top 10 changes 2024 AUC by −0.0018
+  (−0.0033 to −0.0003), no worse than chance (46 of 100 random removals hurt more, p = 0.47), and
+  hurts 2018 AUC and 2024 TPR @ 1 % FPR more than every draw (p = 0.01). Was 20 draws on a ranking
+  that still contained an extractor-sensitive feature.
+- **Paper retitled**: "Attributable Temporal Drift" became "a Correlational Account of Temporal
+  Drift"; abstract, introduction and limitations no longer claim attribution.
+- **Drift ranking recomputed** on point-mass-aware PSI bins and restricted to definition- and
+  extractor-consistent features, with bootstrap rank intervals and binning / family (xtrat)
+  controls: the top 10 is now `cert_kb`, `max_vsize_ratio`, `is_dll`, `n_imports`, `os_major`,
+  `size_kb`, `linker_major`, `n_wx_sections`, `code_ratio`, `avg_string_len`; 6 survive every control.
+- `n_embedded_mz` parity re-measured on 600 System32 files of a Windows Server 2022 runner: exact
+  agreement 13.7 % (11.1-16.6), total variation 0.86 (was 12.7 % on the Windows 11 host, no interval).
+- VITRINE vs the published EMBER 2018 model is reported seed-pooled with plug-in points: AUC −0.0050
+  (−0.0056 to −0.0043), was −0.0047 for seed 0 alone (also still reported).
+- The drift figure shows the comparable-feature ranking with bootstrap error bars and the weekly AUC
+  band; `n_embedded_mz` is greyed out as a definition change.
+- Docs, README, citation and package metadata point to the renamed repository
+  (`rakshit-737/vitrine-malware-triage`, pages at `/vitrine-malware-triage/`); the old pages URL
+  returns 404.
+
+### Fixed
+- `prepare_ember2024.py` pinned thrember's `features.py` by the bytes of a CRLF (Windows autocrlf)
+  checkout, so on Linux the check failed in every pool initializer and the pool respawned workers
+  forever; the pin is now on LF-normalised bytes and is checked once before the pool starts.
+- `bench_drift_parity.py` had the two Monte Carlo p-value labels of the random-removal control
+  swapped (`mc_p_topk_more_damaging` / `_less_damaging`); fixed, and the committed result's two
+  fields recomputed from its draws (noted in the file).
+- `bench_drift_parity.py` no longer says the parser parity was "not run"; it points to
+  `extractor_parity.json`.
+- README: the EMBER2024 retrain is ~7 % of the paper's training rows (was "~4 %").
+
 ## [1.1.2] - 2026-10-03
 
 ### Fixed
@@ -163,8 +210,8 @@ All notable changes to this project are documented here. The format follows
   string-based YARA synthesis with specificity and coverage validation, and synthetic inert PE
   families.
 
-[Unreleased]: https://github.com/rakshit-737/vitrine/compare/v1.1.2...HEAD
-[1.1.2]: https://github.com/rakshit-737/vitrine/compare/v1.1.1...v1.1.2
-[1.1.1]: https://github.com/rakshit-737/vitrine/compare/v1.1.0...v1.1.1
-[1.1.0]: https://github.com/rakshit-737/vitrine/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/rakshit-737/vitrine/releases/tag/v1.0.0
+[Unreleased]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/rakshit-737/vitrine-malware-triage/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/rakshit-737/vitrine-malware-triage/releases/tag/v1.0.0

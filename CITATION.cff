@@ -7,6 +7,6 @@ authors:
 version: 1.1.2
 date-released: 2026-10-03
 license: MIT
-repository-code: "https://github.com/rakshit-737/vitrine"
-url: "https://rakshit-737.github.io/vitrine/"
+repository-code: "https://github.com/rakshit-737/vitrine-malware-triage"
+url: "https://rakshit-737.github.io/vitrine-malware-triage/"
 keywords: [malware-analysis, explainable-ai, yara, ember, static-analysis]

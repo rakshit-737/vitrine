@@ -40,7 +40,8 @@ from vitrine.features import FEATURE_NAMES, vector_raw  # noqa: E402
 _EXTRACTOR = None
 # FutureComputing4AI/EMBER2024 commit whose thrember/features.py we execute (fail closed on mismatch).
 THREMBER_COMMIT = "0ef753e81d98bf209f71b03cd331dfc190b5b54d"
-THREMBER_FEATURES_SHA256 = "aa9b29e2267a037ebec0b234234edfc2f8d2316e579ab1a0fba6878e70288eca"
+# sha256 of the file with LF line endings, so a Windows (autocrlf) and a Linux checkout pin the same bytes
+THREMBER_FEATURES_SHA256 = "58a085e9ad307aa2c52e165985ff80db8fd5b763891c0cba2d1758a4825f7273"
 
 
 def _check_thrember(path: str) -> None:
@@ -48,7 +49,7 @@ def _check_thrember(path: str) -> None:
     import subprocess
 
     f = Path(path) / "thrember" / "features.py"
-    got = hashlib.sha256(f.read_bytes()).hexdigest()
+    got = hashlib.sha256(f.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
     if got != THREMBER_FEATURES_SHA256:
         raise SystemExit(f"{f}: sha256 {got} != pinned {THREMBER_FEATURES_SHA256}")
     try:
@@ -108,6 +109,7 @@ def main() -> None:
     out = src / "processed"
     out.mkdir(parents=True, exist_ok=True)
     summary = {}
+    _check_thrember(a.thrember)  # fail here, not in every pool worker (a failing initializer respawns forever)
     with mp.Pool(a.workers, initializer=_init, initargs=(a.thrember,)) as pool:
         for split in ("train", "test"):
             files = sorted(src.glob(f"*_Win32_{split}.prefix.jsonl.gz"))

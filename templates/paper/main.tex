@@ -15,16 +15,16 @@ temporally adjacent test set. We present VITRINE, a static-only triage pipeline 
 files with gradient-boosted trees over 91 named features, explains each verdict with exact TreeSHAP,
 tags import-level capabilities and synthesizes benign-validated YARA rules, and we use it to measure
 temporal drift and rank candidate sources for it. Trained on EMBER 2018 and tested on EMBER2024, the model
-loses 0.018 ROC AUC (0.9914 to 0.9730) and, at its own calibrated threshold, recall falls by
-29.3 points (88.0\% to 58.6\%) while the false-positive rate \emph{drops} to 0.07\%: the decay is
+loses @@DROPAUC@@ ROC AUC (0.9914 to 0.9730) and, at its own calibrated threshold, recall falls by
+@@DROPREC@@ points (88.0\% to 58.6\%) while the false-positive rate \emph{drops} to 0.07\%: the decay is
 silent, and the EMBER authors' own 2018 model decays the same way. A drift-weighted ranking
 (PSI $\times$ mean$|$SHAP$|$; correlational) over features that are defined identically in both
 schemas and that LIEF~0.9 and pefile extract identically on 1{,}069 benign files points to
-benign-side selection shifts (signing size, DLL share) and both-class toolchain shifts (section virtual-size ratio, import count, OS and linker versions, size); 6 of the top 10 survive every binning and family control. The top raw-PSI feature (embedded MZ count) is a schema-definition change, not drift,
+@@RANKSUMMARY@@. The top raw-PSI feature (embedded MZ count) is a schema-definition change, not drift,
 and four section-entropy features differ between the two extractors on identical files. Removing the
 ranked features does not recover robustness, and an oracle intervention that gives the ranked features
-their 2018 distributions does not recover the drop but lowers 2024 AUC further, by 0.0166 (0.0130--0.0204), 93\% of the drop's size. On identical test rows the published EMBER 2018
-model is ahead of VITRINE by 0.0050 (0.0043--0.0056) AUC. All experiments use pre-extracted features; no malware
+their 2018 distributions @@ALIGNSUMMARY@@. On identical test rows the published EMBER 2018
+model is ahead of VITRINE by @@PUBAUC@@ AUC. All experiments use pre-extracted features; no malware
 binaries are handled.
 \end{abstract}
 
@@ -76,7 +76,7 @@ capability indicators) are computed from it. EMBER2024 feature-version-3 records
 \textbf{Model and explanation.} XGBoost (600 trees, depth 10, learning rate 0.08); thresholds at 1\%
 and 0.1\% FPR calibrated on a held-out period; exact TreeSHAP contributions with sentence templates.
 SHAP is faithful in the deletion sense: replacing a malware sample's top-$k$ features with the benign
-median lowers its score 28--37 times more than replacing $k$ random features.
+median lowers its score @@SHAPRATIO@@ times more than replacing $k$ random features.
 
 \textbf{Rules.} Structural atoms (imports, section names, imphash) kept only if rare in a training
 benign pool; the smallest $N$-of threshold with zero benign hits, else abstain.
@@ -120,22 +120,18 @@ the commit, command and, for Actions jobs, the run id.
 \begin{table}[h]\centering\small
 \begin{tabular}{lccc}\toprule
 Train $\rightarrow$ test & ROC AUC (95\% CI) & TPR@1\% FPR (95\% CI) & FPR / recall at source threshold (95\% CI)\\\midrule
-2018 (276k) $\rightarrow$ 2018 & 0.9914 (0.9908--0.9922) & 88.2\% (87.8--88.8) & 0.93\% (0.85--1.00) / 88.0\% (87.5--88.4)\\
-2018 (276k) $\rightarrow$ 2024 & 0.9730 (0.9710--0.9748) & 74.2\% (71.4--76.6) & 0.07\% (0.02--0.14) / 58.6\% (57.7--59.6)\\
-2018 (99k) $\rightarrow$ 2024 & 0.9712 (0.9689--0.9738) & 73.8\% (72.7--75.0) & 0.02\% (0.00--0.04) / 51.7\% (49.1--53.7)\\
-2024 (99k) $\rightarrow$ 2024 & 0.9946 (0.9940--0.9951) & 91.1\% (90.2--91.9) & 1.18\% (0.99--1.40) / 91.8\% (91.3--92.3)\\
-2024 (99k) $\rightarrow$ 2018 & 0.8860 (0.8810--0.8895) & 33.3\% (32.3--34.3) & 44.77\% (44.11--45.64) / 95.5\% (95.4--95.7)\\
+@@TABLEROWS@@
 \bottomrule
 \end{tabular}
 \caption{Cross-time results, 91 named features, XGBoost, 3 seeds; intervals are seed-pooled stratified
 bootstraps. The published EMBER 2018 model is one fixed model scored by us.}\label{tab:cross}\end{table}
 
-\textbf{Silent decay.} The same 2018 models lose 0.0184 (0.0161--0.0205) AUC and 29.3 (28.3--30.5) points of recall
+\textbf{Silent decay.} The same 2018 models lose @@DROPAUCCI@@ AUC and @@DROPRECCI@@ points of recall
 at their own threshold from the 2018 to the 2024 test set, while their false-positive rate falls to
 0.07\%. At equal training size an in-period 2024 model beats the 2018 model on 2024 by
-+0.023 (0.021--0.026) AUC. The 2018 model's weekly AUC over the 64 EMBER2024 weeks ranges from 0.918 (week 32; 0.906--0.928) to 0.992 (week 17; 0.989--0.995)
+@@PAIREDAUC@@ AUC. The 2018 model's weekly AUC over the 64 EMBER2024 weeks ranges @@WEEKRANGE@@
 (Figure~\ref{fig:drift}). The silent decay is not specific to named features: the EMBER authors'
-hashed-feature 2018 model drops 0.0131 (0.0119--0.0142) AUC to 0.9833 (0.9823--0.9843) and, at the threshold that
+hashed-feature 2018 model drops @@PUBDROP@@ AUC to 0.9833 (0.9823--0.9843) and, at the threshold that
 gives it 1\% FPR on the 2018 test set, keeps 68.5\% recall (67.7--69.4\%) at an FPR of 0.006\% (one
 false positive in 15{,}672 benign files). Schema translation costs only 0.0006 AUC (0.0003--0.0008) when
 the EMBER2024 paper configuration is trained on native vs translated vectors of identical rows; that
@@ -149,20 +145,20 @@ shown greyed out because its rank is a definition change.}\label{fig:drift}\end{
 
 \textbf{Parity audit.} \texttt{n\_embedded\_mz} counts the bytes \texttt{MZ} anywhere in a file in v2
 and strings containing \texttt{!This program} in v3. On 600 System32 files (Windows Server 2022, in GitHub Actions) the two definitions agree
-exactly on 13.7\% (11.1--16.6) of files (total variation 0.86 (0.83--0.89)); on the 1{,}069 parity files the extractors
+exactly on @@MZAGREE@@ of files (total variation @@MZTV@@); on the 1{,}069 parity files the extractors
 agree on 0.1\%. Its cross-dataset PSI is therefore a definition change. Among parser features, header,
 import, export and size features agree on at least 99\% of the parity files, but the four
 section-entropy features do not (within-1\% agreement 13--82\%; extractor-only PSI up to
-0.81 (0.62--1.29; \texttt{min\_section\_entropy})), so they leave the faithful set. The parity corpus is benign open-source software, not
+@@ENTPSI@@), so they leave the faithful set. The parity corpus is benign open-source software, not
 EMBER's files; agreement there is necessary, not sufficient.
 
-\textbf{Ranking.} Among faithful features the drift-weighted top 10 is \texttt{cert\_kb} (0.81), \texttt{max\_vsize\_ratio} (0.59), \texttt{is\_dll} (0.58), \texttt{n\_imports} (0.47), \texttt{os\_major} (0.36), \texttt{size\_kb} (0.34), \texttt{linker\_major} (0.33), \texttt{n\_wx\_sections} (0.32), \texttt{code\_ratio} (0.32), \texttt{avg\_string\_len} (0.30) (weights; 9 of 10 are in the top 10 in at least 95\% of 200 bootstrap resamples). 6 features stay in the top 10 under decile and pooled-quantile binning and without the \texttt{xtrat} family: \texttt{cert\_kb}, \texttt{is\_dll}, \texttt{n\_imports}, \texttt{os\_major}, \texttt{linker\_major}, \texttt{code\_ratio}.
+\textbf{Ranking.} @@RANKTEXT@@
 
-\textbf{Removal and alignment.} Retraining without the faithful top 10 changes 2024 AUC by $-$0.0018 ($-$0.0033 to $-$0.0003) and 2018 AUC by $-$0.0033 ($-$0.0046 to $-$0.0023); against 100 seed- and group-matched random removals it is ordinary on 2024 AUC (46 of 100 draws hurt more, Monte Carlo $p = 0.47$) but more damaging than every draw on 2018 AUC and on 2024 TPR at 1\% FPR ($p = 0.01$), so removal does not recover robustness. Giving the faithful top 10 their 2018 class-conditional marginals on the 2024 test set (an oracle quantile mapping that uses the labels) does not recover the drop but lowers 2024 AUC further, by 0.0166 (0.0130--0.0204), 93\% of the drop's size; all 91 features: $-$0.0469 ($-$0.0504 to $-$0.0432) AUC; 20 of 20 group-matched random sets of 10 end at least as high as the top 10 (Monte Carlo $p = 1.00$ for the top 10 recovering more). The shift is not marginal-only.
+\textbf{Removal and alignment.} @@ABLTEXT@@ @@ALIGNTEXT@@
 
 \textbf{Reference models.} The EMBER authors' published 2018 model, scored by us on the same 200k test
 rows, reaches AUC 0.9964 (0.9962--0.9966), 96.5\% / 87.0\% TPR at 1\% / 0.1\% FPR (their notebook:
-86.8\% at 0.1\% FPR). Seed-pooled over three seeds, VITRINE is behind by 0.0050 (0.0043--0.0056) AUC, 8.3 (7.8--8.7) points of TPR at 1\% FPR and 12.8 (11.2--14.8) at 0.1\% FPR. The gap mixes data
+86.8\% at 0.1\% FPR). Seed-pooled over three seeds, VITRINE is behind by @@PUBDIFF@@. The gap mixes data
 (the published model saw about twice the labelled rows and 1{,}000 trees) and representation, which we
 do not separate. Under the published EMBER 2017 setup (feature v1, LightGBM defaults, run in GitHub
 Actions, run 37005292317) we obtain AUC 0.99911 (0.99905--0.99917), 98.2\% and 93.0\% TPR at 1\% /

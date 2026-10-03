@@ -34,6 +34,14 @@ Add the name and its sentence template to `FEATURES` in `vitrine/features.py` an
 `featurize_raw`. It must be computable from an EMBER raw-feature dict. Adding a feature changes
 the model schema, so re-run `scripts/prepare_ember.py` and `scripts/train_ember.py`.
 
+## Numbers in README, docs and paper
+
+`README.md`, `docs/index.md`, `docs/evaluation.md` and `paper/main.tex` are rendered from
+`templates/` by `python scripts/render_results.py`: numbers that come from `results/*.json` are
+tokens there (a NAME between two pairs of at-signs). Edit the template, re-render, and commit both; CI runs
+`python scripts/render_results.py --check`, which fails on a stale rendered file or any such token
+left in a tracked file.
+
 ## Commits and PRs
 
 Use conventional commits (`feat:`, `fix:`, `test:`, `docs:`, `data:`, `perf:`, `refactor:`,

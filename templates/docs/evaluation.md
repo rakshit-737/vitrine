@@ -36,7 +36,7 @@ exact sign-flip test.
 | Model | Features | Train rows | ROC AUC (95 % CI) | TPR @ 1 % FPR (95 % CI) | TPR @ 0.1 % FPR (95 % CI) |
 | --- | --- | --- | --- | --- | --- |
 | **Published EMBER 2018 model** (authors' `ember_model_2018.txt`, 1,000 trees), scored by us on the same test rows | 2,381 hashed | all ~600k labelled (authors) | **0.9964** (0.9962-0.9966) | **96.5 %** (96.3-96.6) | **87.0 %** (86.0-88.8) |
-| VITRINE XGBoost (600 trees, depth 10), 3 seeds, seed-pooled | 91 named | 275,732 (50 % subsample) | 0.9914 (0.9908-0.9922) | 88.2 % (87.8-88.8) | 74.2 % (72.7-75.8) |
+| VITRINE XGBoost (600 trees, depth 10), 3 seeds, seed-pooled | 91 named | 275,732 (50 % subsample) | @@V3AUC@@ | @@V3T1@@ | @@V3T01@@ |
 | VITRINE XGBoost, seed 0 (the saved triage model) | 91 named | 275,732 | 0.9917 (0.9915-0.9920) | 88.7 % (88.2-89.0) | 74.5 % (73.3-75.7) |
 | LightGBM, EMBER-2018 config, 300 rounds (our run) | 2,381 hashed | 150,000 | 0.9901 (0.9898-0.9905) | 89.0 % (88.2-89.4) | 56.8 % (53.2-59.0) |
 | LightGBM, paper defaults, 100 trees (our run) | 2,381 hashed | 150,000 | 0.9797 (0.9792-0.9802) | 75.4 % (74.7-76.0) | 38.9 % (37.0-40.3) |
@@ -50,7 +50,7 @@ Actions ([run 37005292317](https://github.com/rakshit-737/vitrine-malware-triage
 scikit-learn 0.24 / LightGBM 2.3.1, 25 min); all three paper values lie inside its 95 % CIs.
 
 **(worse)** Paired difference VITRINE XGBoost − published model, plug-in point and bootstrap 95 % CI
-(`results/ember_secondary.json`): seed-pooled over 3 seeds AUC −0.0050 (−0.0056 to −0.0043), TPR @ 1 % FPR −8.3 (−8.7 to −7.8) pt, TPR @ 0.1 % FPR −12.8 (−14.8 to −11.2) pt; seed 0 alone AUC −0.0047 (−0.0049 to −0.0045), TPR @ 1 % FPR −7.8 (−8.3 to −7.5) pt, TPR @ 0.1 % FPR −12.5 (−14.4 to −11.2) pt. Our score for
+(`results/ember_secondary.json`): seed-pooled over 3 seeds @@PUBDIFF3@@; seed 0 alone @@PUBDIFF0@@. Our score for
 the published model is consistent with the authors' notebook (0.99643 AUC, 96.5 % / 86.8 %) within
 its CI. Caveat: it was scored on VITRINE's clean-room v2 vectors, whose 50 entry-section-name hash
 dimensions differ from elastic/ember's (whole name vs per character).
@@ -72,18 +72,18 @@ The published model was trained on 2018-10, so a threshold "calibrated" on that 
 | Check (2,000 test malware; intervals: bootstrap over samples) | Result |
 | --- | --- |
 | Additivity: max \|Σ SHAP − margin\| | 1.7e-5 log-odds |
-| Deletion: replace top-k SHAP features with the benign median | score drop 0.087 (0.079-0.095) / 0.224 (0.212-0.235) / 0.335 (0.322-0.349) / 0.532 (0.517-0.547) for k = 1 / 3 / 5 / 10 |
-| Same with k random features | 0.003 (0.001-0.005) / 0.008 (0.005-0.011) / 0.009 (0.006-0.012) / 0.019 (0.014-0.023) |
-| Ratio top-k / random-k | 29 (18-65) / 30 (22-46) / 37 (27-57) / 28 (23-37) |
+| Deletion: replace top-k SHAP features with the benign median | score drop @@DELTOP@@ for k = 1 / 3 / 5 / 10 |
+| Same with k random features | @@DELRND@@ |
+| Ratio top-k / random-k | @@DELRATIO@@ |
 
 ![global SHAP](figures/shap_global_top20.png)
 
 ### Packed vs unpacked
 
 20.8 % of the test set trips the packing heuristics (75.1 % of those are malware). AUC is *higher* on
-the packed subset for every model (VITRINE 0.9965 vs 0.9897 unpacked, difference +0.0068 (+0.0064 to +0.0073); LightGBM EMBER-2018 config 0.9953 vs 0.9881 unpacked, difference +0.0072 (+0.0066 to +0.0078); LightGBM paper defaults 0.9905 vs 0.9753 unpacked, difference +0.0153 (+0.0143 to +0.0162)), so packing does not starve the model overall. The
+the packed subset for every model (@@PACKAUC@@), so packing does not starve the model overall. The
 routing rationale is the benign side: at each model's validation-calibrated 1 % FPR threshold, packed
-benign files are flagged VITRINE 1.9 % (1.7-2.2) vs 0.8 % unpacked; LightGBM EMBER-2018 config 2.3 % (2.0-2.6) vs 0.6 % unpacked; LightGBM paper defaults 2.0 % (1.8-2.3) vs 0.8 % unpacked (`ember_secondary.json`), and static evidence alone cannot clear
+benign files are flagged @@PACKFPR@@ (`ember_secondary.json`), and static evidence alone cannot clear
 them.
 
 ## 2. Cross-time: EMBER 2018 ↔ EMBER2024
@@ -114,7 +114,7 @@ source threshold −0.86 pt (−0.93 to −0.78). Paired, same size, on the 2024
 static model *silently*: AUC falls by 0.018 and, at its own calibrated threshold, recall drops from
 88 % to 59 % while the false-positive rate *falls* (0.07 %), so nothing in its alert volume signals the
 problem. **This is not specific to named features:** the EMBER authors' hashed-feature 2018 model drops
-0.0131 (0.0119-0.0142) AUC on the same 2024 rows and, at its 2018-test 1 % FPR threshold, keeps 68.5 % recall
+@@PUBDROP@@ AUC on the same 2024 rows and, at its 2018-test 1 % FPR threshold, keeps 68.5 % recall
 with one false positive. The reverse direction fails loudly: a 2024 model flags 45 % of 2018 test
 benign files at its own threshold, so old benign software looks malicious to it. Across the 64
 EMBER2024 weeks the 2018 model's AUC ranges 0.918 (week 32; 95 % band 0.906-0.928) to 0.992 (week 17;
@@ -136,8 +136,8 @@ ranks. This is a **correlational ranking**, not a causal attribution.
 - **Definitions.** 4 string counters are *redefined* (v3 has only the nearest regex) and 6 flags are
   *proxies*. `n_embedded_mz`, the top raw-PSI feature, counts the bytes `MZ` anywhere in a file in v2
   and strings containing `!This program ` in v3. On 600 System32 files (Windows Server 2022 Actions runner) the two definitions agree
-  exactly on 13.7 % (11.1-16.6) of files (total variation 0.86 (0.83-0.89)); its rank is a **definition change, not drift**.
-  (The PSI between the two definitions, 8.4 (7.9-8.9), depends on the share floor, 6.4 at a 1e-3 floor to 12.4 at 1e-6, so it is not
+  exactly on @@MZAGREE@@ of files (total variation @@MZTV@@); its rank is a **definition change, not drift**.
+  (The PSI between the two definitions, @@MZPSI@@, depends on the share floor, @@MZFLOOR@@, so it is not
   the headline number.)
 - **Extractors.** EMBER 2018 was extracted by **LIEF 0.9** and EMBER2024 by **pefile** (thrember). A
   GitHub Actions job ([run 37092793271](https://github.com/rakshit-737/vitrine-malware-triage/actions/runs/37092793271),
@@ -145,43 +145,16 @@ ranks. This is a **correlational ranking**, not a causal attribution.
   files unpacked from 70 PyPI Windows wheels (42 % PE32; parsed only, never executed or committed).
   Header, import, export, size and byte-level features agree on at least 99 % of files, but the
   **section-entropy features do not**: LIEF and pefile agree within 1 % on 13 % (mean section entropy),
-  53 % (min), 69 % (max) and 82 % (entry entropy) of files, with extractor-only PSI up to 0.81 (0.62-1.29; `min_section_entropy`).
+  53 % (min), 69 % (max) and 82 % (entry entropy) of files, with extractor-only PSI up to @@ENTPSI@@.
   These, and four other parser features below 99 % agreement, are classed *extractor-sensitive* and
   leave the comparable set. The corpus is benign open-source software, not EMBER's files or packed
   malware, so agreement here is necessary, not sufficient.
 
-**Ranking of the faithful features** (top 10, `ember2024_drift.json`; 200 bootstrap resamples):
+@@RANKSECTION@@
 
-| # | Feature | Group | Shift | PSI benign (95 % CI) | PSI malware (95 % CI) | Weight (95 % CI) | Rank (95 % CI) | P(top 10) |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `cert_kb` | header | mixed | 1.17 (1.12-1.21) | 0.20 (0.18-0.24) | 0.812 (0.776-0.847) | 1 | 1.00 |
-| 2 | `max_vsize_ratio` | sections | both classes | 0.44 (0.42-0.46) | 2.23 (2.19-2.26) | 0.594 (0.580-0.607) | 2-3 | 1.00 |
-| 3 | `is_dll` | header | benign only | 0.86 (0.83-0.89) | 0.00 (0.00-0.00) | 0.575 (0.553-0.600) | 2-3 | 1.00 |
-| 4 | `n_imports` | imports | both classes | 0.92 (0.88-0.97) | 1.08 (1.04-1.14) | 0.468 (0.449-0.494) | 4 | 1.00 |
-| 5 | `os_major` | header | both classes | 1.41 (1.36-1.45) | 0.98 (0.94-1.02) | 0.360 (0.347-0.371) | 5-6 | 1.00 |
-| 6 | `size_kb` | bytes strings | both classes | 0.27 (0.25-0.29) | 1.28 (1.21-1.37) | 0.341 (0.323-0.368) | 5-9 | 1.00 |
-| 7 | `linker_major` | header | both classes | 1.68 (1.59-1.80) | 0.89 (0.85-0.92) | 0.334 (0.316-0.359) | 6-10 | 1.00 |
-| 8 | `n_wx_sections` | sections | mixed | 0.19 (0.17-0.20) | 0.65 (0.61-0.72) | 0.323 (0.306-0.362) | 5-10 | 0.99 |
-| 9 | `code_ratio` | header | both classes | 0.95 (0.91-0.99) | 0.65 (0.58-0.79) | 0.318 (0.305-0.331) | 7-10 | 0.98 |
-| 10 | `avg_string_len` | bytes strings | both classes | 0.57 (0.55-0.60) | 0.77 (0.70-0.90) | 0.305 (0.278-0.355) | 6-11 | 0.55 |
+**(negative result) Removal.** @@ABLSECTION@@
 
-9 of the 10 are in the top 10 in at least 95 % of the resamples. The top 10 is robust to the binning and to the dominant family: it overlaps the primary list in 9/10 (legacy deciles), 9/10 (pooled quantiles), 8/10 (excl xtrat); the last control drops `xtrat` (19 % of the 2018 test malware, 0 % of 2024's). 6 features are in every variant's top 10: `cert_kb`, `is_dll`, `n_imports`, `os_major`, `linker_major`, `code_ratio`. Benign-side shifts (signing size, DLL share) read as collection and selection artifacts, both-class shifts (section virtual-size ratio, import count, OS and linker versions, size) as toolchain change; that reading is a hypothesis, not a measurement.
-
-**(negative result) Removal.** Retraining the 2018 model (99,144 rows, 3 seeds) without the faithful top 10 changes 2024-test AUC by −0.0018 (−0.0033 to −0.0003), 2024-test TPR @ 1 % FPR by −4.9 (−6.8 to −3.1) pt and 2018-test AUC by −0.0033 (−0.0046 to −0.0023) (paired bootstrap). It does not help on 2024. Against 100 group-matched random removals of 10 faithful features, each compared with the full and top-10 models of the same seed (Monte Carlo p that the top-10 removal is at least as damaging as chance): on 2024 AUC it is ordinary (46 of 100 draws hurt more; random mean −0.0016, 2.5-97.5 % of draws −0.0050 to +0.0014; p = 0.47), while on 2024 TPR @ 1 % FPR (0 of 100; p = 0.01) and on 2018 AUC (0 of 100; p = 0.01) it hurts more than any random draw: the ranked features carry signal in both periods, and dropping them does not recover robustness (`ember2024_drift_parity.json`, GitHub Actions [run 37117414731](https://github.com/rakshit-737/vitrine-malware-triage/actions/runs/37117414731), job `parity`).
-
-**Oracle alignment.** An oracle intervention on the frozen 2018 models (3 seeds): per class, 2024 test values of a feature group are quantile-mapped onto the 2018 test marginal (within-class ranks kept; it uses the labels, so it is an analysis tool, not a correction), and the 2024 test is re-scored (paired bootstrap, 1,000 resamples pooled over seeds). The models were retrained in the Actions job with `bench_drift.py`'s recipe and score 0.9913 on 2018 and 0.9735 on 2024 (the committed `bench_drift.py` models: 0.9914 and 0.9730). Change in 2024 AUC after alignment:
-
-| Aligned group | Features | Δ AUC on 2024 (95 % CI) | Share of the 2018 → 2024 drop |
-| --- | --- | --- | --- |
-| faithful top 10 | 10 | −0.0166 (−0.0204 to −0.0130) | −93 % |
-| all 91 features | 91 | −0.0469 (−0.0504 to −0.0432) | −264 % |
-| all faithful features | 72 | −0.0261 (−0.0298 to −0.0229) | −147 % |
-| redefined and proxy features | 19 | −0.0098 (−0.0114 to −0.0084) | −55 % |
-| best single top-10 feature, `size_kb` | 1 | +0.0036 (+0.0032 to +0.0043) | +20 % |
-| worst single top-10 feature, `n_wx_sections` | 1 | −0.0082 (−0.0089 to −0.0076) | −46 % |
-| `n_embedded_mz` alone | 1 | −0.0012 (−0.0017 to −0.0008) | −7 % |
-
-**(negative result)** Aligning the ranked features does not recover the drop but lowers 2024 AUC further, by 0.0166 (0.0130-0.0204), 93 % of the drop's size; 20 of 20 group-matched random sets of 10 faithful features end with at least the 2024 AUC of the top 10 (mean −0.0016, 2.5-97.5 % of draws −0.0088 to +0.0044; Monte Carlo p = 1.00 for "the top 10 recovers more"). Only 2 of the 10 single features raise 2024 AUC when aligned alone. Marginal alignment keeps the 2024 dependence between features, so the aligned rows are combinations the 2018 models were not trained on: the shift is not a marginal-only one, and the ranking does not identify features whose 2018 marginals would restore the model. GitHub Actions [run 37117414731](https://github.com/rakshit-737/vitrine-malware-triage/actions/runs/37117414731) (`.github/workflows/drift-heavy.yml`, job `align`), `results/ember2024_drift_align.json`.
+**Oracle alignment.** @@ALIGNSECTION@@
 
 **Confounds.** 2018 → 2024 mixes temporal drift with a dataset change: different collection
 (EMBER 2018 was selected to be harder), extractor (LIEF 0.9 vs pefile, audited above on benign files
