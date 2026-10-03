@@ -1,0 +1,60 @@
+name: extractor-parity
+# Parser-feature parity behind the drift ranking: EMBER v2's extractor (elastic/ember + LIEF 0.9.0,
+# as used for EMBER 2018) vs EMBER v3's (thrember + pefile, EMBER2024) on the SAME benign files.
+# Corpus: DLL/PYD/EXE members of open-source Windows wheels from PyPI, unpacked inside this runner.
+# They are parsed, never executed, and never uploaded or committed; only the comparison JSON is.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Benign corpus from PyPI Windows wheels (parse-only)
+        run: |
+          for plat in win_amd64 win32; do
+            for pkg in numpy scipy pandas pywin32 pillow lxml psutil cryptography matplotlib kiwisolver pyzmq \
+                       grpcio pyyaml markupsafe regex charset-normalizer msgpack aiohttp frozenlist multidict yarl \
+                       cffi bcrypt pycryptodome greenlet sqlalchemy wrapt zstandard brotli lz4 llvmlite pyqt5-qt5 \
+                       pyqt5 wxpython pygame pymupdf pywinpty pythonnet; do
+              python -m pip download -q --only-binary=:all: --no-deps --platform "$plat" --python-version 3.12 \
+                -d "wheels/$plat" "$pkg" || echo "no $plat wheel for $pkg"
+            done
+          done
+          python scripts/parity_extractors.py corpus --wheels wheels --out corpus --list corpus.txt
+          test "$(wc -l < corpus.txt)" -ge 200
+      - name: elastic/ember and thrember, pinned
+        run: |
+          git clone --quiet https://github.com/elastic/ember.git ember_src
+          git -C ember_src checkout --quiet d97a0b523de02f3fe5ea6089d080abacab6ee931
+          git clone --quiet https://github.com/FutureComputing4AI/EMBER2024.git e24
+          git -C e24 checkout --quiet 0ef753e81d98bf209f71b03cd331dfc190b5b54d
+      - name: v2 raw features with LIEF 0.9.0 (conda-forge py-lief, Python 3.7)
+        run: |
+          docker run --rm -v "$PWD:/w" -w /w condaforge/miniforge3:26.5.3-0 bash -c '
+            set -e
+            conda create -y -q -p /opt/lief09 -c conda-forge python=3.7 py-lief=0.9.0 "numpy<1.22" "scikit-learn<1.1"
+            /opt/lief09/bin/python -c "import lief; print(\"lief\", lief.__version__); assert lief.__version__.startswith(\"0.9.0\")"
+            /opt/lief09/bin/python scripts/parity_extractors.py v2 --files corpus.txt --ember-src ember_src --out v2.jsonl'
+      - name: v3 raw features with pefile (thrember) and the comparison
+        run: |
+          python -m pip install -q -e . "pefile==2024.8.26" scikit-learn scipy
+          python scripts/parity_extractors.py v3 --files corpus.txt --thrember e24/src --out v3.jsonl
+          python scripts/parity_extractors.py compare --v2 v2.jsonl --v3 v3.jsonl --wheels-json corpus.wheels.json \
+            --corpus-note "DLL/PYD/EXE members (<= 8 MiB) of PyPI Windows wheels (win_amd64 + win32, cp312), open-source builds"
+          python - <<'PY'
+          import json
+          r = json.load(open("results/extractor_parity.json"))
+          assert r["n_files_both_parsed"] >= 200, r["n_files_both_parsed"]
+          print(json.dumps(r["summary"], indent=1))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extractor-parity
+          path: results/extractor_parity.json
