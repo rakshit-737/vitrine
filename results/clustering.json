@@ -12,6 +12,7 @@
     "emotet"
   ],
   "n_samples": 5000,
+  "kmeans_note": "k-means is given k = the true number of families (oracle k)",
   "rows": [
     {
       "embedding": "interpretable",
@@ -45,7 +46,8 @@
       "homogeneity": 0.6008560487779799,
       "completeness": 0.6495514226066582,
       "purity": 0.6744,
-      "scored_on": "all points"
+      "scored_on": "all points",
+      "oracle_k": true
     },
     {
       "embedding": "ember_svd",
@@ -79,7 +81,141 @@
       "homogeneity": 0.4484969790731211,
       "completeness": 0.5768556372540403,
       "purity": 0.5164,
-      "scored_on": "all points"
+      "scored_on": "all points",
+      "oracle_k": true
     }
-  ]
+  ],
+  "repeats": {
+    "n": 20,
+    "design": "per-family samples re-drawn with seeds 0..n-1",
+    "summary": {
+      "interpretable:hdbscan": {
+        "ari": {
+          "mean": 0.5793605603941725,
+          "p2.5": 0.5568120373960316,
+          "p97.5": 0.6084160913080083
+        },
+        "nmi": {
+          "mean": 0.7727691899846139,
+          "p2.5": 0.7588486085660192,
+          "p97.5": 0.7837637134926225
+        },
+        "noise_fraction": {
+          "mean": 0.31375999999999993,
+          "p2.5": 0.288855,
+          "p97.5": 0.34091499999999997
+        },
+        "purity": {
+          "mean": 0.9679888463965801,
+          "p2.5": 0.9548881584019119,
+          "p97.5": 0.9772545544874089
+        },
+        "ari_all_points_noise_as_singletons": {
+          "mean": 0.35838188775175195,
+          "p2.5": 0.33443984675712446,
+          "p97.5": 0.3897881771930839
+        }
+      },
+      "interpretable:kmeans_k=true": {
+        "ari": {
+          "mean": 0.4706043699845601,
+          "p2.5": 0.4286553187723733,
+          "p97.5": 0.5188321761917095
+        },
+        "nmi": {
+          "mean": 0.6148958138814933,
+          "p2.5": 0.5913732238774945,
+          "p97.5": 0.6306875827388018
+        },
+        "noise_fraction": {
+          "mean": 0.0,
+          "p2.5": 0.0,
+          "p97.5": 0.0
+        },
+        "purity": {
+          "mean": 0.66931,
+          "p2.5": 0.6499400000000001,
+          "p97.5": 0.69746
+        }
+      },
+      "ember_svd:hdbscan": {
+        "ari": {
+          "mean": 0.6638238829200519,
+          "p2.5": 0.6436274943690589,
+          "p97.5": 0.6851816883924639
+        },
+        "nmi": {
+          "mean": 0.7993157280062224,
+          "p2.5": 0.7863402279266745,
+          "p97.5": 0.8116170359342079
+        },
+        "noise_fraction": {
+          "mean": 0.33672,
+          "p2.5": 0.32719,
+          "p97.5": 0.35203999999999996
+        },
+        "purity": {
+          "mean": 0.9731920586149734,
+          "p2.5": 0.9642642088080298,
+          "p97.5": 0.9868020093756737
+        },
+        "ari_all_points_noise_as_singletons": {
+          "mean": 0.41952135035178084,
+          "p2.5": 0.40764726541914165,
+          "p97.5": 0.427941639777202
+        }
+      },
+      "ember_svd:kmeans_k=true": {
+        "ari": {
+          "mean": 0.27583984912515075,
+          "p2.5": 0.21610945314200067,
+          "p97.5": 0.3243857091453482
+        },
+        "nmi": {
+          "mean": 0.5311076398611783,
+          "p2.5": 0.48270935288993094,
+          "p97.5": 0.5533062395528883
+        },
+        "noise_fraction": {
+          "mean": 0.0,
+          "p2.5": 0.0,
+          "p97.5": 0.0
+        },
+        "purity": {
+          "mean": 0.55691,
+          "p2.5": 0.50769,
+          "p97.5": 0.58809
+        }
+      },
+      "interpretable:hdbscan_all_points_minus_kmeans_ari": {
+        "mean": -0.11222248223280817,
+        "p2.5": -0.17324633678055143,
+        "p97.5": -0.0602118974195134,
+        "n_repeats_hdbscan_lower": 20
+      },
+      "ember_svd:hdbscan_all_points_minus_kmeans_ari": {
+        "mean": 0.14368150122663012,
+        "p2.5": 0.09666578825179764,
+        "p97.5": 0.2027566613666779,
+        "n_repeats_hdbscan_lower": 0
+      }
+    }
+  },
+  "provenance": {
+    "git_commit": "63db15b8e52a2efb4ed7bcefe018aad596007f1b",
+    "git_dirty": false,
+    "command": "python scripts/bench_cluster.py --data <data>",
+    "started_utc": "2026-10-03T03:09:37+00:00",
+    "finished_utc": "2026-10-03T03:15:55+00:00",
+    "python": "3.14.3",
+    "platform": "Windows-11",
+    "packages": {
+      "numpy": "2.4.3",
+      "scipy": "1.17.1",
+      "scikit-learn": "1.8.0",
+      "xgboost": "3.2.0",
+      "lightgbm": "4.6.0"
+    },
+    "runner": "local"
+  }
 }
