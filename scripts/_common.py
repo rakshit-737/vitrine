@@ -2,9 +2,13 @@
 from __future__ import annotations
 
 import csv
+import datetime as _dt
 import gzip
 import json
+import math
 import os
+import platform
+import subprocess
 import sys
 from pathlib import Path
 
@@ -14,6 +18,7 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 RESULTS = REPO / "results"
 FIGURES = REPO / "docs" / "figures"
+_STARTED = _dt.datetime.now(_dt.timezone.utc)
 
 
 def data_dir(arg: str | None = None) -> Path:
@@ -73,9 +78,66 @@ def binary_metrics(y, s, thr: float) -> dict:
             "fpr": fp / (fp + tn) if fp + tn else 0.0, "tp": tp, "fp": fp, "tn": tn, "fn": fn}
 
 
+def _git(*args: str) -> str:
+    try:
+        return subprocess.run(["git", *args], cwd=REPO, capture_output=True, text=True, timeout=30).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
+def provenance() -> dict:
+    """Where a result came from: commit, command, UTC times, library versions, Actions run if any.
+
+    ``git_dirty`` ignores the output folders (``results/``, ``docs/figures/``), so a run from a clean
+    checkout of ``git_commit`` reproduces the file.
+    """
+    import importlib.metadata as md
+
+    dirty = [ln for ln in _git("status", "--porcelain", "--untracked-files=no").splitlines()
+             if not ln[3:].startswith(("results/", "docs/figures/"))]
+    pk = {}
+    for name in ("numpy", "scipy", "scikit-learn", "xgboost", "lightgbm", "hdbscan"):
+        try:
+            pk[name] = md.version(name)
+        except md.PackageNotFoundError:
+            pass
+    argv = [a.replace("\\", "/") for a in sys.argv]
+    argv = [("<data>" if i and argv[i - 1] == "--data" else a) for i, a in enumerate(argv)]
+    cmd = "python " + " ".join([argv[0].split("/vitrine/")[-1], *argv[1:]])
+    out = {"git_commit": _git("rev-parse", "HEAD"), "git_dirty": bool(dirty), "command": cmd,
+           "started_utc": _STARTED.isoformat(timespec="seconds"),
+           "finished_utc": _dt.datetime.now(_dt.timezone.utc).isoformat(timespec="seconds"),
+           "python": platform.python_version(), "platform": platform.platform(terse=True),
+           "packages": pk}
+    if os.environ.get("GITHUB_RUN_ID"):
+        url = f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ.get('GITHUB_REPOSITORY')}"
+        out.update(runner="github-actions", github_run_id=int(os.environ["GITHUB_RUN_ID"]),
+                   github_run_url=f"{url}/actions/runs/{os.environ['GITHUB_RUN_ID']}")
+    else:
+        out["runner"] = "local"
+    return out
+
+
+def _clean(o):
+    """JSON-safe copy: numpy scalars/arrays to Python, NaN/inf to null (strict JSON parsers reject NaN)."""
+    if isinstance(o, dict):
+        return {str(k): _clean(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)):
+        return [_clean(v) for v in o]
+    if isinstance(o, np.ndarray):
+        return _clean(o.tolist())
+    if isinstance(o, np.generic):
+        o = o.item()
+    if isinstance(o, float) and not math.isfinite(o):
+        return None
+    return o
+
+
 def dump(name: str, obj) -> Path:
+    """Write ``results/<name>`` as strict JSON with a ``provenance`` block (see :func:`provenance`)."""
     RESULTS.mkdir(exist_ok=True)
     p = RESULTS / name
-    p.write_text(json.dumps(obj, indent=2, default=float))
+    obj = {**obj, "provenance": provenance()} if isinstance(obj, dict) else obj
+    p.write_text(json.dumps(_clean(obj), indent=2, allow_nan=False) + "\n")
     print(f"wrote {p}")
     return p
