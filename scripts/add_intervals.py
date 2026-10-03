@@ -87,7 +87,25 @@ def main() -> None:
         if "mcnemar_p_xgb_vs_lgbm2018_draw0" in r:
             row["mcnemar_p_xgb_vs_lgbm2018_draw0"] = r["mcnemar_p_xgb_vs_lgbm2018_draw0"]
         rows.append(row)
-    out["adversarial"] = {"n": n, "rows": rows,
+    clean = []
+    for r in adv["pools"]["donors_without_high_risk_capability"]:
+        row = {"perturbation": r["perturbation"]}
+        for m, v in r.items():
+            if isinstance(v, (int, float)) and m.endswith("rate") or m in ("vitrine_xgb", "lgbm_ember_paper",
+                                                                          "lgbm_ember_2018", "vitrine_triage",
+                                                                          "xgb_at_triage_fpr"):
+                rate = v["detection_rate"] if isinstance(v, dict) else v
+                row[m] = {"rate": rate, "ci95": wilson(round(rate * n), n)}
+        clean.append(row)
+    for row, r in zip(rows, adv["rows"]):
+        for m in ("floor_only_rate", "floor_switched_on_by_donor_rate"):
+            if m in r:
+                row[m] = {"rate": r[m], "ci95": wilson(round(r[m] * n), n)}
+    nb_test = 100000  # EMBER 2018 test benign files
+    k_tri = round(adv["triage_benign_fpr_test"] * nb_test)
+    out["adversarial"] = {"n": n, "rows": rows, "clean_donor_rows": clean,
+                          "triage_benign_fpr": {"rate": k_tri / nb_test, "ci95": wilson(k_tri, nb_test),
+                                                "n_benign_test": nb_test},
                           "note": "Wilson CI on the 3-draw mean rate with n = 3,000 malware; paired tests are "
                                   "exact McNemar on draw 0 (adversarial.json)"}
 
