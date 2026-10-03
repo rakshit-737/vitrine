@@ -32,6 +32,15 @@ jobs:
           print(n, "mermaid blocks")
           PY
           for f in /tmp/mmd/*.mmd; do npx -y @mermaid-js/mermaid-cli@11 -p /tmp/mmd/p.json -i "$f" -o "$f.svg"; done
+      - name: Build the preprint PDF
+        uses: xu-cheng/latex-action@e2f99d4b3685b0da93f97e1b86ad8fab81105098 # v3
+        with:
+          root_file: main.tex
+          working_directory: paper
+      - name: Publish it with the site
+        run: |
+          mkdir -p site/paper && cp paper/main.pdf site/paper/vitrine-preprint.pdf
+          test "$(stat -c %s site/paper/vitrine-preprint.pdf)" -lt 5000000
       - uses: actions/upload-pages-artifact@v4
         with:
           path: site

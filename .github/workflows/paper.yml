@@ -1,7 +1,7 @@
 name: paper
 on:
   push:
-    paths: ["paper/**"]
+    paths: ["paper/**", "docs/figures/**"]
   workflow_dispatch:
 permissions:
   contents: read
