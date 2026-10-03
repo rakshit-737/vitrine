@@ -96,3 +96,18 @@ def test_dump_writes_strict_json_with_provenance(tmp_path, monkeypatch):
     doc = json.loads(out.read_text(), parse_constant=lambda c: (_ for _ in ()).throw(ValueError(c)))
     assert doc["a"] is None and doc["b"] == 0.5 and doc["c"] == [0, 1]
     assert {"git_commit", "command", "started_utc", "runner"} <= set(doc["provenance"])
+
+
+def test_committed_demo_has_no_namespace_or_pki_url_hits():
+    """The published demo must not show the manifest-namespace / certificate URL false hits the tagger now filters."""
+    import json
+    import re
+
+    html = (Path(__file__).resolve().parents[1] / "docs" / "demo" / "index.html").read_text(encoding="utf-8")
+    demo = json.loads(re.search(r"const DEMO = (\{.*?\});\n</script>", html, re.S).group(1))
+    assert demo
+    for name, rep in demo.items():
+        for c in rep["capabilities"]:
+            if c["attack_id"] == "T1071.001":
+                ev = " ".join(c["evidence"])
+                assert "xmlns" not in ev and "schemas.microsoft.com" not in ev and "/pki" not in ev, name
