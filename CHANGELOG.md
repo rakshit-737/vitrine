@@ -5,6 +5,32 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-03
+
+### Added
+- LIEF 0.9 vs pefile parity of the parser features on 1,069 benign PE files, run in GitHub Actions
+  (`extractor-parity.yml`, run 37092793271, `results/extractor_parity.json`); the drift ranking
+  excludes parser features the two extractors disagree on.
+- A `provenance` block (commit, command, UTC time, library versions, Actions run id) in every result
+  file; older files are backfilled.
+- Intervals for the YARA coverage (family bootstrap and paired family-level test), clustering
+  (20 re-drawn samples), secondary EMBER 2018 statistics (`ember_secondary.json`) and the clean-donor
+  adversarial pool; parity intervals and a seed-matched 100-draw random ablation in the drift tooling.
+- The preprint PDF is built with the docs and published at `/paper/vitrine-preprint.pdf`.
+- README / datasets: related work on drift detection (Transcend, CADE, drift forensics, Kalný et al.)
+  and the EMBER2024 subsample's fraction of the paper split and class shares.
+
+### Changed
+- Point-mass-aware PSI, exact Wilson edges, threshold and two-sample bootstraps in `_stats.py`;
+  `bench_drift.py` keeps models and scores and bootstraps every reported drift statistic.
+- CI takes Dependabot's action bumps and exercises the pinned Docker actions.
+
+### Fixed
+- Authenticode CRL/AIA/CPS URLs no longer tag T1071.001; the static demo is rebuilt with the current tagger.
+- `analyze`/`scan` refuse files over the 128 MiB parser cap before reading; one default per help line.
+- The API runs analyses in a worker thread with two bounded slots; its test uses httpx's ASGI transport.
+- Docs: current CLI help and `/openapi.json` in the reference; private advisory link in SECURITY.
+
 ## [1.1.0] - 2026-10-02
 
 ### Added
@@ -130,6 +156,7 @@ All notable changes to this project are documented here. The format follows
   string-based YARA synthesis with specificity and coverage validation, and synthetic inert PE
   families.
 
-[Unreleased]: https://github.com/rakshit-737/vitrine/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/rakshit-737/vitrine/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/rakshit-737/vitrine/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rakshit-737/vitrine/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rakshit-737/vitrine/releases/tag/v1.0.0

@@ -20,5 +20,5 @@
 - [ ] Per-cluster (HDBSCAN) rule generation instead of per-AVClass-family.
 - [ ] EMBER2024 challenge set evaluation and a representation-only ablation (deferred for time; not run).
 - [ ] Drift parity on more than string counters: the parser-based features are still computed by LIEF (2018) and pefile (2024); a both-extractor run on benign files would need the 2018 LIEF 0.9 toolchain.
-- [x] Release v1.1.0 with the current `main`.
+- [x] Release v1.1.1 with the current `main`.
 - [x] Full-budget EMBER 2018 reference: the authors' published model is now scored on our test rows.
