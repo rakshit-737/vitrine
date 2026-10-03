@@ -54,5 +54,14 @@
     "T1547.001": 0.001,
     "T1095": 0.0003,
     "T1055.012": 0.0003
+  },
+  "provenance": {
+    "runner": "local",
+    "backfilled": true,
+    "result_committed_in": "76ee8dd8011a5764a86c0b22a7782b11cc863220",
+    "command": "python scripts/bench_benign.py --data <data> --dir C:/Windows/System32 --limit 3000",
+    "log": "<data>/benign.log",
+    "log_last_modified_utc": "2026-09-26T12:07:20+00:00",
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
   }
 }

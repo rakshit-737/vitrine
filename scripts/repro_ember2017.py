@@ -29,6 +29,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import provenance  # noqa: E402
 from _stats import bootstrap_roc  # noqa: E402
 
 PAPER = {"source": "Anderson & Roth 2018, EMBER (arXiv:1804.04637), LightGBM baseline on EMBER 2017 v1",
@@ -81,6 +82,7 @@ def main() -> None:
                                   for k in ("roc_auc", "tpr_at_fpr_1pct", "tpr_at_fpr_0.1pct")},
         "bootstrap": a.boot,
         "runtime_seconds": {"vectorize": round(t_vec), "train": round(t_fit), "total": round(time.time() - t0)},
+        "provenance": provenance(),  # Actions run id/URL, commit, command, versions
     }
     Path(a.out).write_text(json.dumps(res, indent=2) + "\n")
     print(json.dumps(res, indent=2))

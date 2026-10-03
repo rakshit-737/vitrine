@@ -55,5 +55,23 @@
     "vectorize": 913,
     "train": 185,
     "total": 1136
+  },
+  "provenance": {
+    "runner": "github-actions",
+    "backfilled": true,
+    "github_run_id": 37005292317,
+    "github_run_url": "https://github.com/rakshit-737/vitrine/actions/runs/37005292317",
+    "workflow": ".github/workflows/ember2017.yml (workflow_dispatch)",
+    "git_commit": "36fc89a982bbe6a2d9b3ff354cdfdfbdc678a42b",
+    "started_utc": "2026-10-02T12:12:13Z",
+    "finished_utc": "2026-10-02T12:37:30Z",
+    "command": "python scripts/repro_ember2017.py --data $DATA --ember-src ember_src --out ember2017_repro.json --sha256 a5603de2f34f02ab6e21df7a0f97ec4ac84ddc65caee33fb610093dd6f9e1df9",
+    "artifact": {
+      "name": "ember2017-repro",
+      "size_bytes": 908,
+      "digest": "sha256:fa23ce84b9517dacbbc31e37de2f811bb515bbe3853eb9710b9c8fec8a9c1629",
+      "expires_utc": "2026-12-31T12:12:14Z",
+      "note": "the round-5 audit downloaded this artifact and found its JSON identical to this file without this provenance block (sha256 9de280c00126e187e0b73411aa275167795b46021d5ca6e0e34becae4fd4fac3)"
+    }
   }
 }

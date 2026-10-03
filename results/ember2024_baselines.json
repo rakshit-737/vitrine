@@ -130,5 +130,14 @@
       "hi": 0.0713339699410446
     }
   },
-  "runtime_seconds": 4716
+  "runtime_seconds": 4716,
+  "provenance": {
+    "runner": "local",
+    "backfilled": true,
+    "result_committed_in": "03521b6c3d53c48306f6f24f9bb5c6a3a56de199",
+    "command": "python scripts/bench_ember2024.py --data <data> --released <EMBER2024_Win32.model> --config EMBER2024/examples/lgbm_config.json",
+    "log": "<data>/e24base.log",
+    "log_last_modified_utc": "2026-10-02T11:45:35+00:00",
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
+  }
 }

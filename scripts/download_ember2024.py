@@ -34,6 +34,9 @@ import urllib.request
 import zlib
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _common import provenance  # noqa: E402
+
 REVISION = "3d23efef7c0f0b702c5024400cfff4c3744a3832"
 BASE = f"https://huggingface.co/datasets/joyce8/EMBER2024/resolve/{REVISION}"
 ARCHIVES = {  # name -> (size, sha256 of the full archive = Git-LFS oid, for reference)
@@ -153,7 +156,8 @@ def main() -> None:
             "archives": {k: {"size": v[0], "sha256": v[1]} for k, v in ARCHIVES.items()},
             "mib_per_member": a.mb,
             "note": "weekly JSONL members are sha256-sorted, so each prefix is a sha256-range sample",
-            "members": sorted(known.values(), key=lambda r: r["member"])}, indent=1))
+            "members": sorted(known.values(), key=lambda r: r["member"]),
+            "provenance": provenance()}, indent=1))
 
     with cf.ThreadPoolExecutor(a.workers) as ex:
         for r in ex.map(lambda m: fetch_member_prefix(m, nbytes, out), todo):

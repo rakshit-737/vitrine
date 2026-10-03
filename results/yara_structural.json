@@ -954,5 +954,14 @@
         "local_benign_fp": 0
       }
     }
-  ]
+  ],
+  "provenance": {
+    "runner": "local",
+    "backfilled": true,
+    "result_committed_in": "708d4bf0550662cd165808477746fcb394001c3f",
+    "command": "python scripts/bench_yara.py --data <data> --benign-dir C:/Windows/System32 --benign-limit 3000",
+    "log": "<data>/yara_r4.log",
+    "log_last_modified_utc": "2026-10-02T11:04:45+00:00",
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
+  }
 }

@@ -185,5 +185,14 @@
         "std": 0.004128474294457936
       }
     }
+  },
+  "provenance": {
+    "runner": "local",
+    "backfilled": true,
+    "result_committed_in": "5c9d4cf4bcca4f64dc0a1b4d984ed833f6262317",
+    "command": "python scripts/bench_ci.py --data <data>",
+    "log": "<data>/ci.log",
+    "log_last_modified_utc": "2026-09-26T17:56:44+00:00",
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
   }
 }

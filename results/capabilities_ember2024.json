@@ -413,5 +413,14 @@
     ],
     "flagged": 13061,
     "tagged": 4495
+  },
+  "provenance": {
+    "runner": "local",
+    "backfilled": true,
+    "result_committed_in": "ca9e090e2450ba6cb4ed6ac4eb1ad42c417ebae3",
+    "command": "python scripts/bench_capabilities.py --data <data>",
+    "log": "<data>/caps.log",
+    "log_last_modified_utc": "2026-10-02T10:47:24+00:00",
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
   }
 }

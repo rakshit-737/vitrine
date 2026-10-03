@@ -269,5 +269,14 @@
       "auc_packed": 0.9965379495493429,
       "auc_unpacked": 0.9897104510279773
     }
+  },
+  "provenance": {
+    "runner": "local",
+    "backfilled": true,
+    "result_committed_in": "3261b8159052c54b9a8aea171e771304dfeb1e0b",
+    "command": "python scripts/train_ember.py --data <data> --lgbm-limit 150000 --rounds-2018 300 (+ python scripts/merge_baselines.py --data <data>)",
+    "log": "<data>/train.log",
+    "log_last_modified_utc": "2026-09-26T12:15:52+00:00",
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
   }
 }

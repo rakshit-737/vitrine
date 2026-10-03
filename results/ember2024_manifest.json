@@ -846,5 +846,14 @@
    "n_records": 2064,
    "file": "2024-12-08_2024-12-14_Win32_test.prefix.jsonl.gz"
   }
- ]
+ ],
+ "provenance": {
+  "runner": "local",
+  "backfilled": true,
+  "result_committed_in": "9cee3308abdf028ff20f5bdabdf1f42c41a1c6d7",
+  "command": "python scripts/download_ember2024.py --out <data>/ember2024 --mb 8",
+  "log": "<data>/download2024_r4.log",
+  "log_last_modified_utc": "2026-10-02T10:01:23+00:00",
+  "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
+ }
 }
