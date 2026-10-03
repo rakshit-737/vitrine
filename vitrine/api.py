@@ -7,12 +7,14 @@ is executed. Bind to localhost (default) -- this is a lab tool, not an internet-
 """
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
+from starlette.concurrency import run_in_threadpool
 
 from . import __version__
 from .dissect import PEParseError
@@ -20,6 +22,9 @@ from .triage import analyze, load_model, train_default
 from .yara_synth import match_parsed, parse
 
 MAX_UPLOAD = 32 * 1024 * 1024
+# Analyses running (or buffering uploads) at once. Peak memory is roughly 15x the file size per
+# analysis, so 2 slots bound a 32 MiB worst case to about 1 GB; other requests wait unread.
+ANALYSIS_SLOTS = 2
 STATIC = Path(__file__).parent / "static"
 
 
@@ -59,6 +64,7 @@ def create_app(model_path: str | None = None, benign_dir: str | None = None, ben
     model = load_model(model_path) if model_path else train_default()
     benign = _load_benign(benign_dir, benign_limit)
     kind = type(model).__name__
+    slots = asyncio.Semaphore(ANALYSIS_SLOTS)
 
     @app.get("/health")
     def health():
@@ -80,18 +86,20 @@ def create_app(model_path: str | None = None, benign_dir: str | None = None, ben
             raise HTTPException(400, "bad Content-Length") from None
         if declared > MAX_UPLOAD:
             raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
-        buf = bytearray()
-        async for chunk in request.stream():
-            buf += chunk
-            if len(buf) > MAX_UPLOAD:
-                raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
-        data = bytes(buf)
-        if not data:
-            raise HTTPException(400, "empty body: POST the file bytes as application/octet-stream")
-        try:
-            res = analyze(data, model, benign if (rules and benign) else None)
-        except PEParseError as e:
-            raise HTTPException(422, f"not a parseable PE: {e}") from e
+        async with slots:  # bound concurrent buffering + analysis; the event loop stays free meanwhile
+            buf = bytearray()
+            async for chunk in request.stream():
+                buf += chunk
+                if len(buf) > MAX_UPLOAD:
+                    raise HTTPException(413, f"file larger than {MAX_UPLOAD} bytes")
+            data = bytes(buf)
+            del buf
+            if not data:
+                raise HTTPException(400, "empty body: POST the file bytes as application/octet-stream")
+            try:
+                res = await run_in_threadpool(analyze, data, model, benign if (rules and benign) else None)
+            except PEParseError as e:
+                raise HTTPException(422, f"not a parseable PE: {e}") from e
         return res.to_dict()
 
     @app.post("/api/yara/validate")
