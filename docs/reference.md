@@ -4,7 +4,7 @@
 
 ```text
 $ vitrine --help
-usage: vitrine [-h] {gen-corpus,train,analyze,scan,serve,demo} ...
+usage: vitrine [-h] [--version] {gen-corpus,train,analyze,scan,serve,demo} ...
 
 VITRINE command-line interface (static analysis only; nothing is ever
 executed).
@@ -20,9 +20,13 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
+  --version             show program's version number and exit
 ```
 
-Each subcommand has its own `--help`. `analyze` and `scan` only read files; nothing is executed.
+Each subcommand has its own `--help`. `analyze` and `scan` only read files; nothing is executed. Files over the
+parser's 128 MiB cap are skipped before they are read (`scan` reports them as `too large`). Analysis keeps the
+file and several derived copies (strings, byte histograms, feature blocks) in memory, so peak memory is a large
+multiple of the file size; scan very large installers one at a time.
 
 ## HTTP API (`vitrine serve`)
 
@@ -33,7 +37,10 @@ Each subcommand has its own `--help`. `analyze` and `scan` only read files; noth
 | POST | `/api/analyze` | raw PE bytes (`application/octet-stream`, at most 32 MB) | full triage result (verdict, score, SHAP drivers, capabilities, YARA rule) |
 | POST | `/api/yara/validate` | `{"text": "<rule>"}` | benign hits and specificity against the configured benign corpus |
 
-The OpenAPI schema is served at `/docs` when the service runs. A static, server-less copy of the UI is on the [demo page](demo/index.html).
+The OpenAPI schema is at `/openapi.json`. The interactive `/docs` page (Swagger UI, loaded from a CDN) is served
+only with `vitrine serve --enable-docs`; `/redoc` is off. At most two uploads are buffered and analysed at once
+(further requests wait unread), which bounds the service's memory. A static, server-less copy of the UI is on the
+[demo page](demo/index.html).
 
 ## Python API
 

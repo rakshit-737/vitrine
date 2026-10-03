@@ -2,7 +2,7 @@
 
 ```bash
 python -m pip install -e ".[dev]"      # numpy core; dev pulls sklearn, xgboost, fastapi, pytest, ruff
-python -m pytest -q                     # 43 tests; realdata tests skip when the dataset is absent
+python -m pytest -q                     # realdata tests skip when the datasets are absent
 python -m vitrine demo                  # end-to-end on synthetic inert samples
 ```
 
