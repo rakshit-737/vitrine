@@ -142,7 +142,7 @@ def main() -> None:
     res["training_composition"] = {
         "fit_rows": int(fit_idx.size), "fit_benign": int((lab == 0).sum()), "fit_malicious": int((lab == 1).sum()),
         "fit_benign_first_seen_before_2018": int(old.sum()),
-        "first_seen_range_of_those": [str(app[fit_idx][old].min()), str(app[fit_idx][old].max())]}
+        "first_seen_range_of_those": [min(app[fit_idx][old].tolist()), max(app[fit_idx][old].tolist())]}
     res["runtime_seconds"] = round(time.time() - t0)
     dump("ember_secondary.json", res)
 
