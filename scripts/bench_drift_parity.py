@@ -1,25 +1,26 @@
 #!/usr/bin/env python
-"""Is the EMBER 2018 -> EMBER2024 drift attribution confounded by the v2 <-> v3 schema translation?
+"""Is the EMBER 2018 -> EMBER2024 drift ranking confounded by the v2 <-> v3 schema translation?
 
 The cross-dataset PSI in ``ember2024_drift.json`` compares a 2018 value computed by EMBER v2 with a
 2024 value computed by EMBER v3 (thrember) and translated by :mod:`vitrine.ember3`. Where the two
 extractors define a feature differently, PSI measures the definition change, not the files.
 
-1. Definition audit: every one of the 91 named features is put in one class
-     * ``redefined``  -- v3 has no equivalent, the nearest counter is used (string IOC counters);
-     * ``proxy``      -- same concept, derived from a different field (general flags, vsize);
-     * ``parser``     -- same definition, different PE parser (LIEF 0.9 vs pefile in thrember);
-     * ``byte_level`` -- same definition on raw bytes, no parser involved (histograms, strings).
+1. Definition audit: every one of the 91 named features is put in one class (``_drift_defs.py``):
+   ``redefined``, ``proxy``, ``parser`` (same definition, LIEF 0.9 vs pefile) or ``byte_level``.
 2. Parity on overlap data: both definitions of each ``redefined`` counter are computed on the same
    benign files (a deterministic sample of local ``C:/Windows/System32`` PEs; regexes copied from
-   elastic/ember v2 and thrember v3). Reported: Spearman rho, exact agreement, and the PSI between the
-   two definitions on identical files -- PSI that a definition change alone produces.
-3. Attribution restricted to faithful features (``parser`` + ``byte_level``) with every feature
-   tagged as shifting in both classes, benign only, or malicious only (PSI >= 0.25 / < 0.1).
-4. Ablation of the top-10 faithful drift features on the 2018 model (3 seeds) versus 20 random
-   draws of 10 faithful features matched by feature group (1 seed each); in-period (2018) cost and
-   cross-time (2024) change reported side by side. To fit the shared laptop, all models are trained
-   on the 99,144-row 2018 subsample used for ``ember2018_sub`` in ``bench_drift.py``.
+   elastic/ember v2 and thrember v3). Reported with 95 % intervals (Wilson; bootstrap over files):
+   exact agreement, total-variation distance, Spearman rho, and the PSI between the two definitions
+   on identical files (with its sensitivity to the share floor). Parser-based features are NOT
+   checked: that needs LIEF 0.9 and pefile on the same files.
+3. Ranking restricted to faithful features (``parser`` + ``byte_level``), copied from
+   ``ember2024_drift.json`` with its bootstrap rank intervals and binning / family controls.
+4. Ablation of the top-10 faithful drift features on the 2018 model (3 seeds, paired bootstrap)
+   versus ``--draws`` random draws of 10 faithful features matched by feature group. Draw ``i`` is
+   trained with seed ``i % 3`` and compared with the full and top-10 models of the same seed
+   (plug-in differences), and Monte Carlo p-values (1 + #as-extreme) / (1 + #draws) are reported.
+   To fit the shared laptop, all models are trained on the 99,144-row 2018 subsample used for
+   ``ember2018_sub`` in ``bench_drift.py``.
 
     python scripts/bench_drift_parity.py --data D:/cyber-portfolio/datasets/vitrine
 """
@@ -33,50 +34,11 @@ from pathlib import Path
 
 import numpy as np
 from _common import RESULTS, data_dir, dump
-from _stats import paired_bootstrap_diff, psi
+from _drift_defs import PROXY, REDEFINED, feature_class, feature_group
+from _stats import paired_bootstrap_diff, psi, psi_legacy, roc_metrics, total_variation, wilson
 from bench_drift import load18, load24, score, train
 
 from vitrine.features import FEATURE_NAMES
-
-REDEFINED = {
-    "n_embedded_mz": "v2: count of b'MZ' anywhere in the file; v3: strings containing '!This program ' (dos_msg)",
-    "n_paths": "v2: 'c:\\' case-insensitive anywhere; v3: strings matching r'\\bC:/' (forward slash, case-sensitive)",
-    "n_registry": "v2: 'HKEY_' anywhere; v3: strings matching r'\\b(?:KHEY_|KHLM|HKCU)'",
-    "n_urls": "v2: 'http(s)://' anywhere; v3: strings matching the thrember url regex (also ftp)",
-}
-PROXY = {
-    "has_signature": "v2 LIEF flag; v3 SECURITY data-directory size > 0",
-    "has_debug": "v2 LIEF has_debug; v3 DEBUG data-directory size > 0",
-    "has_tls": "v2 LIEF has_tls; v3 TLS data-directory size > 0",
-    "has_relocations": "v2 LIEF flag; v3 BASERELOC data-directory size > 0",
-    "has_resources": "v2 LIEF flag; v3 RESOURCE data-directory size > 0",
-    "vsize_to_size": "v2 LIEF virtual_size; v3 optional.sizeof_image",
-}
-BYTE_LEVEL = {"size_kb", "file_entropy", "high_entropy_window_frac", "n_strings", "avg_string_len",
-              "string_entropy", "printable_ratio"}
-
-
-def feature_class(n: str) -> str:
-    if n in REDEFINED:
-        return "redefined"
-    if n in PROXY:
-        return "proxy"
-    if n in BYTE_LEVEL:
-        return "byte_level"
-    return "parser"
-
-
-def feature_group(n: str) -> str:
-    if n.startswith("cap:") or n in ("capability_count", "high_risk_capabilities"):
-        return "capability"
-    if n.startswith("api_") or n in ("n_dlls", "n_imports", "n_ordinal_imports", "n_exports", "imports_tiny"):
-        return "imports"
-    if "section" in n or n.startswith("entry_") or n == "max_vsize_ratio":
-        return "sections"
-    if n in BYTE_LEVEL or n == "unaccounted_ratio":
-        return "bytes_strings"
-    return "header"
-
 
 # v2 (elastic/ember features.py, as in vitrine/ember.py) and v3 (thrember features.py) definitions
 _ALL = re.compile(rb"[\x20-\x7f]{5,}")
@@ -87,7 +49,7 @@ V3 = {"n_embedded_mz": re.compile("!This program "), "n_paths": re.compile("\\bC
       "n_urls": re.compile("\\b(?:http|https|ftp):\\/\\/[a-zA-Z0-9-._~:?#[\\]@!$&'()*+,;=]+")}
 
 
-def parity(root: Path, n: int) -> dict:
+def parity(root: Path, n: int, boot: int = 1000) -> dict:
     from scipy.stats import spearmanr
 
     files = sorted(p for p in root.glob("*") if p.suffix.lower() in (".dll", ".exe", ".sys") and p.is_file())
@@ -107,14 +69,30 @@ def parity(root: Path, n: int) -> dict:
         for k in V2:
             v2[k].append(len(V2[k].findall(b)))
             v3[k].append(sum(1 for s in strs if V3[k].search(s)))
-    out = {"corpus": f"{root} (benign; deterministic every-k-th sample of PE files <= 8 MiB)", "n_files": used}
+    out = {"corpus": f"{root} (benign; deterministic every-k-th sample of PE files <= 8 MiB)", "n_files": used,
+           "bootstrap_resamples_over_files": boot,
+           "note": ("PSI between two definitions on the same files depends on the share floor when one "
+                    "definition puts every file in one bin; exact agreement and total variation do not.")}
+    rng = np.random.default_rng(9)
     for k in V2:
         a, c = np.array(v2[k], float), np.array(v3[k], float)
-        rho = spearmanr(a, c).statistic if a.std() and c.std() else float("nan")
+        rho = spearmanr(a, c).statistic if a.std() and c.std() else None
+        agree = int((a == c).sum())
+        bt = {"tv": [], "psi": []}
+        for _ in range(boot):
+            ix = rng.integers(0, a.size, a.size)  # resample files (pairs kept together)
+            bt["tv"].append(total_variation(a[ix], c[ix]))
+            bt["psi"].append(psi(a[ix], c[ix]))
+        ci = {m: [float(v) for v in np.percentile(bt[m], [2.5, 97.5])] for m in bt}
         out[k] = {"definition": REDEFINED[k], "v2_mean": float(a.mean()), "v3_mean": float(c.mean()),
                   "v2_median": float(np.median(a)), "v3_median": float(np.median(c)),
-                  "exact_agreement": float((a == c).mean()), "spearman_rho": float(rho),
-                  "psi_v2_vs_v3_same_files": psi(a, c)}
+                  "v3_distinct_values": int(np.unique(c).size),
+                  "exact_agreement": agree / a.size, "exact_agreement_wilson95": wilson(agree, a.size),
+                  "total_variation": total_variation(a, c), "total_variation_ci95": ci["tv"],
+                  "spearman_rho": None if rho is None else float(rho),
+                  "psi_v2_vs_v3_same_files": psi(a, c), "psi_ci95": ci["psi"],
+                  "psi_legacy_deciles": psi_legacy(a, c),
+                  "psi_by_floor": {f"{e:g}": psi(a, c, floor=e) for e in (1e-3, 1e-4, 1e-5, 1e-6)}}
     return out
 
 
@@ -123,8 +101,8 @@ def main() -> None:
     ap.add_argument("--data")
     ap.add_argument("--system32", default="C:/Windows/System32")
     ap.add_argument("--parity-files", type=int, default=600)
-    ap.add_argument("--draws", type=int, default=20)
-    ap.add_argument("--boot", type=int, default=500)
+    ap.add_argument("--draws", type=int, default=100)
+    ap.add_argument("--boot", type=int, default=1000)
     ap.add_argument("--k", type=int, default=10)
     a = ap.parse_args()
     t0 = time.time()
@@ -132,32 +110,30 @@ def main() -> None:
            "feature_classes": {n: feature_class(n) for n in FEATURE_NAMES},
            "definitions": {**REDEFINED, **PROXY}}
     s32 = Path(a.system32)
-    res["parity_system32"] = parity(s32, a.parity_files) if s32.exists() else {"skipped": "no System32"}
+    res["parity_system32"] = parity(s32, a.parity_files, a.boot) if s32.exists() else {"skipped": "no System32"}
     print(json.dumps(res["parity_system32"], indent=1), flush=True)
+    res["parser_parity"] = ("not run: parser-based features were extracted by LIEF 0.9 (EMBER 2018) and "
+                            "pefile/thrember (EMBER2024); no run of both extractors on the same files was done")
 
-    # ---- attribution restricted to faithful features, tagged by class pattern
-    drift = json.loads((RESULTS / "ember2024_drift.json").read_text())
-    feats = []
-    for f in drift["feature_drift"]:
-        pb, pm = f["psi_benign"], f["psi_malicious"]
-        pattern = ("both_classes" if pb >= 0.25 and pm >= 0.25 else
-                   "benign_only" if pb >= 0.25 and pm < 0.1 else
-                   "malicious_only" if pm >= 0.25 and pb < 0.1 else
-                   "stable" if max(pb, pm) < 0.1 else "mixed")
-        feats.append({**f, "class": feature_class(f["feature"]), "group": feature_group(f["feature"]),
-                      "shift_pattern": pattern})
-    res["all_features_top15"] = [{k: f[k] for k in ("feature", "class", "shift_pattern", "psi_benign",
-                                                     "psi_malicious", "drift_weight")} for f in feats[:15]]
-    faithful = [f for f in feats if f["class"] in ("parser", "byte_level")]
-    res["faithful_attribution"] = [{k: f[k] for k in ("feature", "class", "group", "shift_pattern", "psi_benign",
-                                                      "psi_malicious", "mean_abs_shap_2018", "drift_weight")}
+    # ---- ranking restricted to faithful features (from bench_drift.py, with its bootstrap and controls)
+    rank = json.loads((RESULTS / "ember2024_drift.json").read_text())["drift_ranking"]
+    feats = rank["features"]
+    keys = ("feature", "class", "group", "shift_pattern", "psi_benign", "psi_benign_ci95", "psi_malicious",
+            "psi_malicious_ci95", "mean_abs_shap_2018", "drift_weight", "drift_weight_ci95")
+    res["all_features_top15"] = [{k: f[k] for k in (*keys, "rank_all_ci95")} for f in feats[:15]]
+    faithful = [f for f in feats if f["faithful"]]
+    res["faithful_attribution"] = [{k: f[k] for k in (*keys, "rank_faithful_ci95", "p_in_faithful_top_k",
+                                                      "zero_share", "psi_malicious_excl_top_family")}
                                    for f in faithful[:15]]
+    tops = rank["faithful_top_k_by_binning"]
+    res["faithful_top_k_robust_core"] = sorted(set.intersection(*(set(v["top_k"]) for v in tops.values())))
+    res["faithful_top_k_by_binning"] = tops
     res["faithful_both_class_top"] = [f["feature"] for f in faithful if f["shift_pattern"] == "both_classes"][:a.k]
 
     # ---- ablation on faithful features vs group-matched random draws
     data = data_dir(a.data)
     d18, d24 = load18(data), load24(data)
-    F18, y18, m18 = d18["train"]
+    F18, y18, m18, _ = d18["train"]
     fit18 = m18 != "2018-10"
     rng = np.random.default_rng(0)  # identical subsample to bench_drift.py's ember2018_sub
     fit24n = int((d24["train"][2] <= 47).sum())
@@ -168,22 +144,22 @@ def main() -> None:
     allc = list(range(len(FEATURE_NAMES)))
     full = [train(X, y, s) for s in seeds]
     full_s = {t: [score(b, Xt) for b in full] for t, (Xt, _) in targets.items()}
+    full_m = {t: [roc_metrics(targets[t][1], s) for s in full_s[t]] for t in targets}
     print(f"full models ({time.time() - t0:.0f}s)", flush=True)
-
-    def ablate(drop: list[int], sd: list[int]) -> dict:
-        keep = [j for j in allc if j not in drop]
-        ms = [train(X, y, s, keep) for s in sd]
-        out = {}
-        for t, (Xt, yt) in targets.items():
-            s = [score(b, Xt, keep) for b in ms]
-            out[t] = paired_bootstrap_diff(yt, s, full_s[t][: len(sd)], a.boot)
-        return out
+    names = ("roc_auc", "tpr_at_fpr_1pct", "tpr_at_fpr_0.1pct")
 
     top = [FEATURE_NAMES.index(f["feature"]) for f in faithful[: a.k]]
-    ab = {"dropped": [FEATURE_NAMES[j] for j in top], "seeds": seeds,
-          "ablated_minus_full": ablate(top, seeds)}
+    keep = [j for j in allc if j not in top]
+    top_models = [train(X, y, s, keep) for s in seeds]
+    top_s = {t: [score(b, Xt, keep) for b in top_models] for t, (Xt, _) in targets.items()}
+    top_d = {t: [np.subtract(roc_metrics(targets[t][1], s), full_m[t][i]) for i, s in enumerate(top_s[t])]
+             for t in targets}
+    ab = {"dropped": [FEATURE_NAMES[j] for j in top], "seeds": seeds, "bootstrap_resamples": a.boot,
+          "ablated_minus_full": {t: paired_bootstrap_diff(yt, top_s[t], full_s[t], a.boot)
+                                 for t, (_, yt) in targets.items()},
+          "ablated_minus_full_per_seed": {t: [dict(zip(names, map(float, d))) for d in top_d[t]] for t in targets}}
     print(f"faithful ablation {ab['ablated_minus_full']} ({time.time() - t0:.0f}s)", flush=True)
-    # group-matched random draws from the faithful pool (excluding the top-k themselves)
+    # group-matched random draws from the faithful pool (excluding the top-k themselves), seed-matched
     pool = {}
     for f in faithful[a.k:]:
         pool.setdefault(f["group"], []).append(FEATURE_NAMES.index(f["feature"]))
@@ -193,23 +169,40 @@ def main() -> None:
         need[g] = need.get(g, 0) + 1
     rr = np.random.default_rng(11)
     draws = []
-    for _ in range(a.draws):
+    for i in range(a.draws):
+        sd = seeds[i % len(seeds)]
         pick = []
         for g, c in need.items():
             pick += rr.choice(pool[g], min(c, len(pool[g])), replace=False).tolist()
-        r = ablate(sorted(pick), [0])
-        draws.append({"dropped": [FEATURE_NAMES[j] for j in sorted(pick)],
-                      **{t: {m: r[t][m]["mean"] for m in r[t]} for t in r}})
+        kp = [j for j in allc if j not in pick]
+        b = train(X, y, sd, kp)
+        e = {"dropped": [FEATURE_NAMES[j] for j in sorted(pick)], "seed": sd}
+        for t, (Xt, yt) in targets.items():
+            d = np.subtract(roc_metrics(yt, score(b, Xt, kp)), full_m[t][sd])
+            e[t] = dict(zip(names, map(float, d)))
+            e[t + ":minus_topk_same_seed"] = dict(zip(names, map(float, d - top_d[t][sd])))
+        draws.append(e)
         print(f"draw {len(draws)} ({time.time() - t0:.0f}s)", flush=True)
     summ = {}
+    n = len(draws)
     for t in targets:
-        for m in ("roc_auc", "tpr_at_fpr_1pct", "tpr_at_fpr_0.1pct"):
+        for j, m in enumerate(names):
             v = np.array([d[t][m] for d in draws])
-            summ[f"{t}:{m}"] = {"mean": float(v.mean()), "p2.5": float(np.percentile(v, 2.5)),
-                                "p97.5": float(np.percentile(v, 97.5)),
-                                "frac_draws_worse_than_topk": float(
-                                    (v < ab["ablated_minus_full"][t][m]["mean"]).mean())}
-    ab["group_matched_random"] = {"n_draws": len(draws), "group_counts": need, "summary": summ, "draws": draws}
+            rel = np.array([d[t + ":minus_topk_same_seed"][m] for d in draws])
+            worse = int((rel < 0).sum())
+            summ[f"{t}:{m}"] = {
+                "mean": float(v.mean()), "p2.5": float(np.percentile(v, 2.5)), "p97.5": float(np.percentile(v, 97.5)),
+                "topk_mean_over_seeds": float(np.mean([d[j] for d in top_d[t]])),
+                "n_draws_worse_than_topk": worse, "frac_draws_worse_than_topk": worse / n,
+                "mc_p_topk_more_damaging": (1 + int((rel >= 0).sum())) / (1 + n),
+                "mc_p_topk_less_damaging": (1 + int((rel <= 0).sum())) / (1 + n)}
+    ab["group_matched_random"] = {
+        "n_draws": n, "group_counts": need,
+        "design": ("draw i trained with seed i % 3, compared with the full and top-k models of the same seed; "
+                   "plug-in metric differences on the full test sets"),
+        "p_value_note": ("one-sided Monte Carlo p = (1 + #draws at least as extreme) / (1 + #draws); "
+                         "mc_p_topk_more_damaging tests whether removing the top-k hurts more than a random draw"),
+        "summary": summ, "draws": draws}
     res["faithful_ablation"] = ab
     res["training_rows"] = int(sub.size)
     res["threshold_note"] = "ROC-read metrics; no thresholds are calibrated in this script"
