@@ -21,7 +21,7 @@ VITRINE parses a PE file (headers, sections, imports, exports, resources, entrop
 1. **No install:** open the [static demo](https://rakshit-737.github.io/vitrine/demo/) (precomputed: synthetic samples plus real System32 files scored by the EMBER model).
 2. **pip** (numpy only):
    ```bash
-   pip install https://github.com/rakshit-737/vitrine/releases/download/v1.1.1/vitrine-1.1.1-py3-none-any.whl
+   pip install https://github.com/rakshit-737/vitrine/releases/download/v1.1.2/vitrine-1.1.2-py3-none-any.whl
    vitrine demo
    ```
    ```text
@@ -33,7 +33,7 @@ VITRINE parses a PE file (headers, sections, imports, exports, resources, entrop
    ```
 3. **Docker** (API + UI on localhost only):
    ```bash
-   docker run --rm -p 127.0.0.1:8000:8000 ghcr.io/rakshit-737/vitrine:v1.1.1   # http://127.0.0.1:8000
+   docker run --rm -p 127.0.0.1:8000:8000 ghcr.io/rakshit-737/vitrine:v1.1.2   # http://127.0.0.1:8000
    ```
 
 ## Headline results

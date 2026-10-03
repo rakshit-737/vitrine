@@ -4,7 +4,7 @@ title: "VITRINE: static-first, explainable PE triage with auto-synthesized YARA 
 authors:
   - name: Rakshit
     affiliation: "VIT Chennai"
-version: 1.1.1
+version: 1.1.2
 date-released: 2026-10-03
 license: MIT
 repository-code: "https://github.com/rakshit-737/vitrine"

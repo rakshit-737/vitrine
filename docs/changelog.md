@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-03
+
+### Fixed
+- The sdist test run no longer fails on the committed-demo check: it skips when `docs/demo` is absent
+  from the sdist. The v1.1.1 tag has no release artefacts (no GitHub Release, wheel, sdist or GHCR
+  image) because its release workflow failed on that test; 1.1.2 is the same code plus this fix.
+
 ## [1.1.1] - 2026-10-03
 
 ### Added
@@ -156,7 +163,8 @@ All notable changes to this project are documented here. The format follows
   string-based YARA synthesis with specificity and coverage validation, and synthetic inert PE
   families.
 
-[Unreleased]: https://github.com/rakshit-737/vitrine/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/rakshit-737/vitrine/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/rakshit-737/vitrine/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/rakshit-737/vitrine/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/rakshit-737/vitrine/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/rakshit-737/vitrine/releases/tag/v1.0.0
