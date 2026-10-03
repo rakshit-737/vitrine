@@ -1,11 +1,15 @@
 version: 2
 updates:
+  # floors in pyproject.toml are minimum supported versions: only raise one when the old floor
+  # stops being installable, not on every upstream release
   - package-ecosystem: pip
     directory: /
     schedule: {interval: weekly}
+    versioning-strategy: increase-if-necessary
   - package-ecosystem: pip
     directory: /docs
     schedule: {interval: weekly}
+    versioning-strategy: increase-if-necessary
   - package-ecosystem: github-actions
     directory: /
     schedule: {interval: weekly}
