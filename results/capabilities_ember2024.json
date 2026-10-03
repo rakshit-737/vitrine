@@ -174,7 +174,7 @@
       "fn": 0,
       "precision": 0.0,
       "precision_ci95": [
-        1.0842021724855044e-19,
+        0.0,
         0.0014010506728373683
       ],
       "recall": null,
@@ -421,6 +421,7 @@
     "command": "python scripts/bench_capabilities.py --data <data>",
     "log": "<data>/caps.log",
     "log_last_modified_utc": "2026-10-02T10:47:24+00:00",
-    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded.",
+    "round5_edit": "Wilson intervals recomputed from the stored counts with exact 0/1 bounds at k = 0 / k = n"
   }
 }
