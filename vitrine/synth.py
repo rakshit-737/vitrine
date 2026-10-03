@@ -89,7 +89,10 @@ def build_pe(
     overlay: bytes = b"",
     pe32plus: bool = False,
     exports: list[str] | None = None,
+    certificate: bytes = b"",
 ) -> bytes:
+    """Build an inert PE. ``certificate`` is an opaque blob placed at the end of the file and pointed
+    to by the security (certificate table) data directory, as Authenticode signatures are."""
     imports = imports or {}
     rva = SECT_ALIGN
     layout = []
@@ -108,6 +111,9 @@ def build_pe(
         dirs[0] = (rva, len(edata))
         rva += _align(len(edata), SECT_ALIGN)
     size_of_image = rva
+    if certificate:
+        end = HEADERS_SIZE + sum(_align(len(d), FILE_ALIGN) for _, d, _, _ in layout) + len(overlay)
+        dirs[4] = (end, len(certificate))  # certificate table: a FILE offset, not an RVA
 
     dos = bytearray(0x80)
     dos[0:2] = b"MZ"
@@ -151,7 +157,7 @@ def build_pe(
         raw += rsize
     hdr = bytes(dos) + b"PE\0\0" + coff + opt + table
     assert len(hdr) <= HEADERS_SIZE
-    return hdr.ljust(HEADERS_SIZE, b"\0") + body + overlay
+    return hdr.ljust(HEADERS_SIZE, b"\0") + body + overlay + certificate
 
 
 # ---------------------------------------------------------------- families

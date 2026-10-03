@@ -243,6 +243,8 @@ def dissect(data: bytes) -> PEReport:
     overlay = max(0, len(data) - end_of_image)
     if cert_size and cert_off >= end_of_image:
         overlay = max(0, overlay - cert_size)
+    sig_strings = (extract_strings(data[cert_off: cert_off + min(cert_size, len(data) - cert_off)])
+                   if cert_size and 0 < cert_off < len(data) else [])
 
     parts = []
     for dll, fs in imports.items():
@@ -269,7 +271,7 @@ def dissect(data: bytes) -> PEReport:
         pe32plus=plus, coff_characteristics=chars, dll_characteristics=dll_chars, header=header,
         data_directories=dirs[:15], exports=exports, delay_imports=delay,
         resource_types=resource_types, entry_section=entry_section, size_of_image=size_image,
-        overlay_size=overlay, n_symbols=nsyms,
+        overlay_size=overlay, n_symbols=nsyms, signature_strings=sig_strings,
     )
 
 

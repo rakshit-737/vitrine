@@ -115,6 +115,24 @@ def test_capabilities():
     assert ids("benign") == set()
 
 
+def test_signature_and_manifest_urls_are_not_embedded_urls():
+    """CRL/AIA URLs inside an Authenticode blob and manifest XML namespaces are not network indicators."""
+    rdata = b"\0".join([b"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\">",
+                        b"<ws2 xmlns:ws2=\"http://schemas.microsoft.com/SMI/2016/WindowsSettings\">", b"\0"])
+    cert = b"0\x82\x05\x00" + b"\0".join([b"Fhttp://www.microsoft.com/pkiops/crl/MicWinProPCA2011_2011-10-19.crl0a",
+                                         b"Ehttp://crl.example.test/pki/crl/products/Root_2010-06-23.crl0Z",
+                                         b"http://cps.example.test/repository/policy0"]) + b"\0" * 64
+    text = (".text", b"\xc3" + b"\x90" * 63, CODE)
+    pe = build_pe([text, (".rdata", rdata, 0x40000040)], certificate=cert)
+    rep = dissect(pe)
+    assert rep.data_directories[4][1] == len(cert) and rep.overlay_size == 0
+    assert any("cps.example.test" in s for s in rep.signature_strings)
+    assert "T1071.001" not in {c.attack_id for c in tag(rep)}
+    # the same URL outside the certificate table still counts
+    pe2 = build_pe([text, (".rdata", b"http://cps.example.test/repository/policy0\0", 0x40000040)])
+    assert "T1071.001" in {c.attack_id for c in tag(dissect(pe2))}
+
+
 def test_feature_schema():
     f = featurize(dissect(make_sample("benign", 0)))
     assert list(f) == FEATURE_NAMES

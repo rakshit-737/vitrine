@@ -59,6 +59,8 @@ class PEReport:
     size_of_image: int = 0
     overlay_size: int = 0
     n_symbols: int = 0
+    # strings inside the certificate table (Authenticode CRL/AIA/CPS URLs); not part of ``strings``' meaning
+    signature_strings: list[str] = field(default_factory=list)
 
     @property
     def import_names(self) -> set[str]:

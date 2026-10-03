@@ -81,11 +81,23 @@ HIGH_RISK_ATTACK_IDS = {r.attack_id for r in RULES if r.high_risk}
 
 # XML namespace / schema URLs in manifests are not network indicators (e.g. every signed Windows binary)
 _NAMESPACE_URLS = ("xmlns", "schemas.microsoft.com", "www.w3.org/", "schemas.xmlsoap.org")
+# Certificate-infrastructure URLs (CRL, OCSP, AIA certificates, CPS) from Authenticode signatures
+_PKI_URL = re.compile(r"(?i)https?://(?:crl\d*|ocsp|cacerts?)\.|/pki(?:ops)?/|\.(?:crl|crt)(?:[^a-z0-9]|$)")
+
+
+def _not_network_url(s: str) -> bool:
+    return any(n in s for n in _NAMESPACE_URLS) or bool(_PKI_URL.search(s))
 
 
 def tag_imports(import_names: Iterable[str], strings: list[str] | None = None,
-                string_stats: dict | None = None, rules: list[Rule] = RULES) -> list[Capability]:
-    """Tag capabilities from imported API names plus either raw strings or EMBER string stats."""
+                string_stats: dict | None = None, rules: list[Rule] = RULES,
+                ignore_strings: Iterable[str] = ()) -> list[Capability]:
+    """Tag capabilities from imported API names plus either raw strings or EMBER string stats.
+
+    ``ignore_strings`` (e.g. strings from the certificate table) never count as URL evidence; neither do
+    XML-namespace and certificate-infrastructure (CRL/OCSP/AIA) URLs.
+    """
+    ignore = set(ignore_strings)
     raw_names = sorted(set(import_names))
     by_norm: dict[str, str] = {}
     for n in raw_names:
@@ -106,7 +118,7 @@ def tag_imports(import_names: Iterable[str], strings: list[str] | None = None,
         if r.any_string_substr:
             if strings is not None:
                 hit_s = [s for s in strings if any(x in s for x in r.any_string_substr)
-                         and not (r.attack_id == "T1071.001" and any(n in s for n in _NAMESPACE_URLS))]
+                         and not (r.attack_id == "T1071.001" and (s in ignore or _not_network_url(s)))]
                 if not hit_s:
                     continue
                 ev += [f"string {s!r}" for s in hit_s[:3]]
@@ -120,7 +132,7 @@ def tag_imports(import_names: Iterable[str], strings: list[str] | None = None,
 
 def tag(rep: PEReport, rules: list[Rule] = RULES) -> list[Capability]:
     names = set(rep.import_names) | {f for fs in rep.delay_imports.values() for f in fs}
-    return tag_imports(names, strings=rep.strings, rules=rules)
+    return tag_imports(names, strings=rep.strings, rules=rules, ignore_strings=rep.signature_strings)
 
 
 def tag_raw(raw: dict, rules: list[Rule] = RULES) -> list[Capability]:
