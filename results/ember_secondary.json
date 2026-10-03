@@ -1,0 +1,311 @@
+{
+  "description": "Intervals for the secondary EMBER 2018 statistics quoted in README, docs and paper.",
+  "bootstrap_resamples": 1000,
+  "shap_deletion_test": {
+    "n_malware": 2000,
+    "replacement": "benign training median",
+    "interval": "bootstrap over the 2,000 test malware",
+    "k": {
+      "1": {
+        "mean_score_drop_shap_topk": 0.08700279891490936,
+        "shap_topk_ci95": [
+          0.0794893592596054,
+          0.09520418979227543
+        ],
+        "mean_score_drop_random_k": 0.0029707099311053753,
+        "random_k_ci95": [
+          0.0013510182005120443,
+          0.004747601051349193
+        ],
+        "ratio_topk_over_random": 29.2868709564209,
+        "ratio_ci95": [
+          18.36964359283447,
+          64.98502712249756
+        ]
+      },
+      "3": {
+        "mean_score_drop_shap_topk": 0.2236347645521164,
+        "shap_topk_ci95": [
+          0.21169518046081065,
+          0.23529108837246895
+        ],
+        "mean_score_drop_random_k": 0.0075213913805782795,
+        "random_k_ci95": [
+          0.004835996427573264,
+          0.0105052444152534
+        ],
+        "ratio_topk_over_random": 29.733163833618164,
+        "ratio_ci95": [
+          21.536345148086546,
+          45.6985200881958
+        ]
+      },
+      "5": {
+        "mean_score_drop_shap_topk": 0.33541619777679443,
+        "shap_topk_ci95": [
+          0.3219258576631546,
+          0.34935661852359773
+        ],
+        "mean_score_drop_random_k": 0.00906464084982872,
+        "random_k_ci95": [
+          0.005743788415566086,
+          0.012476617866195739
+        ],
+        "ratio_topk_over_random": 37.00270080566406,
+        "ratio_ci95": [
+          27.246652603149414,
+          57.48443946838378
+        ]
+      },
+      "10": {
+        "mean_score_drop_shap_topk": 0.5317537784576416,
+        "shap_topk_ci95": [
+          0.5166644468903542,
+          0.5465084999799729
+        ],
+        "mean_score_drop_random_k": 0.018734389916062355,
+        "random_k_ci95": [
+          0.014230828336440026,
+          0.023275928990915417
+        ],
+        "ratio_topk_over_random": 28.383832931518555,
+        "ratio_ci95": [
+          22.872788858413696,
+          36.99082098007202
+        ]
+      }
+    }
+  },
+  "packing_subsets": {
+    "packed_fraction_test": 0.20809,
+    "packed_malicious_fraction": 0.7513335575952713,
+    "n_packed": 41618,
+    "n_packed_benign": 10349,
+    "n_unpacked_benign": 89651,
+    "vitrine_xgb": {
+      "packed": {
+        "point": 0.9965379495493429,
+        "lo": 0.9962002542786386,
+        "hi": 0.9968560442915216
+      },
+      "unpacked": {
+        "point": 0.9897104510279773,
+        "lo": 0.9893370437100323,
+        "hi": 0.9900526324504796
+      },
+      "packed_minus_unpacked": {
+        "point": 0.00682749852136566,
+        "lo": 0.006361655823960327,
+        "hi": 0.007304470956213333
+      },
+      "benign_fpr_at_val_1pct_threshold": {
+        "threshold": 0.8891706466674805,
+        "packed": 0.019422166392888202,
+        "packed_wilson95": [
+          0.016936186742165522,
+          0.022264786288761593
+        ],
+        "unpacked": 0.007629585838417865,
+        "unpacked_wilson95": [
+          0.007080719996038101,
+          0.008220645066893763
+        ],
+        "fisher_p_two_sided": 1.0057755955265577e-26
+      }
+    },
+    "lgbm_ember_2018": {
+      "packed": {
+        "point": 0.995321401356745,
+        "lo": 0.9948670513381493,
+        "hi": 0.9957382486962469
+      },
+      "unpacked": {
+        "point": 0.9880960722995255,
+        "lo": 0.9876610447431806,
+        "hi": 0.9884987109424542
+      },
+      "packed_minus_unpacked": {
+        "point": 0.0072253290572195095,
+        "lo": 0.006598344004749071,
+        "hi": 0.007826125544727914
+      },
+      "benign_fpr_at_val_1pct_threshold": {
+        "threshold": 0.929694308765283,
+        "packed": 0.0225142525847908,
+        "packed_wilson95": [
+          0.019828332618176136,
+          0.025554518137293116
+        ],
+        "unpacked": 0.0062464445460731054,
+        "unpacked_wilson95": [
+          0.005751443151692212,
+          0.006783757854010141
+        ],
+        "fisher_p_two_sided": 3.4781923101894406e-50
+      }
+    },
+    "lgbm_ember_paper": {
+      "packed": {
+        "point": 0.9905402279159561,
+        "lo": 0.9898485780168317,
+        "hi": 0.9911900259009129
+      },
+      "unpacked": {
+        "point": 0.9752599841403462,
+        "lo": 0.974608317255662,
+        "hi": 0.9758746699146478
+      },
+      "packed_minus_unpacked": {
+        "point": 0.01528024377560988,
+        "lo": 0.014275463943071873,
+        "hi": 0.016240156715498274
+      },
+      "benign_fpr_at_val_1pct_threshold": {
+        "threshold": 0.882454586503826,
+        "packed": 0.020388443327857764,
+        "packed_wilson95": [
+          0.01783828608294413,
+          0.023294523736902408
+        ],
+        "unpacked": 0.007640740203678709,
+        "unpacked_wilson95": [
+          0.007091461185517172,
+          0.008232211652069768
+        ],
+        "fisher_p_two_sided": 3.388745278671902e-30
+      }
+    }
+  },
+  "vitrine_minus_published": {
+    "seed0_saved_triage_model": {
+      "roc_auc": {
+        "point": -0.004709925199999909,
+        "mean": -0.004712284200500003,
+        "lo": -0.004921362757499914,
+        "hi": -0.004518757632499956
+      },
+      "tpr_at_fpr_1pct": {
+        "point": -0.07823000000000002,
+        "mean": -0.07846199000000001,
+        "lo": -0.08256074999999996,
+        "hi": -0.07499974999999996
+      },
+      "tpr_at_fpr_0.1pct": {
+        "point": -0.12477000000000005,
+        "mean": -0.12661998,
+        "lo": -0.14363175000000003,
+        "hi": -0.11189974999999999
+      }
+    },
+    "seed_pooled_3_seeds": {
+      "roc_auc": {
+        "point": -0.005030194949999974,
+        "mean": -0.005035135329599998,
+        "lo": -0.005551886444999959,
+        "hi": -0.004273272306250247
+      },
+      "tpr_at_fpr_1pct": {
+        "point": -0.0828066666666667,
+        "mean": -0.08266348999999999,
+        "lo": -0.08712999999999993,
+        "hi": -0.07776925000000001
+      },
+      "tpr_at_fpr_0.1pct": {
+        "point": -0.1278166666666667,
+        "mean": -0.1301575,
+        "lo": -0.14831650000000005,
+        "hi": -0.11151624999999996
+      }
+    },
+    "note": "point = plug-in difference (mean over seeds); lo/hi = paired stratified bootstrap percentiles. The 3 seeds are bench_drift.py's 275,732-row models (same rows and hyperparameters as the triage model)"
+  },
+  "vitrine_3_seeds_ember2018_test": {
+    "roc_auc": {
+      "point": 0.99137533715,
+      "lo": 0.9907971892425,
+      "hi": 0.992181179075
+    },
+    "tpr_at_fpr_1pct": {
+      "point": 0.8820933333333333,
+      "lo": 0.87770875,
+      "hi": 0.88757025
+    },
+    "tpr_at_fpr_0.1pct": {
+      "point": 0.7419633333333334,
+      "lo": 0.72686,
+      "hi": 0.75808325
+    }
+  },
+  "published_2018_model_on_2024": {
+    "drop_2018test_minus_2024test": {
+      "roc_auc": {
+        "point": 0.013079777530816794,
+        "lo": 0.011900473319038323,
+        "hi": 0.014214218136428753
+      },
+      "tpr_at_fpr_1pct": {
+        "point": 0.16476714273852033,
+        "lo": 0.1517411013036619,
+        "hi": 0.17670857269783272
+      },
+      "tpr_at_fpr_0.1pct": {
+        "point": 0.1418052428796811,
+        "lo": 0.13007069206177857,
+        "hi": 0.16438063030391092
+      },
+      "recall_at_source_threshold": {
+        "point": 0.2797417097068837,
+        "lo": 0.27154972938636557,
+        "hi": 0.2885929007514739
+      },
+      "fpr_at_source_threshold": {
+        "point": 0.009926191934660543,
+        "lo": 0.00930842100561511,
+        "hi": 0.010486191934660542
+      }
+    },
+    "at_2018_test_1pct_threshold": {
+      "threshold": 0.8416902352279133,
+      "recall": 0.6851282902931163,
+      "recall_wilson95": [
+        0.6767750426137535,
+        0.6933634717214807
+      ],
+      "fpr": 6.380806533945891e-05,
+      "fpr_wilson95": [
+        1.1263779136354654e-05,
+        0.0003613770667180269
+      ],
+      "tp": 8251,
+      "fp": 1
+    }
+  },
+  "training_composition": {
+    "fit_rows": 275732,
+    "fit_benign": 146792,
+    "fit_malicious": 128940,
+    "fit_benign_first_seen_before_2018": 27370,
+    "first_seen_range_of_those": [
+      "2006-12",
+      "2017-12"
+    ]
+  },
+  "runtime_seconds": 2068,
+  "provenance": {
+    "git_commit": "82a151c99ca2ccbc5f05c102de86ff422fc5725c",
+    "git_dirty": false,
+    "command": "python scripts/bench_secondary.py --data <data>",
+    "started_utc": "2026-10-03T04:01:49+00:00",
+    "finished_utc": "2026-10-03T04:36:18+00:00",
+    "python": "3.14.3",
+    "platform": "Windows-11",
+    "packages": {
+      "numpy": "2.4.3",
+      "scipy": "1.17.1",
+      "scikit-learn": "1.8.0",
+      "xgboost": "3.2.0",
+      "lightgbm": "4.6.0"
+    },
+    "runner": "local"
+  }
+}

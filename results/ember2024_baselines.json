@@ -4,12 +4,24 @@
     "train_malicious": 49953,
     "test_rows": 27715,
     "test_malicious": 12043,
-    "note": "first 8 MiB of each weekly Win32 member (sha256-range sample, ~7 % of files); see results/ember2024_manifest.json"
+    "note": "first 8 MiB of each weekly Win32 member (sha256-range sample, ~7 % of files); see results/ember2024_manifest.json",
+    "train_fraction_of_paper": 0.069,
+    "test_fraction_of_paper": 0.077,
+    "train_malicious_share": 0.4638,
+    "test_malicious_share": 0.4345
   },
   "paper_win32": {
     "roc_auc": 0.9984,
     "pr_auc": 0.9986,
-    "source": "Joyce et al., KDD 2025 (arXiv:2506.05074), Table 5, full Win32 test split"
+    "source": "Joyce et al., KDD 2025 (arXiv:2506.05074), Table 5, full Win32 test split",
+    "train_rows": 1560000,
+    "test_rows": 360000,
+    "weekly_inclusion": {
+      "benign": 15000,
+      "malicious": 15000
+    },
+    "sizes_source": "Joyce et al. 2025, Table 3 (Win32 train 1,560,000 / test 360,000) and Table 2 (weekly thresholds)",
+    "pr_auc_note": "paper PR AUC is at 50 % malicious prevalence; our test subsample is 43.5 % malicious, so PR AUC is not comparable and is not compared"
   },
   "lgbm_config": {
     "objective": "binary",
@@ -138,6 +150,7 @@
     "command": "python scripts/bench_ember2024.py --data <data> --released <EMBER2024_Win32.model> --config EMBER2024/examples/lgbm_config.json",
     "log": "<data>/e24base.log",
     "log_last_modified_utc": "2026-10-02T11:45:35+00:00",
-    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded."
+    "note": "written before result files recorded provenance; the run used the scripts as of the commit that committed this file (or its parent). Library versions were not recorded.",
+    "round5_edit": "paper_win32 sizes and subsample fractions/class shares added from the paper and the existing counts; no metric changed"
   }
 }
