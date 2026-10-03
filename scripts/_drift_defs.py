@@ -30,7 +30,8 @@ def _extractor_sensitive() -> dict[str, float]:
         return {}
     feats = json.loads(PARITY_FILE.read_text(encoding="utf-8"))["features"]
     return {f["feature"]: f["close_agreement_1pct"] for f in feats
-            if f["class"] == "parser" and f["close_agreement_1pct"] < CLOSE_AGREEMENT_MIN}
+            if f["class"] in ("parser", "parser_extractor_sensitive")
+            and f["close_agreement_1pct"] < CLOSE_AGREEMENT_MIN}
 
 
 EXTRACTOR_SENSITIVE = _extractor_sensitive()
