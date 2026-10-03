@@ -147,17 +147,18 @@ capabilities:
 | Dataset | What | Licence | Used for |
 | --- | --- | --- | --- |
 | **EMBER 2018** v2 [2] | LIEF-extracted features of 1M PE files (600k labelled train, 200k test), AVClass labels; ships the authors' benchmark model | Data MIT; `elastic/ember` code AGPL-3.0, not vendored | Training, calibration, test, YARA, clustering, adversarial |
-| **EMBER2024** Win32 [3] | pefile/thrember features (v3) with capa and packer labels, weekly 2023-09 .. 2024-12 | Apache-2.0 | Cross-time drift, baseline reproduction, capability validation |
+| **EMBER2024** Win32 [3] | pefile/thrember features (v3) with capa and packer labels, weekly 2023-09 .. 2024-12 | Apache-2.0 | Cross-time drift, baseline scoring (released model; ~7 % retrain), capability validation |
 | Local `C:\Windows\System32` | Real current benign PEs, read in place | not redistributed | Parser checks, benign specificity |
 
 ## Prior art
 
 | Existing | What it does | VITRINE's angle |
 | --- | --- | --- |
-| EMBER / EMBER2024 [1-3] | Feature sets and GBDT baselines | Named features, exact TreeSHAP sentences, calibrated thresholds, cross-time drift attribution |
+| EMBER / EMBER2024 [1-3] | Feature sets and GBDT baselines | Named features, exact TreeSHAP sentences, calibrated thresholds, a correlational cross-time drift ranking (extractor change audited on benign files, not isolated) |
 | yarGen, AutoYara [4,5] | Rule generation from frequent strings/bytes | Structural `pe` rules, benign-filtered, with abstention; compared with benign-filtered baselines |
 | capa [6] | Capability detection from code | Import-level rules used as features and a review floor; agreement with capa measured on EMBER2024 |
-| TESSERACT [7] | Time-aware evaluation | Applied across two EMBER generations, with feature-level drift attribution |
+| TESSERACT [7] | Time-aware evaluation | Applied across two EMBER generations, with a correlational feature-level drift ranking |
+| Transcend, CADE, drift forensics [8-11] | Detect drifting samples (conformal / contrastive) and explain which features and families drive decay | No sample-level drift detector; instead a cross-generation definition and extractor (LIEF 0.9 vs pefile) parity audit of named features, plus removal and alignment tests of the ranking |
 
 ## Limitations
 
@@ -189,6 +190,10 @@ See [CHANGELOG.md](CHANGELOG.md), [CONTRIBUTING.md](CONTRIBUTING.md), [CITATION.
 5. E. Raff et al. *Automatic Yara Rule Generation Using Biclustering.* AISec 2020, arXiv:2009.03779.
 6. Mandiant capa, <https://github.com/mandiant/capa>.
 7. F. Pendlebury et al. *TESSERACT: Eliminating Experimental Bias in Malware Classification across Space and Time.* USENIX Security 2019, arXiv:1807.07838.
+8. R. Jordaney et al. *Transcend: Detecting Concept Drift in Malware Classification Models.* USENIX Security 2017; F. Barbero et al. *Transcending TRANSCEND.* IEEE S&P 2022.
+9. L. Yang et al. *CADE: Detecting and Explaining Concept Drift Samples for Security Applications.* USENIX Security 2021.
+10. T. Chow et al. *Drift Forensics of Malware Classifiers.* AISec 2023.
+11. T. Kalný, M. Jureček, M. Stamp. *Detecting Concept Drift in Evolving Malware Families Using Rule-Based Classifier Representations.* arXiv:2604.22629, 2026.
 
 ## License
 
