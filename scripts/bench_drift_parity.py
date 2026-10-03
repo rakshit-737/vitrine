@@ -129,6 +129,24 @@ def main() -> None:
     res["faithful_top_k_robust_core"] = sorted(set.intersection(*(set(v["top_k"]) for v in tops.values())))
     res["faithful_top_k_by_binning"] = tops
     res["faithful_both_class_top"] = [f["feature"] for f in faithful if f["shift_pattern"] == "both_classes"][:a.k]
+    xp = RESULTS / "extractor_parity.json"
+    if xp.exists():
+        xd = json.loads(xp.read_text(encoding="utf-8"))
+        byf = {f["feature"]: f for f in xd["features"]}
+        res["extractor_parity_join"] = {
+            "source": "results/extractor_parity.json", "github_run_url": xd["provenance"].get("github_run_url"),
+            "n_files": xd["n_files_both_parsed"], "close_agreement_threshold": 0.99,
+            "extractor_sensitive_parser_features": rank.get("extractor_sensitive_excluded", {}),
+            "all_features_top15": [
+                {"feature": f["feature"], "class": f["class"], "drift_weight": f["drift_weight"],
+                 "psi_benign_2018_vs_2024": f["psi_benign"],
+                 "extractor_close_agreement": byf[f["feature"]]["close_agreement_1pct"],
+                 "extractor_psi_same_files": byf[f["feature"]]["psi_extractor_same_files"],
+                 "extractor_psi_ci95": byf[f["feature"]]["psi_extractor_ci95"]} for f in feats[:15]],
+            "faithful_top_k": [
+                {"feature": f["feature"], "psi_benign_2018_vs_2024": f["psi_benign"],
+                 "extractor_close_agreement": byf[f["feature"]]["close_agreement_1pct"],
+                 "extractor_psi_same_files": byf[f["feature"]]["psi_extractor_same_files"]} for f in faithful[: a.k]]}
 
     # ---- ablation on faithful features vs group-matched random draws
     data = data_dir(a.data)

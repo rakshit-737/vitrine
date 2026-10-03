@@ -5,13 +5,35 @@ and EMBER v3 (2024, thrember/pefile) values are defined:
 
 * ``redefined``  -- v3 has no equivalent, the nearest counter is used (string IOC counters);
 * ``proxy``      -- same concept, derived from a different field (general flags, vsize);
-* ``parser``     -- same definition, different PE parser (LIEF 0.9 vs pefile in thrember);
+* ``parser``     -- same definition, different PE parser (LIEF 0.9 vs pefile in thrember), and the two
+                    parsers agree on the parity corpus (``results/extractor_parity.json``);
+* ``parser_extractor_sensitive`` -- same definition, but LIEF 0.9 and pefile disagree on more than 1 %
+                    of identical benign files in that parity run (e.g. section entropies);
 * ``byte_level`` -- same definition on raw bytes, no parser involved (histograms, strings).
 
-Only ``parser`` and ``byte_level`` features are "faithful" (comparable across the two datasets), and
-even the ``parser`` ones are computed by different parsers: no LIEF-vs-pefile parity run was done.
+Only ``parser`` and ``byte_level`` features are "faithful" (comparable across the two datasets). The
+parity corpus is benign open-source DLLs, not EMBER's files, so agreement there is necessary, not
+sufficient.
 """
 from __future__ import annotations
+
+import json
+from pathlib import Path
+
+PARITY_FILE = Path(__file__).resolve().parents[1] / "results" / "extractor_parity.json"
+CLOSE_AGREEMENT_MIN = 0.99  # share of files where the two extractors agree within 1 %
+
+
+def _extractor_sensitive() -> dict[str, float]:
+    """Parser features whose LIEF-0.9 and pefile values agree within 1 % on fewer than 99 % of files."""
+    if not PARITY_FILE.exists():
+        return {}
+    feats = json.loads(PARITY_FILE.read_text(encoding="utf-8"))["features"]
+    return {f["feature"]: f["close_agreement_1pct"] for f in feats
+            if f["class"] == "parser" and f["close_agreement_1pct"] < CLOSE_AGREEMENT_MIN}
+
+
+EXTRACTOR_SENSITIVE = _extractor_sensitive()
 
 REDEFINED = {
     "n_embedded_mz": "v2: count of b'MZ' anywhere in the file; v3: strings containing '!This program ' (dos_msg)",
@@ -38,6 +60,8 @@ def feature_class(n: str) -> str:
         return "proxy"
     if n in BYTE_LEVEL:
         return "byte_level"
+    if n in EXTRACTOR_SENSITIVE:
+        return "parser_extractor_sensitive"
     return "parser"
 
 

@@ -40,7 +40,7 @@ from pathlib import Path
 
 import numpy as np
 from _common import binary_metrics, data_dir, dump, threshold_for_fpr
-from _drift_defs import FAITHFUL, feature_class, feature_group, shift_pattern
+from _drift_defs import EXTRACTOR_SENSITIVE, FAITHFUL, feature_class, feature_group, shift_pattern
 from _stats import (
     bootstrap_roc,
     bootstrap_threshold,
@@ -220,6 +220,35 @@ def drift_ranking(T18, yT18, fam18, T24, yT24, fam24, shap_rows, B: int, k: int)
     }
 
 
+def _shap_rows(b0, T18, n18: int):
+    import xgboost as xgb
+
+    rs = np.random.default_rng(1)
+    i18 = rs.choice(n18, 20000, replace=False)
+    return np.abs(b0.predict(xgb.DMatrix(T18[i18]), pred_contribs=True)[:, :-1])
+
+
+def _rank_only(a, store: Path, d18, d24, t0: float) -> None:
+    import json
+
+    import xgboost as xgb
+    from _common import RESULTS
+    from _drift_defs import EXTRACTOR_SENSITIVE
+
+    res = json.loads((RESULTS / "ember2024_drift.json").read_text(encoding="utf-8"))
+    T18, yT18, _, fam18 = d18["test"]
+    T24, yT24, _, fam24 = d24["test"]
+    b0 = xgb.Booster()
+    b0.load_model(str(store / "ember2018_seed0.ubj"))
+    res["drift_ranking"] = drift_ranking(T18, yT18, fam18, T24, yT24, fam24, _shap_rows(b0, T18, yT18.size),
+                                         a.rank_boot, a.k)
+    res["drift_ranking"]["extractor_sensitive_excluded"] = EXTRACTOR_SENSITIVE
+    prev = res.pop("provenance", None)
+    res["provenance_of_other_sections"] = res.pop("provenance_of_other_sections", prev)
+    res["runtime_seconds_rank_only"] = round(time.time() - t0)
+    dump("ember2024_drift.json", res)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data")
@@ -229,12 +258,18 @@ def main() -> None:
     ap.add_argument("--rank-boot", type=int, default=200, help="bootstrap resamples for PSI / rank intervals")
     ap.add_argument("--k", type=int, default=10, help="size of the top-k sets compared across binnings")
     ap.add_argument("--reuse", action="store_true", help="load saved models from <data>/models/drift if present")
+    ap.add_argument("--rank-only", action="store_true",
+                    help="recompute only the drift ranking (seed-0 2018 model from <data>/models/drift) and keep "
+                         "the other sections of results/ember2024_drift.json")
     a = ap.parse_args()
     data = data_dir(a.data)
     store = data / "models" / "drift"
     store.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     d18, d24 = load18(data), load24(data)
+    if a.rank_only:
+        _rank_only(a, store, d18, d24, t0)
+        return
     F18, y18, m18, _ = d18["train"]
     fit18, val18 = m18 != "2018-10", m18 == "2018-10"
     T18, yT18, _, fam18 = d18["test"]
@@ -325,13 +360,10 @@ def main() -> None:
     print(f"weekly curve ({time.time() - t0:.0f}s)", flush=True)
 
     # ---- drift ranking: PSI per class x mean |SHAP| of the 2018 model (seed 0), with bootstrap and controls
-    import xgboost as xgb
 
-    b0 = models["ember2018"][0]
-    rs = np.random.default_rng(1)
-    i18 = rs.choice(yT18.size, 20000, replace=False)
-    shap_rows = np.abs(b0.predict(xgb.DMatrix(T18[i18]), pred_contribs=True)[:, :-1])
-    res["drift_ranking"] = drift_ranking(T18, yT18, fam18, T24, yT24, fam24, shap_rows, a.rank_boot, a.k)
+    res["drift_ranking"] = drift_ranking(T18, yT18, fam18, T24, yT24, fam24,
+                                         _shap_rows(models["ember2018"][0], T18, yT18.size), a.rank_boot, a.k)
+    res["drift_ranking"]["extractor_sensitive_excluded"] = EXTRACTOR_SENSITIVE
     res["runtime_seconds"] = round(time.time() - t0)
     dump("ember2024_drift.json", res)
 
