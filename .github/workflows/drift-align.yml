@@ -1,0 +1,58 @@
+name: drift-align
+# Oracle marginal-alignment test of the drift ranking (scripts/bench_drift_align.py) on the full data
+# used by bench_drift.py: EMBER 2018 v2 features (sha256-prefix half of the labelled training rows) and the
+# EMBER2024 Win32 8 MiB/week prefix subsample. Features only, no binaries; nothing but the result JSON is
+# uploaded. The three frozen 2018 models are retrained here with bench_drift.py's exact recipe.
+on:
+  workflow_dispatch:
+  push:
+    branches: ["ci/drift-align"]
+permissions:
+  contents: read
+jobs:
+  align:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v7
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -q -e ".[bench]" "pefile==2024.8.26" scipy
+      - name: EMBER2024 extractor (thrember), pinned
+        run: |
+          git clone --quiet https://github.com/FutureComputing4AI/EMBER2024.git data/ref/EMBER2024
+          git -C data/ref/EMBER2024 checkout --quiet 0ef753e81d98bf209f71b03cd331dfc190b5b54d
+      - name: EMBER 2018 features (download + verify + prepare)
+        run: |
+          python scripts/download_ember.py --out data
+          python scripts/prepare_ember.py --data data --train-frac 0.5 --workers 4
+          rm -f data/*.tar.bz2 data/processed/*_X.f32; df -h /
+      - name: EMBER2024 subsample (download + prepare)
+        run: |
+          python scripts/download_ember2024.py --out data/ember2024 --mb 8
+          python scripts/prepare_ember2024.py --data data --thrember data/ref/EMBER2024/src
+      - name: Frozen 2018 models (bench_drift.py recipe, seeds 0-2)
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from bench_drift import load18, models_for
+          d = Path("data"); st = d / "models" / "drift"; st.mkdir(parents=True, exist_ok=True)
+          F, y, m, _ = load18(d)["train"]
+          fit = m != "2018-10"
+          print("ember2018 fit rows", int(fit.sum()))
+          models_for("ember2018", F[fit], y[fit], [0, 1, 2], st, False)
+          PY
+      - name: Alignment test
+        run: python scripts/bench_drift_align.py --data data
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ember2024-drift-align
+          path: results/ember2024_drift_align.json
